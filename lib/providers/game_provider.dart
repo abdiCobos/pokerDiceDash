@@ -389,6 +389,7 @@ class GameProvider extends ChangeNotifier {
       currentPlayerIndex: nextIndex,
       status: GameStatus.diceTurn,
     );
+    debugPrint('🔄 nextTurn result: nextIndex=$nextIndex playersActed=${_playersActedThisPhase.toList()}');
     _luckySevenApplied = false;
 
     if (_isHost) {
