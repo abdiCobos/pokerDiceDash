@@ -266,15 +266,17 @@ class _GameTableScreenState extends State<GameTableScreen>
   }
 
   Widget _buildCenterArea(GameProvider game) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildCommunityCards(game),
-          SizedBox(height: 12 * _s),
-          _buildDiceArea(game),
-        ],
-      ),
+    return Stack(
+      children: [
+        Center(
+          child: _buildCommunityCards(game),
+        ),
+        Positioned(
+          bottom: _screenH * 0.20,
+          right: _screenW * 0.08,
+          child: _buildDiceArea(game),
+        ),
+      ],
     );
   }
 
@@ -501,19 +503,49 @@ class _GameTableScreenState extends State<GameTableScreen>
         game.players[activeIdx].id == game.localPlayerId;
     final canRoll = game.state.status == GameStatus.diceTurn && (isMyTurn || !widget.isMultiplayer);
 
-    return Positioned(
-      bottom: _screenH * 0.04,
-      right: _screenW * 0.03,
-      child: Transform.scale(
-        scale: _s,
-        child: FloatingActionButton.extended(
-          onPressed: canRoll ? game.rollDice : null,
-          backgroundColor: canRoll ? const Color(0xFFFFA726) : Colors.grey.shade700,
-          foregroundColor: Colors.black,
-          icon: const Icon(Icons.casino),
-          label: const Text('Lanzar Dados', style: TextStyle(fontWeight: FontWeight.bold)),
+    final canStart = widget.isMultiplayer && widget.isHost &&
+        game.players.length >= 2 && game.state.phase == PokerPhase.preFlop &&
+        game.state.communityCards.isEmpty && game.state.status != GameStatus.diceTurn;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          bottom: _screenH * 0.04,
+          right: _screenW * 0.03,
+          child: Transform.scale(
+            scale: _s,
+            child: FloatingActionButton.extended(
+              onPressed: canRoll ? game.rollDice : null,
+              backgroundColor: canRoll ? const Color(0xFFFFA726) : Colors.grey.shade700,
+              foregroundColor: Colors.black,
+              icon: const Icon(Icons.casino),
+              label: const Text('Lanzar Dados', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
         ),
-      ),
+        if (canStart)
+          Positioned(
+            bottom: _screenH * 0.13,
+            right: _screenW * 0.03,
+            child: Material(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(10 * _s),
+              child: InkWell(
+                onTap: () {
+                  game.startMatch();
+                  game.broadcastState();
+                },
+                borderRadius: BorderRadius.circular(10 * _s),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16 * _s, vertical: 8 * _s),
+                  child: Text('Iniciar Partida',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12 * _s)),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -542,7 +574,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     }
 
     return Positioned(
-      bottom: _screenH * 0.20,
+      bottom: _screenH * 0.12,
       left: 0,
       right: 0,
       child: Column(
@@ -741,6 +773,8 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
   final maxBalance = game.players[playerIdx].chipBalance;
   final amountToCall = game.currentBet - game.getPlayerBet(playerId);
   final s = (MediaQuery.of(context).size.width / 800).clamp(0.55, 1.3);
+  final btnSize = (40 * s).clamp(32.0, 60.0);
+  final btnFont = (10 * s).clamp(8.0, 13.0);
 
   showDialog(
     context: context,
@@ -803,10 +837,10 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                           onTap: canAdd
                               ? () => setState(() => raiseAmount += amount)
                               : null,
-                          borderRadius: BorderRadius.circular(18 * s),
+                          borderRadius: BorderRadius.circular(btnSize * 0.4),
                           child: Container(
-                            width: 44 * s,
-                            height: 44 * s,
+                            width: btnSize,
+                            height: btnSize,
                             decoration: BoxDecoration(
                               color: canAdd ? Colors.amber : Colors.grey.shade700,
                               shape: BoxShape.circle,
@@ -819,7 +853,7 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                               child: Text('+$amount',
                                 style: TextStyle(
                                   color: canAdd ? Colors.black : Colors.white54,
-                                  fontSize: 11 * s,
+                                  fontSize: btnFont,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

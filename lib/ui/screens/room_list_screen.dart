@@ -120,13 +120,53 @@ class _RoomListScreenState extends State<RoomListScreen> {
   }
 
   void _joinRoom(_RoomInfo room) {
-    final game = context.read<GameProvider>();
-    game.setHost(false);
-    game.setMultiplayer(true);
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const GameTableScreen(isMultiplayer: true, isHost: false),
+    _showNameDialog(room);
+  }
+
+  void _showNameDialog(_RoomInfo room) {
+    final s = (MediaQuery.of(context).size.width / 800).clamp(0.45, 1.3);
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14 * s),
+          side: const BorderSide(color: Colors.amber, width: 2),
+        ),
+        title: Text('Unirse a ${room.name}', style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          style: TextStyle(color: Colors.white, fontSize: 14 * s),
+          decoration: InputDecoration(
+            labelText: 'Tu nombre',
+            labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
+            focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              final game = context.read<GameProvider>();
+              game.setHost(false);
+              game.setMultiplayer(true);
+              game.setPlayerName(controller.text.trim().isEmpty ? 'Jugador' : controller.text.trim());
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const GameTableScreen(isMultiplayer: true, isHost: false),
+                ),
+              );
+            },
+            child: Text('Entrar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+          ),
+        ],
       ),
     );
   }

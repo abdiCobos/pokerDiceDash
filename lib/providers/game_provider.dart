@@ -53,7 +53,7 @@ class GameProvider extends ChangeNotifier {
       if (_isHost) {
         _players.add(PlayerModel(
           id: '0',
-          name: 'Host (Tú)',
+          name: _hostName,
           chipBalance: 1000,
           isLocal: true,
         ));
@@ -159,7 +159,17 @@ class GameProvider extends ChangeNotifier {
   int _nextSeatId = 1;
 
   String _roomName = '';
+  String _hostName = 'Host';
   String _roomPassword = '';
+
+  void setPlayerName(String name) {
+    _hostName = name;
+    final local = _players.where((p) => p.isLocal).firstOrNull;
+    if (local != null) {
+      local.name = name;
+      notifyListeners();
+    }
+  }
 
   void setRoomMetadata(String name, String password) {
     _roomName = name;
@@ -575,8 +585,21 @@ class GameProvider extends ChangeNotifier {
     _deck.clear();
     _die1 = 1;
     _die2 = 1;
+    _rollCounter = 0;
+    _roundCounter = 0;
+    _communityCardRenderCounter = 0;
     _luckySevenApplied = false;
-    notifyListeners();
+    _currentBet = 0;
+    _totalContributions.clear();
+    _betsThisPhase.clear();
+    _playersActedThisPhase.clear();
+    _winningCards = null;
+    _winnerId = null;
+    _isPotFlying = false;
+    _animatingBetPlayerId = null;
+    _lastBurnedCard = null;
+    _isChaosSwapping = false;
+    _centralMessage = null;
     _initDebugMode();
   }
 
@@ -907,6 +930,7 @@ class GameProvider extends ChangeNotifier {
     'die2': _die2,
     'mustSwapHands': _state.mustSwapHands,
     'totalContributions': Map.from(_totalContributions),
+    'winningCards': _winningCards?.map((c) => c.toMap()).toList(),
   };
 
   void broadcastState() {
@@ -961,6 +985,11 @@ class GameProvider extends ChangeNotifier {
       (state['totalContributions'] as Map<String, dynamic>).forEach((k, v) {
         _totalContributions[k] = v as int;
       });
+    }
+    if (state['winningCards'] != null) {
+      _winningCards = (state['winningCards'] as List<dynamic>)
+          .map((c) => CardModel.fromJson(c as Map<String, dynamic>))
+          .toList();
     }
   }
 

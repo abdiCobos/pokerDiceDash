@@ -18,6 +18,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   bool _isHosting = false;
   final TextEditingController _roomNameController = TextEditingController();
   final TextEditingController _roomPasswordController = TextEditingController();
+  final TextEditingController _playerNameController = TextEditingController();
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   void dispose() {
     _roomNameController.dispose();
     _roomPasswordController.dispose();
+    _playerNameController.dispose();
     super.dispose();
   }
 
@@ -71,6 +73,17 @@ class _LobbyScreenState extends State<LobbyScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              TextField(
+                controller: _playerNameController,
+                style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                decoration: InputDecoration(
+                  labelText: 'Tu nombre',
+                  labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
+                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
+                ),
+              ),
+              SizedBox(height: 12 * s),
               TextField(
                 controller: _roomNameController,
                 style: TextStyle(color: Colors.white, fontSize: 14 * s),
@@ -120,6 +133,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     game.setHost(true);
     game.setMultiplayer(true);
+    game.setPlayerName(
+      _playerNameController.text.trim().isEmpty ? 'Host' : _playerNameController.text.trim(),
+    );
     game.setRoomMetadata(
       _roomNameController.text.trim().isEmpty
           ? '${Platform.localHostname}-Poker'

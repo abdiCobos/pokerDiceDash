@@ -2,7 +2,7 @@ import 'card_model.dart';
 
 class PlayerModel {
   final String id;
-  final String name;
+  String name;
   int chipBalance;
   List<CardModel> hand;
   bool isLocal;
