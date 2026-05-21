@@ -281,7 +281,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     return Stack(
       children: [
         Positioned(
-          top: _screenH * 0.30,
+          top: _screenH * 0.35,
           left: 0,
           right: 0,
           child: Center(child: _buildCommunityCards(game)),
@@ -330,7 +330,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
       if (i == 0) {
         widgets.add(Positioned(
-          top: _screenH * 0.03,
+          top: _screenH * 0.06,
           left: 0,
           right: 0,
           child: Align(alignment: Alignment.topCenter, child: seat),
@@ -809,7 +809,8 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
               style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16 * s),
               textAlign: TextAlign.center,
             ),
-            content: Column(
+            content: SingleChildScrollView(
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (amountToCall > 0)
@@ -905,29 +906,34 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                     ),
                   ),
                 ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
-              ),
-              TextButton(
-                onPressed: raiseAmount > 0 && amountToCall + raiseAmount <= maxBalance
-                    ? () {
-                        Navigator.pop(dialogContext);
-                        game.raise(playerId, raiseAmount);
-                      }
-                    : null,
-                child: Text('Confirmar',
-                  style: TextStyle(
-                    color: raiseAmount > 0 ? Colors.amber : Colors.white24,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13 * s,
-                  ),
+                SizedBox(height: 16 * s),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                    ),
+                    TextButton(
+                      onPressed: raiseAmount > 0 && amountToCall + raiseAmount <= maxBalance
+                          ? () {
+                              Navigator.pop(dialogContext);
+                              game.raise(playerId, raiseAmount);
+                            }
+                          : null,
+                      child: Text('Confirmar',
+                        style: TextStyle(
+                          color: raiseAmount > 0 ? Colors.amber : Colors.white24,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13 * s,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+              ],
               ),
-            ],
+            ),
           );
         },
       );
