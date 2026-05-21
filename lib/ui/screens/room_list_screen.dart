@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import 'game_table_screen.dart';
+import 'lobby_screen.dart';
 
 class RoomListScreen extends StatefulWidget {
   const RoomListScreen({super.key});
@@ -174,7 +175,18 @@ class _RoomListScreenState extends State<RoomListScreen> {
     final screenW = MediaQuery.of(context).size.width;
     final s = (screenW / 800).clamp(0.45, 1.3);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          context.read<GameProvider>().p2pService.stopDiscovery();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LobbyScreen()),
+          );
+        }
+      },
+      child: Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: RadialGradient(
@@ -194,7 +206,10 @@ class _RoomListScreenState extends State<RoomListScreen> {
                       icon: Icon(Icons.arrow_back, color: Colors.amber, size: 24 * s),
                       onPressed: () {
                         context.read<GameProvider>().p2pService.stopDiscovery();
-                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LobbyScreen()),
+                        );
                       },
                     ),
                     SizedBox(width: 8 * s),
@@ -229,6 +244,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

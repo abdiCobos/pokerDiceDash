@@ -8,6 +8,7 @@ import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/betting_chip_widget.dart';
+import 'lobby_screen.dart';
 
 class GameTableScreen extends StatefulWidget {
   final bool isMultiplayer;
@@ -132,7 +133,17 @@ class _GameTableScreenState extends State<GameTableScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LobbyScreen()),
+          );
+        }
+      },
+      child: Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: RadialGradient(
@@ -233,6 +244,7 @@ class _GameTableScreenState extends State<GameTableScreen>
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -276,7 +288,7 @@ class _GameTableScreenState extends State<GameTableScreen>
         ),
         Positioned(
           bottom: _screenH * 0.28,
-          right: _screenW * 0.15,
+          left: _screenW * 0.25,
           child: _buildDiceArea(game),
         ),
       ],
@@ -318,7 +330,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
       if (i == 0) {
         widgets.add(Positioned(
-          top: 0,
+          top: _screenH * 0.03,
           left: 0,
           right: 0,
           child: Align(alignment: Alignment.topCenter, child: seat),
@@ -348,6 +360,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     final revealed = game.revealedCommunityCount;
 
     if (revealed == 0 || cards.isEmpty) {
+      _previousRevealed = 0;
       return SizedBox(height: 30 * _s);
     }
 
@@ -780,6 +793,7 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
 
   showDialog(
     context: context,
+    barrierDismissible: false,
     builder: (dialogContext) {
       int raiseAmount = 0;
       return StatefulBuilder(
@@ -872,6 +886,7 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                   child: InkWell(
                     onTap: () {
                       final allInRaise = maxBalance - amountToCall;
+                      debugPrint('ALL IN tap: maxBalance=$maxBalance amountToCall=$amountToCall allInRaise=$allInRaise');
                       if (allInRaise > 0) {
                         setState(() => raiseAmount = allInRaise);
                       }
@@ -1133,12 +1148,31 @@ class _PotTextState extends State<_PotText>
           child: child,
         );
       },
-      child: Text(
-        'Bote: ${widget.pot}',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16 * widget.scale,
-          fontWeight: FontWeight.bold,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14 * widget.scale, vertical: 6 * widget.scale),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12 * widget.scale),
+          border: Border.all(color: Colors.amber.withValues(alpha: 0.6), width: 2),
+          boxShadow: [
+            BoxShadow(color: Colors.amber.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.monetization_on, color: Colors.amber, size: 22 * widget.scale),
+            SizedBox(width: 6 * widget.scale),
+            Text(
+              '${widget.pot}',
+              style: TextStyle(
+                color: Colors.amber,
+                fontSize: 22 * widget.scale,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
         ),
       ),
     );

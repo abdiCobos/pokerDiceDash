@@ -908,11 +908,16 @@ class GameProvider extends ChangeNotifier {
   int get currentBet => _currentBet;
 
   void rebuyLocalPlayer() {
+    if (!_isHost) {
+      _sendPlayerAction('REBUY');
+      return;
+    }
     final local = _players.where((p) => p.isLocal).firstOrNull;
     if (local == null) return;
     local.chipBalance = 1000;
     local.isBankrupt = false;
     local.isFolded = false;
+    _playersActedThisPhase.remove(local.id);
     notifyListeners();
   }
 
@@ -1022,6 +1027,9 @@ class GameProvider extends ChangeNotifier {
         break;
       case 'ROLL_DICE':
         rollDice();
+        break;
+      case 'REBUY':
+        rebuyLocalPlayer();
         break;
     }
   }
