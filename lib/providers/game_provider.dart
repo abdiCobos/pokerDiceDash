@@ -47,7 +47,7 @@ class GameProvider extends ChangeNotifier {
 
   void _initDebugMode() {
     _players.clear();
-    _state = GameState(status: GameStatus.diceTurn, phase: PokerPhase.preFlop);
+    _state = GameState(status: GameStatus.waitingPlayers, phase: PokerPhase.preFlop);
 
     if (_isMultiplayer) {
       if (_isHost) {
@@ -161,6 +161,7 @@ class GameProvider extends ChangeNotifier {
   String _roomName = '';
   String _hostName = 'Host';
   String _roomPassword = '';
+  bool _matchStarted = false;
 
   void setPlayerName(String name) {
     _hostName = name;
@@ -180,7 +181,7 @@ class GameProvider extends ChangeNotifier {
     if (!_isHost || _roomName.isEmpty) return;
     final hasPassword = _roomPassword.isNotEmpty;
     final count = _players.length;
-    final started = _state.phase != PokerPhase.preFlop || _state.communityCards.isNotEmpty;
+    final started = _matchStarted;
     final metadata = '$_roomName|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}';
     _p2pService.stopAdvertising();
     _p2pService.startAdvertising(metadata);
@@ -573,6 +574,7 @@ class GameProvider extends ChangeNotifier {
 
   void startMatch() {
     if (!_isHost || _players.length < 2) return;
+    _matchStarted = true;
     shuffleAndDeal();
     _state = _state.copyWith(status: GameStatus.diceTurn, phase: PokerPhase.preFlop);
     updateAdvertisedName();
@@ -600,6 +602,7 @@ class GameProvider extends ChangeNotifier {
     _lastBurnedCard = null;
     _isChaosSwapping = false;
     _centralMessage = null;
+    _matchStarted = false;
     _initDebugMode();
   }
 

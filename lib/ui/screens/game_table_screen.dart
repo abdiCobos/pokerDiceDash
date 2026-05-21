@@ -268,12 +268,15 @@ class _GameTableScreenState extends State<GameTableScreen>
   Widget _buildCenterArea(GameProvider game) {
     return Stack(
       children: [
-        Center(
-          child: _buildCommunityCards(game),
+        Positioned(
+          top: _screenH * 0.08,
+          left: 0,
+          right: 0,
+          child: Center(child: _buildCommunityCards(game)),
         ),
         Positioned(
-          bottom: _screenH * 0.20,
-          right: _screenW * 0.08,
+          bottom: _screenH * 0.28,
+          right: _screenW * 0.15,
           child: _buildDiceArea(game),
         ),
       ],
@@ -574,7 +577,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     }
 
     return Positioned(
-      bottom: _screenH * 0.12,
+      bottom: _screenH * 0.06,
       left: 0,
       right: 0,
       child: Column(

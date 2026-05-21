@@ -61,66 +61,82 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) {
-        final s = (MediaQuery.of(context).size.width / 800).clamp(0.45, 1.3);
-        return AlertDialog(
+        final screenW = MediaQuery.of(ctx).size.width;
+        final s = (screenW / 800).clamp(0.45, 1.3);
+        return Dialog(
           backgroundColor: const Color(0xFF1A1A2E),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14 * s),
             side: const BorderSide(color: Colors.amber, width: 2),
           ),
-          title: Text('Crear Sala', style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _playerNameController,
-                style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                decoration: InputDecoration(
-                  labelText: 'Tu nombre',
-                  labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
-                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
-                ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(20 * s),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Crear Sala', style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 16 * s),
+                  TextField(
+                    controller: _playerNameController,
+                    style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: 'Tu nombre',
+                      labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
+                      focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
+                    ),
+                  ),
+                  SizedBox(height: 12 * s),
+                  TextField(
+                    controller: _roomNameController,
+                    style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre de la sala',
+                      labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
+                      focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
+                    ),
+                  ),
+                  SizedBox(height: 12 * s),
+                  TextField(
+                    controller: _roomPasswordController,
+                    obscureText: true,
+                    style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: 'Contraseña (opcional)',
+                      labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
+                      focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
+                    ),
+                  ),
+                  SizedBox(height: 20 * s),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      ),
+                      SizedBox(width: 8 * s),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _startHostingInternal(_roomNameController.text.trim().isEmpty ? '${Platform.localHostname}-Poker' : _roomNameController.text.trim(), _roomPasswordController.text.trim());
+                        },
+                        child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              SizedBox(height: 12 * s),
-              TextField(
-                controller: _roomNameController,
-                style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                decoration: InputDecoration(
-                  labelText: 'Nombre de la sala',
-                  labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
-                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
-                ),
-              ),
-              SizedBox(height: 12 * s),
-              TextField(
-                controller: _roomPasswordController,
-                obscureText: true,
-                style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                decoration: InputDecoration(
-                  labelText: 'Contraseña (opcional)',
-                  labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
-                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
-                ),
-              ),
-            ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _startHostingInternal(_roomNameController.text.trim().isEmpty ? '${Platform.localHostname}-Poker' : _roomNameController.text.trim(), _roomPasswordController.text.trim());
-              },
-              child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
-            ),
-          ],
         );
       },
     );
