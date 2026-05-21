@@ -162,7 +162,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final metadata = _buildRoomMetadata();
     p2p.startAdvertising(metadata);
 
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => GameTableScreen(isMultiplayer: true, isHost: true),
@@ -186,7 +186,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   void startDiscovering() {
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const RoomListScreen()),
     );
@@ -241,7 +241,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       game.setHost(true);
                       game.setMultiplayer(false);
                       game.resetGame();
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const GameTableScreen(),

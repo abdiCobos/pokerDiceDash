@@ -269,7 +269,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     return Stack(
       children: [
         Positioned(
-          top: _screenH * 0.08,
+          top: _screenH * 0.30,
           left: 0,
           right: 0,
           child: Center(child: _buildCommunityCards(game)),
@@ -578,8 +578,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
     return Positioned(
       bottom: _screenH * 0.06,
-      left: 0,
-      right: 0,
+      left: _screenW * 0.05,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

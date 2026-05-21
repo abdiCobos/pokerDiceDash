@@ -32,6 +32,7 @@ class PokerDiceDashApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        scaffoldBackgroundColor: const Color(0xFF052915),
         useMaterial3: true,
         textTheme: GoogleFonts.robotoTextTheme(),
       ),

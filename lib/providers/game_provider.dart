@@ -338,6 +338,7 @@ class GameProvider extends ChangeNotifier {
 
   void nextTurn() {
     if (_players.isEmpty) return;
+    debugPrint('🔄 nextTurn: currentPlayerIndex=${_state.currentPlayerIndex} status=${_state.status}');
 
     final activePlayers = _players.where((p) => !p.isFolded && p.chipBalance > 0).toList();
     final unFoldedPlayers = _players.where((p) => !p.isFolded).toList();
@@ -945,6 +946,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _syncStateFromMap(Map<String, dynamic> state) {
+    debugPrint('📥 Cliente _syncStateFromMap: currentPlayerIndex=${state['currentPlayerIndex']} status=${state['status']} numPlayers=${(state['players'] as List?)?.length}');
     _currentBet = state['currentBet'] as int? ?? _currentBet;
     _die1 = state['die1'] as int? ?? _die1;
     _die2 = state['die2'] as int? ?? _die2;

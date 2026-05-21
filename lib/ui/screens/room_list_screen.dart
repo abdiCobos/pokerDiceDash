@@ -41,13 +41,16 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
     _connectionSub = p2p.onConnected.listen((endpointId) {
       if (!mounted) return;
-      final room = _rooms.firstWhere((r) => r.endpointId == endpointId,
-          orElse: () => _RoomInfo(name: '', playerCount: 0, maxPlayers: 4, hasPassword: false, started: false, endpointId: ''));
-      if (room.hasPassword) {
-        _showPasswordDialog(room);
-      } else {
-        _joinRoom(room);
-      }
+      final game = context.read<GameProvider>();
+      game.setHost(false);
+      game.setMultiplayer(true);
+      game.setPlayerName(_pendingName ?? 'Jugador');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const GameTableScreen(isMultiplayer: true, isHost: false),
+        ),
+      );
     });
 
     p2p.startDiscovery('player');
@@ -72,101 +75,89 @@ class _RoomListScreenState extends State<RoomListScreen> {
     );
   }
 
-  void _showPasswordDialog(_RoomInfo room) {
+  String? _pendingName;
+
+  void _onRoomTapped(_RoomInfo room) {
+    if (room.playerCount >= room.maxPlayers) return;
+    if (room.hasPassword) {
+      _showJoinDialog(room, requirePassword: true);
+    } else {
+      _showJoinDialog(room);
+    }
+  }
+
+  void _showJoinDialog(_RoomInfo room, {bool requirePassword = false}) {
     final s = (MediaQuery.of(context).size.width / 800).clamp(0.45, 1.3);
-    final controller = TextEditingController();
+    final nameController = TextEditingController();
+    final passController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
         backgroundColor: const Color(0xFF1A1A2E),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14 * s),
           side: const BorderSide(color: Colors.amber, width: 2),
         ),
-        title: Text('Contraseña requerida', style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${room.name} es privada.', style: TextStyle(color: Colors.white70, fontSize: 13 * s)),
-            SizedBox(height: 12 * s),
-            TextField(
-              controller: controller,
-              obscureText: true,
-              style: TextStyle(color: Colors.white, fontSize: 14 * s),
-              decoration: InputDecoration(
-                labelText: 'Contraseña',
-                labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
-                focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _joinRoom(room);
-            },
-            child: Text('Entrar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _joinRoom(_RoomInfo room) {
-    _showNameDialog(room);
-  }
-
-  void _showNameDialog(_RoomInfo room) {
-    final s = (MediaQuery.of(context).size.width / 800).clamp(0.45, 1.3);
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14 * s),
-          side: const BorderSide(color: Colors.amber, width: 2),
-        ),
-        title: Text('Unirse a ${room.name}', style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: controller,
-          style: TextStyle(color: Colors.white, fontSize: 14 * s),
-          decoration: InputDecoration(
-            labelText: 'Tu nombre',
-            labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
-            focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              final game = context.read<GameProvider>();
-              game.setHost(false);
-              game.setMultiplayer(true);
-              game.setPlayerName(controller.text.trim().isEmpty ? 'Jugador' : controller.text.trim());
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const GameTableScreen(isMultiplayer: true, isHost: false),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(20 * s),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Unirse a ${room.name}', style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
+                SizedBox(height: 16 * s),
+                TextField(
+                  controller: nameController,
+                  style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                  textInputAction: requirePassword ? TextInputAction.next : TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: 'Tu nombre',
+                    labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
+                    focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
+                  ),
                 ),
-              );
-            },
-            child: Text('Entrar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                if (requirePassword) ...[
+                  SizedBox(height: 12 * s),
+                  TextField(
+                    controller: passController,
+                    obscureText: true,
+                    style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: 'Contraseña',
+                      labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
+                      focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
+                    ),
+                  ),
+                ],
+                SizedBox(height: 20 * s),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                    ),
+                    SizedBox(width: 8 * s),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _pendingName = nameController.text.trim().isEmpty ? 'Jugador' : nameController.text.trim();
+                        final p2p = context.read<GameProvider>().p2pService;
+                        p2p.connectToDevice(room.endpointId);
+                      },
+                      child: Text('Entrar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -230,8 +221,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                         itemBuilder: (context, index) {
                           final room = _rooms[index];
                           return _RoomCard(room: room, s: s, onTap: () {
-                            final p2p = context.read<GameProvider>().p2pService;
-                            p2p.connectToDevice(room.endpointId);
+                            _onRoomTapped(room);
                           });
                         },
                       ),
