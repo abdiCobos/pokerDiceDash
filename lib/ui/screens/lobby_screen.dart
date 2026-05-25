@@ -56,7 +56,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   void _showCreateRoomDialog() {
-    _roomNameController.text = '${Platform.localHostname}-Poker';
+    _roomNameController.text = 'UAdeO';
     _roomPasswordController.text = '';
 
     showDialog(
@@ -195,7 +195,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
-    final s = (MediaQuery.of(context).size.shortestSide / 400).clamp(0.7, 1.4);
+    final s = (MediaQuery.of(context).size.shortestSide / 250).clamp(0.9, 1.8);
 
     return Scaffold(
       body: Container(

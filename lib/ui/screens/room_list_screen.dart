@@ -16,6 +16,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
   final List<_RoomInfo> _rooms = [];
   StreamSubscription? _deviceSub;
   StreamSubscription<String>? _connectionSub;
+  StreamSubscription? _messageSub;
 
   @override
   void initState() {
@@ -48,15 +49,34 @@ class _RoomListScreenState extends State<RoomListScreen> {
       game.setPlayerName(_pendingName ?? 'Jugador');
       final pass = _pendingPassword ?? '';
       _pendingPassword = null;
-      if (pass.isNotEmpty) {
-        p2p.sendMessage(endpointId, {'type': 'JOIN_REQUEST', 'playerName': _pendingName ?? 'Jugador', 'password': pass, 'endpointId': endpointId});
+      p2p.sendMessage(endpointId, {
+        'type': 'JOIN_REQUEST',
+        'playerName': _pendingName ?? 'Jugador',
+        'password': pass,
+        'endpointId': endpointId,
+      });
+      // No navigate here - wait for ASSIGN_SEAT or JOIN_REJECTED
+    });
+
+    _messageSub = p2p.onMessageReceived.listen((msg) {
+      final type = msg['type'];
+      if (type == 'JOIN_REJECTED') {
+        final reason = msg['reason'] as String? ?? '';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(reason == 'password' ? 'Contraseña incorrecta' : 'Error al unirse'), backgroundColor: Colors.red),
+          );
+        }
+        return;
       }
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const GameTableScreen(isMultiplayer: true, isHost: false),
-        ),
-      );
+      if (type == 'ASSIGN_SEAT') {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const GameTableScreen(isMultiplayer: true, isHost: false)),
+          );
+        }
+      }
     });
 
     p2p.startDiscovery('player');
@@ -94,7 +114,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
   }
 
   void _showJoinDialog(_RoomInfo room, {bool requirePassword = false}) {
-    final s = (MediaQuery.of(context).size.width / 800).clamp(0.45, 1.3);
+    final s = (MediaQuery.of(context).size.shortestSide / 250).clamp(0.9, 1.8);
     final nameController = TextEditingController();
     final passController = TextEditingController();
 
@@ -174,13 +194,14 @@ class _RoomListScreenState extends State<RoomListScreen> {
   void dispose() {
     _deviceSub?.cancel();
     _connectionSub?.cancel();
+    _messageSub?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
-    final s = (screenW / 800).clamp(0.45, 1.3);
+    final s = (MediaQuery.of(context).size.shortestSide / 250).clamp(0.9, 1.8);
 
     return PopScope(
       canPop: false,

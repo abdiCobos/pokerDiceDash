@@ -187,7 +187,7 @@ class GameProvider extends ChangeNotifier {
     _p2pService.startAdvertising(metadata);
   }
 
-  void assignSeatToClient(String endpointId) {
+  void assignSeatToClient(String endpointId, {String playerName = ''}) {
     debugPrint('🪑 assignSeatToClient: endpointId=$endpointId');
     if (!_isHost) return;
     final playerId = _nextSeatId.toString();
@@ -195,7 +195,7 @@ class GameProvider extends ChangeNotifier {
 
     _players.add(PlayerModel(
       id: playerId,
-      name: 'Jugador $playerId',
+      name: playerName.isEmpty ? 'Jugador $playerId' : playerName,
       chipBalance: 1000,
       isLocal: false,
     ));
@@ -249,13 +249,24 @@ class GameProvider extends ChangeNotifier {
         return;
       }
 
+      if (type == 'JOIN_REJECTED' && !_isHost) {
+        final reason = message['reason'] as String? ?? '';
+        debugPrint('🚫 JOIN_REJECTED: $reason');
+        _centralMessage = reason == 'password' ? 'Contraseña incorrecta' : 'No se pudo unir';
+        notifyListeners();
+        return;
+      }
+
       if (type == 'JOIN_REQUEST' && _isHost) {
         final pass = message['password'] as String? ?? '';
+        final epId = message['endpointId'] as String? ?? '';
         if (_roomPassword.isNotEmpty && pass != _roomPassword) {
           debugPrint('🔒 JOIN_REQUEST rechazado: password incorrecta');
+          _p2pService.sendMessage(epId, {'type': 'JOIN_REJECTED', 'reason': 'password'});
           return;
         }
         debugPrint('🔓 JOIN_REQUEST aceptado');
+        assignSeatToClient(epId, playerName: message['playerName'] as String? ?? 'Jugador');
         return;
       }
 
@@ -352,6 +363,9 @@ class GameProvider extends ChangeNotifier {
 
     final activePlayers = _players.where((p) => !p.isFolded && p.chipBalance > 0).toList();
     final unFoldedPlayers = _players.where((p) => !p.isFolded).toList();
+    final allInPlayers = _players.where((p) => !p.isFolded && p.chipBalance == 0).toList();
+    for (final p in allInPlayers) { if (!_playersActedThisPhase.contains(p.id)) _playersActedThisPhase.add(p.id); }
+    debugPrint('🔄 nextTurn stats: active=${activePlayers.length} unF=${unFoldedPlayers.length} allIn=${allInPlayers.length} acted=${_playersActedThisPhase.length}');
     if (unFoldedPlayers.length == 1) {
       final winner = unFoldedPlayers.first;
       final totalContribs = _totalContributions.values.fold(0, (a, b) => a + b);
@@ -361,16 +375,16 @@ class GameProvider extends ChangeNotifier {
       scheduleNewRound();
       return;
     }
-    if (activePlayers.isEmpty) {
+    if (activePlayers.isEmpty && allInPlayers.isEmpty) {
       advancePhase();
       return;
     }
-    if (activePlayers.length <= 1) {
+    if (activePlayers.length <= 1 && allInPlayers.isEmpty) {
       advancePhase();
       return;
     }
 
-    final allActed = activePlayers.every(
+    final allActed = unFoldedPlayers.every(
       (p) => _playersActedThisPhase.contains(p.id),
     );
 
@@ -934,7 +948,10 @@ class GameProvider extends ChangeNotifier {
     local.isBankrupt = false;
     local.isFolded = false;
     _playersActedThisPhase.remove(local.id);
+    _isBetting = false;
+    debugPrint('💵 REBUY: ${local.name} recibe 1000 fichas');
     notifyListeners();
+    nextTurn();
   }
 
   int getPlayerBet(String playerId) => _betsThisPhase[playerId] ?? 0;
