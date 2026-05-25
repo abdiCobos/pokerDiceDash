@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/card_model.dart';
 import '../../models/game_state.dart';
@@ -57,6 +58,10 @@ class _GameTableScreenState extends State<GameTableScreen>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
     _shakeController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -521,7 +526,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
     final canStart = widget.isMultiplayer && widget.isHost &&
         game.players.length >= 2 && game.state.phase == PokerPhase.preFlop &&
-        game.state.communityCards.isEmpty && game.state.status != GameStatus.diceTurn;
+        game.state.communityCards.isEmpty && game.state.status == GameStatus.waitingPlayers;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -542,7 +547,7 @@ class _GameTableScreenState extends State<GameTableScreen>
         ),
         if (canStart)
           Positioned(
-            bottom: _screenH * 0.13,
+            bottom: _screenH * 0.20,
             right: _screenW * 0.03,
             child: Material(
               color: Colors.green,

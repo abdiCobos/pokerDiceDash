@@ -122,8 +122,8 @@ class GameProvider extends ChangeNotifier {
   int get revealedCommunityCount => _state.revealedCommunityCount;
   PokerPhase get phase => _state.phase;
   int get dealerIndex => _state.dealerIndex;
-  int get smallBlindIndex => (_state.dealerIndex + 1) % 4;
-  int get bigBlindIndex => (_state.dealerIndex + 2) % 4;
+  int get smallBlindIndex => _players.isEmpty ? 0 : (_state.dealerIndex + 1) % _players.length;
+  int get bigBlindIndex => _players.isEmpty ? 0 : (_state.dealerIndex + 2) % _players.length;
   P2PService get p2pService => _p2pService;
 
   CardModel? _lastBurnedCard;
@@ -246,6 +246,16 @@ class GameProvider extends ChangeNotifier {
       if (type == 'STATE_UPDATE' && !_isHost) {
         _syncStateFromMap(message['state'] as Map<String, dynamic>);
         notifyListeners();
+        return;
+      }
+
+      if (type == 'JOIN_REQUEST' && _isHost) {
+        final pass = message['password'] as String? ?? '';
+        if (_roomPassword.isNotEmpty && pass != _roomPassword) {
+          debugPrint('🔒 JOIN_REQUEST rechazado: password incorrecta');
+          return;
+        }
+        debugPrint('🔓 JOIN_REQUEST aceptado');
         return;
       }
 
@@ -889,6 +899,10 @@ class GameProvider extends ChangeNotifier {
     _currentBet += amount;
     _betsThisPhase[playerId] = (_betsThisPhase[playerId] ?? 0) + totalDeduction;
     _addContribution(playerId, totalDeduction);
+
+    if (totalDeduction >= player.chipBalance && totalDeduction > 0) {
+      debugPrint('🟧 ALL-IN RAISE: $playerId se queda sin fichas');
+    }
 
     _playersActedThisPhase.clear();
     _playersActedThisPhase.add(playerId);

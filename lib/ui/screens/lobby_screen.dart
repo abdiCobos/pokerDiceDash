@@ -168,7 +168,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         builder: (_) => GameTableScreen(isMultiplayer: true, isHost: true),
       ),
     ).then((_) {
-      setState(() => _isHosting = false);
+      if (mounted) setState(() => _isHosting = false);
       p2p.stopAdvertising();
       p2p.disconnectAll();
     });

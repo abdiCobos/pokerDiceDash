@@ -46,6 +46,11 @@ class _RoomListScreenState extends State<RoomListScreen> {
       game.setHost(false);
       game.setMultiplayer(true);
       game.setPlayerName(_pendingName ?? 'Jugador');
+      final pass = _pendingPassword ?? '';
+      _pendingPassword = null;
+      if (pass.isNotEmpty) {
+        p2p.sendMessage(endpointId, {'type': 'JOIN_REQUEST', 'playerName': _pendingName ?? 'Jugador', 'password': pass});
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -77,6 +82,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
   }
 
   String? _pendingName;
+  String? _pendingPassword;
 
   void _onRoomTapped(_RoomInfo room) {
     if (room.playerCount >= room.maxPlayers) return;
@@ -148,6 +154,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                       onPressed: () {
                         Navigator.pop(ctx);
                         _pendingName = nameController.text.trim().isEmpty ? 'Jugador' : nameController.text.trim();
+                        _pendingPassword = requirePassword ? passController.text.trim() : '';
                         final p2p = context.read<GameProvider>().p2pService;
                         p2p.connectToDevice(room.endpointId);
                       },
