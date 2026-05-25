@@ -88,15 +88,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     });
   }
 
-  void _setupHost() {
-    final game = context.read<GameProvider>();
-    final p2p = game.p2pService;
-    _hostConnectionSub = p2p.onConnected.listen((endpointId) {
-      if (mounted) {
-        game.assignSeatToClient(endpointId);
-      }
-    });
-  }
+  void _setupHost() {}
 
   @override
   void dispose() {

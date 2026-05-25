@@ -1,0 +1,112 @@
+$ adb -s U8RCMZVWMF4PDMVC logcat -s flutter
+--------- beginning of main
+05-25 15:17:07.211 21328 21328 I flutter : [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.
+05-25 15:17:07.211 21328 21328 I flutter :     The application opted out of Impeller by either using the
+05-25 15:17:07.211 21328 21328 I flutter :     `--no-enable-impeller` flag or the
+05-25 15:17:07.211 21328 21328 I flutter :     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry. 
+05-25 15:17:07.211 21328 21328 I flutter :     These options are going to go away in an upcoming Flutter release. Remove  
+05-25 15:17:07.211 21328 21328 I flutter :     the explicit opt-out. If you need to opt-out, please report a bug describing
+05-25 15:17:07.211 21328 21328 I flutter :     the issue.
+05-25 15:17:07.211 21328 21328 I flutter :
+05-25 15:17:07.211 21328 21328 I flutter :     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+05-25 15:17:07.211 21328 21328 I flutter :
+05-25 15:18:37.905 21856 21895 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+05-25 15:18:38.369 21856 21856 I flutter : Error: google_fonts was unable to load font Roboto-Regular because the following exception occurred:
+05-25 15:18:38.369 21856 21856 I flutter : Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 15:18:38.369 21856 21856 I flutter :
+05-25 15:18:38.369 21856 21856 I flutter : See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+05-25 15:18:38.369 21856 21856 I flutter : If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+05-25 15:18:38.369 21856 21856 I flutter :
+05-25 15:18:38.369 21856 21856 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 15:18:38.369 21856 21856 E flutter : #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:266)
+05-25 15:18:38.369 21856 21856 E flutter : <asynchronous suspension>
+05-25 15:18:38.369 21856 21856 E flutter : #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:172)
+05-25 15:18:38.369 21856 21856 E flutter : <asynchronous suspension>
+05-25 15:18:38.369 21856 21856 E flutter : #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:109)
+05-25 15:18:38.369 21856 21856 E flutter : <asynchronous suspension>
+05-25 15:18:38.369 21856 21856 E flutter :
+05-25 15:19:14.290 21856 21856 I flutter : {2: 10, 3: 20}
+05-25 15:19:14.290 21856 21856 I flutter : 🔧 setMultiplayer: true (isHost=true)
+05-25 15:19:24.065 21856 21856 I flutter : 🪑 assignSeatToClient: endpointId=8V4A
+05-25 15:19:24.128 21856 21856 I flutter : 🔒 JOIN_REQUEST rechazado: password incorrecta
+05-25 15:20:00.400 21856 21856 I flutter : {1: 10, 0: 20}
+05-25 15:20:05.608 21856 21856 I flutter : Apuesta de 0: 20
+05-25 15:20:05.624 21856 21856 I flutter : Apuesta de 0: 20
+05-25 15:20:05.808 21856 21856 I flutter : Apuesta de 0: 20
+05-25 15:20:09.905 21856 21856 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-25 15:20:09.906 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-25 15:20:09.906 21856 21856 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
+05-25 15:20:47.142 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
+05-25 15:20:47.142 21856 21856 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
+05-25 15:20:48.367 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
+05-25 15:20:48.367 21856 21856 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
+05-25 15:20:48.367 21856 21856 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-25 15:20:48.368 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-25 15:20:56.274 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:20:56.291 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:20:56.475 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:20:57.454 21856 21856 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-25 15:20:57.454 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-25 15:20:57.454 21856 21856 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
+05-25 15:20:58.995 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
+05-25 15:20:58.996 21856 21856 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
+05-25 15:21:23.618 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=RAISE playerId=1
+05-25 15:21:23.618 21856 21856 I flutter : 📨 _processRemoteAction: action=RAISE playerId=1 value=980
+05-25 15:21:23.618 21856 21856 I flutter : 🟧 ALL-IN RAISE: 1 se queda sin fichas
+05-25 15:21:23.619 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-25 15:21:58.772 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:21:58.788 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:21:58.956 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:22:35.509 21856 21856 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-25 15:22:35.509 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-25 15:22:48.156 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:22:48.173 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:22:48.357 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:22:54.612 21856 21856 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-25 15:22:54.612 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-25 15:22:54.629 21856 21895 E flutter : [ERROR:flutter/impeller/entity/contents/contents.cc(122)] Impeller validation: Contents::SetInheritedOpacity should never be called when Contents::CanAcceptOpacity returns false.
+05-25 15:23:01.616 21856 21856 I flutter : {0: 10, 1: 20}
+05-25 15:23:09.398 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
+05-25 15:23:09.398 21856 21856 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
+05-25 15:23:10.403 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
+05-25 15:23:10.403 21856 21856 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
+05-25 15:23:10.403 21856 21856 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-25 15:23:10.404 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-25 15:23:10.404 21856 21856 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[1]
+05-25 15:23:12.082 21856 21856 I flutter : Apuesta de 0: 10
+05-25 15:23:12.099 21856 21856 I flutter : Apuesta de 0: 10
+05-25 15:23:12.283 21856 21856 I flutter : Apuesta de 0: 10
+05-25 15:23:13.421 21856 21856 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-25 15:23:13.421 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-25 15:23:18.805 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
+05-25 15:23:18.805 21856 21856 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
+05-25 15:23:20.832 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
+05-25 15:23:20.832 21856 21856 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
+05-25 15:23:20.832 21856 21856 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-25 15:23:20.832 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-25 15:23:20.832 21856 21856 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[1]
+05-25 15:23:30.710 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:23:30.727 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:23:30.910 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:23:32.710 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:23:33.762 21856 21856 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-25 15:23:33.762 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-25 15:23:51.467 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
+05-25 15:23:51.467 21856 21856 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
+05-25 15:23:52.488 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
+05-25 15:23:52.489 21856 21856 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
+05-25 15:23:52.489 21856 21856 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-25 15:23:52.489 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-25 15:23:52.489 21856 21856 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[1]
+05-25 15:23:53.836 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:23:53.852 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:23:54.036 21856 21856 I flutter : Apuesta de 0: 0
+05-25 15:23:55.576 21856 21856 I flutter : ALL IN tap: maxBalance=960 amountToCall=0 allInRaise=960
+05-25 15:23:57.020 21856 21856 I flutter : 🟧 ALL-IN RAISE: 0 se queda sin fichas
+05-25 15:23:57.020 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-25 15:23:59.043 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
+05-25 15:23:59.043 21856 21856 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
+05-25 15:24:00.375 21856 21856 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
+05-25 15:24:00.375 21856 21856 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
+05-25 15:24:00.375 21856 21856 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-25 15:24:00.375 21856 21856 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting

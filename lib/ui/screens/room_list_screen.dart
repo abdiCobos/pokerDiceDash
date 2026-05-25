@@ -49,7 +49,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
       final pass = _pendingPassword ?? '';
       _pendingPassword = null;
       if (pass.isNotEmpty) {
-        p2p.sendMessage(endpointId, {'type': 'JOIN_REQUEST', 'playerName': _pendingName ?? 'Jugador', 'password': pass});
+        p2p.sendMessage(endpointId, {'type': 'JOIN_REQUEST', 'playerName': _pendingName ?? 'Jugador', 'password': pass, 'endpointId': endpointId});
       }
       Navigator.pushReplacement(
         context,
