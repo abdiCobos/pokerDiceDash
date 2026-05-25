@@ -352,10 +352,6 @@ class GameProvider extends ChangeNotifier {
 
     final activePlayers = _players.where((p) => !p.isFolded && p.chipBalance > 0).toList();
     final unFoldedPlayers = _players.where((p) => !p.isFolded).toList();
-    final allInPlayers = _players.where((p) => !p.isFolded && p.chipBalance == 0).toList();
-    for (final p in allInPlayers) {
-      if (!_playersActedThisPhase.contains(p.id)) _playersActedThisPhase.add(p.id);
-    }
     if (unFoldedPlayers.length == 1) {
       final winner = unFoldedPlayers.first;
       final totalContribs = _totalContributions.values.fold(0, (a, b) => a + b);
@@ -369,13 +365,12 @@ class GameProvider extends ChangeNotifier {
       advancePhase();
       return;
     }
-    if (activePlayers.length <= 1 && allInPlayers.isEmpty) {
+    if (activePlayers.length <= 1) {
       advancePhase();
       return;
     }
 
-    final unFoldedAll = _players.where((p) => !p.isFolded).toList();
-    final allActed = unFoldedAll.every(
+    final allActed = activePlayers.every(
       (p) => _playersActedThisPhase.contains(p.id),
     );
 
@@ -911,6 +906,7 @@ class GameProvider extends ChangeNotifier {
 
     _playersActedThisPhase.clear();
     _playersActedThisPhase.add(playerId);
+    for (final p in _players) { if (!p.isFolded && p.chipBalance == 0 && p.id != playerId) _playersActedThisPhase.add(p.id); }
 
     _isBetting = true;
     _animatingBetPlayerId = playerId;
