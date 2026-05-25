@@ -955,6 +955,7 @@ class GameProvider extends ChangeNotifier {
     'die2': _die2,
     'mustSwapHands': _state.mustSwapHands,
     'totalContributions': Map.from(_totalContributions),
+    'betsThisPhase': Map.from(_betsThisPhase),
     'winningCards': _winningCards?.map((c) => c.toMap()).toList(),
   };
 
@@ -1010,6 +1011,12 @@ class GameProvider extends ChangeNotifier {
       _totalContributions.clear();
       (state['totalContributions'] as Map<String, dynamic>).forEach((k, v) {
         _totalContributions[k] = v as int;
+      });
+    }
+    if (state['betsThisPhase'] != null) {
+      _betsThisPhase.clear();
+      (state['betsThisPhase'] as Map<String, dynamic>).forEach((k, v) {
+        _betsThisPhase[k] = v as int;
       });
     }
     if (state['winningCards'] != null) {
