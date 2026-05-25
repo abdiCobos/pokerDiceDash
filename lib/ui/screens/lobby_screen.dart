@@ -195,7 +195,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
-    final s = (screenW / 800).clamp(0.45, 1.3);
+    final s = (MediaQuery.of(context).size.shortestSide / 400).clamp(0.7, 1.4);
 
     return Scaffold(
       body: Container(
@@ -215,13 +215,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.casino, size: 70 * s, color: Colors.amber),
-                SizedBox(height: 20 * s),
+                Icon(Icons.casino, size: 90 * s, color: Colors.amber),
+                SizedBox(height: 24 * s),
                 Text(
                   'POKER DICE DASH',
                   style: TextStyle(
                     color: Colors.amber,
-                    fontSize: 28 * s,
+                    fontSize: 32 * s,
                     fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(
@@ -232,9 +232,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     ],
                   ),
                 ),
-                SizedBox(height: 40 * s),
+                SizedBox(height: 50 * s),
                 SizedBox(
-                  width: 240 * s,
+                  width: screenW * 0.75,
                   child: ElevatedButton(
                     onPressed: () {
                       final game = context.read<GameProvider>();
@@ -251,26 +251,26 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber,
                       foregroundColor: Colors.black,
-                      padding: EdgeInsets.symmetric(vertical: 14 * s),
+                      padding: EdgeInsets.symmetric(vertical: 18 * s),
                       textStyle: TextStyle(
-                        fontSize: 16 * s,
+                        fontSize: 18 * s,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: Text('Jugar Solo (Práctica)', style: TextStyle(fontSize: 16 * s)),
+                    child: Text('Jugar Solo (Práctica)', style: TextStyle(fontSize: 18 * s)),
                   ),
                 ),
-                SizedBox(height: 14 * s),
+                SizedBox(height: 16 * s),
                 SizedBox(
-                  width: 240 * s,
+                  width: screenW * 0.75,
                   child: ElevatedButton(
                     onPressed: _isHosting ? null : startHosting,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber.shade700,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 14 * s),
+                      padding: EdgeInsets.symmetric(vertical: 18 * s),
                       textStyle: TextStyle(
-                        fontSize: 16 * s,
+                        fontSize: 18 * s,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -279,44 +279,44 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SizedBox(
-                                width: 18 * s,
-                                height: 18 * s,
+                                width: 20 * s,
+                                height: 20 * s,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   color: Colors.white,
                                 ),
                               ),
-                              SizedBox(width: 10 * s),
-                              Text('Esperando jugadores...', style: TextStyle(fontSize: 14 * s)),
+                              SizedBox(width: 12 * s),
+                              Text('Esperando jugadores...', style: TextStyle(fontSize: 16 * s)),
                             ],
                           )
-                        : Text('Crear Sala (Host)', style: TextStyle(fontSize: 16 * s)),
+                        : Text('Crear Sala (Host)', style: TextStyle(fontSize: 18 * s)),
                   ),
                 ),
-                SizedBox(height: 14 * s),
+                SizedBox(height: 16 * s),
                 SizedBox(
-                  width: 240 * s,
+                  width: screenW * 0.75,
                   child: ElevatedButton(
                     onPressed: startDiscovering,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey.shade800,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 14 * s),
+                      padding: EdgeInsets.symmetric(vertical: 18 * s),
                       textStyle: TextStyle(
-                        fontSize: 16 * s,
+                        fontSize: 18 * s,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: Text('Unirse a Sala', style: TextStyle(fontSize: 16 * s)),
+                    child: Text('Unirse a Sala', style: TextStyle(fontSize: 18 * s)),
                   ),
                 ),
                 if (_isHosting) ...[
-                  SizedBox(height: 20 * s),
+                  SizedBox(height: 24 * s),
                   CircularProgressIndicator(color: Colors.amber, strokeWidth: 2),
-                  SizedBox(height: 10 * s),
+                  SizedBox(height: 12 * s),
                   Text(
                     'Esperando jugadores...',
-                    style: TextStyle(color: Colors.white70, fontSize: 13 * s),
+                    style: TextStyle(color: Colors.white70, fontSize: 15 * s),
                   ),
                 ],
               ],

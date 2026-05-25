@@ -100,6 +100,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
   @override
   void dispose() {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     _hostConnectionSub?.cancel();
     _burnController.dispose();
     _shakeController.dispose();
