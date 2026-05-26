@@ -36,7 +36,14 @@ class GameProvider extends ChangeNotifier {
 
   GameProvider({required P2PService p2pService}) : _p2pService = p2pService {
     _listenToMessages();
+    _listenToDisconnections();
     _initDebugMode();
+  }
+
+  void _listenToDisconnections() {
+    _p2pService.onDisconnected.listen((endpointId) {
+      debugPrint('🔌 Jugador desconectado: $endpointId');
+    });
   }
 
   void setMultiplayer(bool value) {
@@ -982,6 +989,7 @@ class GameProvider extends ChangeNotifier {
 
   void broadcastState() {
     if (!_isHost) return;
+    debugPrint('📡 broadcastState: enviando a ${_p2pService.connectedEndpointCount} clientes');
     _p2pService.broadcastMessage({
       'type': 'STATE_UPDATE',
       'state': exportGameState(),

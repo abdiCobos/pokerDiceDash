@@ -62,11 +62,18 @@ class _RoomListScreenState extends State<RoomListScreen> {
       final type = msg['type'];
       if (type == 'JOIN_REJECTED') {
         final reason = msg['reason'] as String? ?? '';
+        debugPrint('🚫 JOIN_REJECTED recibido: $reason');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(reason == 'password' ? 'Contraseña incorrecta' : 'Error al unirse'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(reason == 'password' ? 'Contraseña incorrecta' : 'Error al unirse'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
           );
         }
+        p2p.stopDiscovery();
+        p2p.startDiscovery('player');
         return;
       }
       if (type == 'ASSIGN_SEAT') {

@@ -25,6 +25,7 @@ class P2PService {
   Stream<String> get onDisconnected => _disconnectionController.stream;
 
   final Set<String> _connectedEndpoints = {};
+  int get connectedEndpointCount => _connectedEndpoints.length;
 
   P2PService({
     Strategy strategy = Strategy.P2P_CLUSTER,
