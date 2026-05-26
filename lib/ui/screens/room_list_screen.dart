@@ -114,7 +114,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
   }
 
   void _showJoinDialog(_RoomInfo room, {bool requirePassword = false}) {
-    final s = (MediaQuery.of(context).size.shortestSide / 250).clamp(0.9, 1.8);
+    final s = (MediaQuery.of(context).size.shortestSide / 400).clamp(0.75, 1.35);
     final nameController = TextEditingController();
     final passController = TextEditingController();
 
@@ -200,8 +200,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
-    final s = (MediaQuery.of(context).size.shortestSide / 250).clamp(0.9, 1.8);
+    final s = (MediaQuery.of(context).size.shortestSide / 400).clamp(0.75, 1.35);
 
     return PopScope(
       canPop: false,

@@ -1,0 +1,46 @@
+$ adb -s U8RCMZVWMF4PDMVC logcat -s flutter
+--------- beginning of main
+05-25 20:00:24.595 22774 22817 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+05-25 20:00:25.109 22774 22774 I flutter : Error: google_fonts was unable to load font Roboto-Regular because the following exception occurred:
+05-25 20:00:25.110 22774 22774 I flutter : Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 20:00:25.110 22774 22774 I flutter : 
+05-25 20:00:25.110 22774 22774 I flutter : See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+05-25 20:00:25.110 22774 22774 I flutter : If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+05-25 20:00:25.110 22774 22774 I flutter : 
+05-25 20:00:25.110 22774 22774 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 20:00:25.110 22774 22774 E flutter : #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:266)
+05-25 20:00:25.110 22774 22774 E flutter : <asynchronous suspension>
+05-25 20:00:25.110 22774 22774 E flutter : #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:172)
+05-25 20:00:25.110 22774 22774 E flutter : <asynchronous suspension>
+05-25 20:00:25.110 22774 22774 E flutter : #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:109)
+05-25 20:00:25.110 22774 22774 E flutter : <asynchronous suspension>
+05-25 20:00:25.110 22774 22774 E flutter :
+05-25 20:00:46.498 22774 22774 I flutter : {2: 10, 3: 20}
+05-25 20:00:46.499 22774 22774 I flutter : 🔧 setMultiplayer: true (isHost=true)
+05-25 20:01:07.232 22774 22774 I flutter : 🔒 JOIN_REQUEST rechazado: password incorrecta
+05-25 20:01:39.091 22774 22774 I flutter : 🔓 JOIN_REQUEST aceptado
+05-25 20:01:39.092 22774 22774 I flutter : 🪑 assignSeatToClient: endpointId=QNOD
+05-25 20:02:13.740 22774 22774 I flutter : 🔓 JOIN_REQUEST aceptado
+05-25 20:02:13.740 22774 22774 I flutter : 🪑 assignSeatToClient: endpointId=QNOD
+05-25 20:02:20.425 22774 22774 I flutter : {2: 10, 0: 20}
+05-25 20:04:11.407 22774 23785 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+05-25 20:04:11.613 22774 22774 I flutter : Error: google_fonts was unable to load font Roboto-Regular because the following exception occurred:
+05-25 20:04:11.613 22774 22774 I flutter : Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 20:04:11.613 22774 22774 I flutter :
+05-25 20:04:11.613 22774 22774 I flutter : See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+05-25 20:04:11.613 22774 22774 I flutter : If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+05-25 20:04:11.613 22774 22774 I flutter :
+05-25 20:04:11.613 22774 22774 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 20:04:11.613 22774 22774 E flutter : #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:266)
+05-25 20:04:11.613 22774 22774 E flutter : <asynchronous suspension>
+05-25 20:04:11.613 22774 22774 E flutter : #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:172)
+05-25 20:04:11.613 22774 22774 E flutter : <asynchronous suspension>
+05-25 20:04:11.613 22774 22774 E flutter : #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:109)
+05-25 20:04:11.613 22774 22774 E flutter : <asynchronous suspension>
+05-25 20:04:11.613 22774 22774 E flutter :
+05-25 20:04:33.532 22774 22774 I flutter : {2: 10, 3: 20}
+05-25 20:04:48.236 22774 22774 I flutter : 🔧 setMultiplayer: true (isHost=false)
+05-25 20:04:49.657 22774 22774 I flutter : 🎫 Cliente recibió ASSIGN_SEAT: playerId=2
+05-25 20:04:49.671 22774 22774 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=waitingPlayers numPlayers=3
+05-25 20:04:49.783 22774 22774 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=waitingPlayers numPlayers=3
+05-25 20:04:57.947 22774 22774 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=305-25 20:04:57.953 22774 22774 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=305-25 20:04:57.960 22774 22774 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3

@@ -328,7 +328,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
       if (i == 0) {
         widgets.add(Positioned(
-          top: _screenH * 0.06,
+          top: 0,
           left: 0,
           right: 0,
           child: Align(alignment: Alignment.topCenter, child: seat),
@@ -406,30 +406,8 @@ class _GameTableScreenState extends State<GameTableScreen>
           }),
         ),
         SizedBox(height: 3 * _s),
-        Text(
-          _phaseLabel(game.phase),
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 11 * _s,
-          ),
-        ),
       ],
     );
-  }
-
-  String _phaseLabel(PokerPhase phase) {
-    switch (phase) {
-      case PokerPhase.preFlop:
-        return 'Pre-Flop';
-      case PokerPhase.flop:
-        return 'Flop';
-      case PokerPhase.turn:
-        return 'Turn';
-      case PokerPhase.river:
-        return 'River';
-      case PokerPhase.showdown:
-        return 'Showdown';
-    }
   }
 
   Widget _buildDiceArea(GameProvider game) {
@@ -513,9 +491,10 @@ class _GameTableScreenState extends State<GameTableScreen>
 
   Widget _buildControls(GameProvider game) {
     final activeIdx = game.state.currentPlayerIndex;
+    final blocked = game.isBetting || game.isChaosSwapping || game.centralMessage != null;
     final isMyTurn = activeIdx >= 0 && activeIdx < game.players.length &&
         game.players[activeIdx].id == game.localPlayerId;
-    final canRoll = game.state.status == GameStatus.diceTurn && (isMyTurn || !widget.isMultiplayer);
+    final canRoll = game.state.status == GameStatus.diceTurn && (isMyTurn || !widget.isMultiplayer) && !blocked;
 
     final canStart = widget.isMultiplayer && widget.isHost &&
         game.players.length >= 2 && game.state.phase == PokerPhase.preFlop &&
@@ -570,6 +549,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     if (activePlayer.isFolded) return const SizedBox.shrink();
 
     final isMyTurn = activePlayer.id == game.localPlayerId;
+    final blocked = game.isBetting || game.isChaosSwapping || game.centralMessage != null;
     if (!isMyTurn && widget.isMultiplayer) return const SizedBox.shrink();
 
     final currentBet = game.currentBet;
@@ -604,22 +584,22 @@ class _GameTableScreenState extends State<GameTableScreen>
               _ActionButton(
                 label: 'FOLD',
                 color: Colors.red,
-                enabled: true,
-                onTap: () => game.fold(activePlayer.id),
+                enabled: !blocked,
+                onTap: !blocked ? () => game.fold(activePlayer.id) : null,
               ),
               const SizedBox(width: 8),
               _ActionButton(
                 label: callLabel,
                 color: Colors.blue,
-                enabled: true,
-                onTap: () => game.call(activePlayer.id),
+                enabled: !blocked,
+                onTap: !blocked ? () => game.call(activePlayer.id) : null,
               ),
               const SizedBox(width: 8),
               _ActionButton(
                 label: 'RAISE',
                 color: Colors.orange,
-                enabled: !isAllInCall,
-                onTap: !isAllInCall ? () => _showRaiseDialog(context, game, activePlayer.id) : null,
+                enabled: !blocked && !isAllInCall,
+                onTap: !blocked && !isAllInCall ? () => _showRaiseDialog(context, game, activePlayer.id) : null,
               ),
             ],
           ),

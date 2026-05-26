@@ -202,7 +202,7 @@ class GameProvider extends ChangeNotifier {
 
     updateAdvertisedName();
 
-    _p2pService.broadcastMessage({
+    _p2pService.sendMessage(endpointId, {
       'type': 'ASSIGN_SEAT',
       'endpointId': endpointId,
       'playerId': playerId,
@@ -259,14 +259,15 @@ class GameProvider extends ChangeNotifier {
 
       if (type == 'JOIN_REQUEST' && _isHost) {
         final pass = message['password'] as String? ?? '';
-        final epId = message['endpointId'] as String? ?? '';
+        final senderEpId = message['_senderEndpointId'] as String? ?? '';
+        debugPrint('🔔 JOIN_REQUEST recibido: senderEndpointId=$senderEpId');
         if (_roomPassword.isNotEmpty && pass != _roomPassword) {
           debugPrint('🔒 JOIN_REQUEST rechazado: password incorrecta');
-          _p2pService.sendMessage(epId, {'type': 'JOIN_REJECTED', 'reason': 'password'});
+          _p2pService.sendMessage(senderEpId, {'type': 'JOIN_REJECTED', 'reason': 'password'});
           return;
         }
-        debugPrint('🔓 JOIN_REQUEST aceptado');
-        assignSeatToClient(epId, playerName: message['playerName'] as String? ?? 'Jugador');
+        debugPrint('🔓 JOIN_REQUEST aceptado: $senderEpId');
+        assignSeatToClient(senderEpId, playerName: message['playerName'] as String? ?? 'Jugador');
         return;
       }
 
@@ -424,6 +425,7 @@ class GameProvider extends ChangeNotifier {
     }
 
     notifyListeners();
+    broadcastState();
   }
 
   void advancePhase() {
@@ -497,6 +499,7 @@ class GameProvider extends ChangeNotifier {
     }
 
     notifyListeners();
+    broadcastState();
   }
 
   void _burnCard() {
@@ -605,6 +608,7 @@ class GameProvider extends ChangeNotifier {
     _state = _state.copyWith(status: GameStatus.diceTurn, phase: PokerPhase.preFlop);
     updateAdvertisedName();
     notifyListeners();
+    broadcastState();
   }
 
   void resetGame() {

@@ -63,8 +63,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
-        final screenW = MediaQuery.of(ctx).size.width;
-        final s = (screenW / 800).clamp(0.45, 1.3);
+        final s = (MediaQuery.of(ctx).size.shortestSide / 400).clamp(0.75, 1.35);
         return Dialog(
           backgroundColor: const Color(0xFF1A1A2E),
           shape: RoundedRectangleBorder(
@@ -195,7 +194,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
-    final s = (MediaQuery.of(context).size.shortestSide / 250).clamp(0.9, 1.8);
+    final s = (MediaQuery.of(context).size.shortestSide / 400).clamp(0.75, 1.35);
 
     return Scaffold(
       body: Container(

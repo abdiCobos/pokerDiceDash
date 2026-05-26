@@ -105,6 +105,7 @@ class P2PService {
       final message = utf8.decode(payload.bytes!);
       try {
         final jsonData = jsonDecode(message) as Map<String, dynamic>;
+        jsonData['_senderEndpointId'] = endpointId;
         _messagesController.add(jsonData);
       } catch (_) {}
     }
