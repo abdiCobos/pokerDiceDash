@@ -58,7 +58,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
       // No navigate here - wait for ASSIGN_SEAT or JOIN_REJECTED
     });
 
-    _messageSub = p2p.onMessageReceived.listen((msg) {
+    _messageSub = p2p.onMessageReceived.listen((msg) async {
       final type = msg['type'];
       if (type == 'JOIN_REJECTED') {
         final reason = msg['reason'] as String? ?? '';
@@ -72,8 +72,9 @@ class _RoomListScreenState extends State<RoomListScreen> {
             ),
           );
         }
-        p2p.stopDiscovery();
-        p2p.startDiscovery('player');
+        await p2p.disconnectAll();
+        await p2p.stopDiscovery();
+        await p2p.startDiscovery('player');
         return;
       }
       if (type == 'ASSIGN_SEAT') {

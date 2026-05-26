@@ -519,7 +519,7 @@ class _GameTableScreenState extends State<GameTableScreen>
         ),
         if (canStart)
           Positioned(
-            bottom: _screenH * 0.20,
+            bottom: _screenH * 0.28,
             right: _screenW * 0.03,
             child: Material(
               color: Colors.green,
@@ -549,6 +549,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     if (activePlayer.isFolded) return const SizedBox.shrink();
 
     final isMyTurn = activePlayer.id == game.localPlayerId;
+    final isAllIn = activePlayer.chipBalance <= 0 && !activePlayer.isFolded;
     final blocked = game.isBetting || game.isChaosSwapping || game.centralMessage != null;
     if (!isMyTurn && widget.isMultiplayer) return const SizedBox.shrink();
 
@@ -580,7 +581,12 @@ class _GameTableScreenState extends State<GameTableScreen>
           SizedBox(height: 4 * _s),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+            children: isAllIn
+                ? [
+                    Text('ALL-IN - Solo lanza dados',
+                        style: TextStyle(color: Colors.orange, fontSize: 11 * _s, fontWeight: FontWeight.bold)),
+                  ]
+                : [
               _ActionButton(
                 label: 'FOLD',
                 color: Colors.red,

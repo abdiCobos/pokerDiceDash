@@ -258,9 +258,7 @@ class GameProvider extends ChangeNotifier {
 
       if (type == 'JOIN_REJECTED' && !_isHost) {
         final reason = message['reason'] as String? ?? '';
-        debugPrint('🚫 JOIN_REJECTED: $reason');
-        _centralMessage = reason == 'password' ? 'Contraseña incorrecta' : 'No se pudo unir';
-        notifyListeners();
+        debugPrint('🚫 JOIN_REJECTED recibido en GameProvider: $reason');
         return;
       }
 
@@ -367,6 +365,7 @@ class GameProvider extends ChangeNotifier {
 
   void nextTurn() {
     if (_players.isEmpty) return;
+    _isBetting = false;
     debugPrint('🔄 nextTurn: currentPlayerIndex=${_state.currentPlayerIndex} status=${_state.status}');
 
     final activePlayers = _players.where((p) => !p.isFolded && p.chipBalance > 0).toList();
@@ -406,7 +405,6 @@ class GameProvider extends ChangeNotifier {
     while (loopCount < _players.length * 2 &&
         (_players[nextIndex].isFolded ||
          _players[nextIndex].isBankrupt ||
-         _players[nextIndex].chipBalance <= 0 ||
          _playersActedThisPhase.contains(_players[nextIndex].id))) {
       nextIndex = (nextIndex + 1) % _players.length;
       loopCount++;
@@ -437,6 +435,7 @@ class GameProvider extends ChangeNotifier {
 
   void advancePhase() {
     _clearBets();
+    _playersActedThisPhase.clear();
     final currentPhase = _state.phase;
 
     switch (currentPhase) {
@@ -753,7 +752,7 @@ class GameProvider extends ChangeNotifier {
     _addContribution(_players[sbIdx].id, actualSB);
     _addContribution(_players[bbIdx].id, actualBB);
 
-    debugPrint(_betsThisPhase.toString());
+    debugPrint('🎯 BLINDS: SB=${_players[sbIdx].name}(${_players[sbIdx].id})=$actualSB BB=${_players[bbIdx].name}(${_players[bbIdx].id})=$actualBB dealerIndex=$dealerIdx');
 
     _deck
       ..clear()
@@ -961,6 +960,16 @@ class GameProvider extends ChangeNotifier {
     _playersActedThisPhase.remove(local.id);
     _isBetting = false;
     debugPrint('💵 REBUY: ${local.name} recibe 1000 fichas');
+    if (_state.status == GameStatus.finished || _state.phase == PokerPhase.showdown) {
+      debugPrint('💵 REBUY en partida terminada - iniciando nueva ronda');
+      _matchStarted = true;
+      _winnerId = null;
+      _isPotFlying = false;
+      _centralMessage = null;
+      broadcastState();
+      scheduleNewRound();
+      return;
+    }
     notifyListeners();
     nextTurn();
   }

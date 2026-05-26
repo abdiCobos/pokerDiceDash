@@ -1,0 +1,145 @@
+$ adb -s U8RCMZVWMF4PDMVC logcat -s flutter
+--------- beginning of main
+05-25 21:02:59.456 13240 13277 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+05-25 21:02:59.805 13240 13240 I flutter : Error: google_fonts was unable to load font Roboto-Regular because the following exception occurred:
+05-25 21:02:59.805 13240 13240 I flutter : Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 21:02:59.805 13240 13240 I flutter : 
+05-25 21:02:59.805 13240 13240 I flutter : See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+05-25 21:02:59.805 13240 13240 I flutter : If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+05-25 21:02:59.805 13240 13240 I flutter : 
+05-25 21:02:59.805 13240 13240 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 21:02:59.805 13240 13240 E flutter : #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:266)
+05-25 21:02:59.805 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:02:59.805 13240 13240 E flutter : #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:172)  
+05-25 21:02:59.805 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:02:59.805 13240 13240 E flutter : #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:109)
+05-25 21:02:59.805 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:02:59.805 13240 13240 E flutter :
+05-25 21:03:03.556 13240 13240 I flutter : {2: 10, 3: 20}
+05-25 21:03:03.556 13240 13240 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-25 21:03:03.556 13240 13240 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-25 21:03:21.105 13240 13240 I flutter : 🔧 setMultiplayer: true (isHost=false)
+05-25 21:03:25.301 13240 13240 I flutter : 🎫 Cliente recibió ASSIGN_SEAT: playerId=2
+05-25 21:03:25.310 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3
+05-25 21:03:25.313 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3    
+05-25 21:03:56.038 13240 13240 I flutter : 🔌 Jugador desconectado: Q5WF
+05-25 21:04:00.011 13240 13240 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-25 21:04:00.011 13240 13240 I flutter : 🔧 setMultiplayer: true (isHost=true)
+05-25 21:04:00.011 13240 13240 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-25 21:04:00.011 13240 13240 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-25 21:04:09.285 13240 13240 I flutter : 🔔 JOIN_REQUEST recibido: senderEndpointId=VLM3
+05-25 21:04:09.285 13240 13240 I flutter : 🔓 JOIN_REQUEST aceptado: VLM3
+05-25 21:04:09.285 13240 13240 I flutter : 🪑 assignSeatToClient: endpointId=VLM3
+05-25 21:04:09.285 13240 13240 I flutter : 📡 broadcastState: enviando a 1 clientes
+05-25 21:04:09.286 13240 13240 I flutter : 📡 broadcastState: enviando a 1 clientes
+05-25 21:04:14.051 13240 13240 I flutter : 🔔 JOIN_REQUEST recibido: senderEndpointId=VTXP
+05-25 21:04:14.051 13240 13240 I flutter : 🔓 JOIN_REQUEST aceptado: VTXP
+05-25 21:04:14.051 13240 13240 I flutter : 🪑 assignSeatToClient: endpointId=VTXP
+05-25 21:04:14.051 13240 13240 I flutter : 📡 broadcastState: enviando a 2 clientes
+05-25 21:04:14.052 13240 13240 I flutter : 📡 broadcastState: enviando a 2 clientes
+05-25 21:04:21.816 13240 13240 I flutter : {2: 10, 0: 20}
+05-25 21:04:21.816 13240 13240 I flutter : 📡 broadcastState: enviando a 2 clientes
+05-25 21:04:21.816 13240 13240 I flutter : 📡 broadcastState: enviando a 2 clientes
+05-25 21:04:21.816 13240 13240 I flutter : 📡 broadcastState: enviando a 2 clientes
+05-25 21:04:21.817 13240 13240 I flutter : 📡 broadcastState: enviando a 2 clientes
+05-25 21:05:10.127 13240 13240 I flutter : 🔌 Jugador desconectado: VTXP
+05-25 21:05:10.127 13240 13240 I flutter : 🔌 Jugador desconectado: VLM3
+05-25 21:05:11.046 13240 13240 I flutter : 🔌 Jugador desconectado: VLM3
+05-25 21:05:11.461 13240 13240 I flutter : 🔌 Jugador desconectado: VTXP
+05-25 21:05:39.703 13240 13240 I flutter : 🔧 setMultiplayer: true (isHost=false)
+05-25 21:05:39.819 13240 13240 I flutter : 🚫 JOIN_REJECTED: password
+05-25 21:05:39.819 13240 13240 I flutter : 🚫 JOIN_REJECTED recibido: password
+05-25 21:05:50.931 13240 13240 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: PlatformException(Failure, 8003: STATUS_ALREADY_CONNECTED_TO_ENDPOINT, null, null)
+05-25 21:05:50.931 13240 13240 E flutter : #0      StandardMethodCodec.decodeEnvelope (package:flutter/src/services/message_codecs.dart:653)
+05-25 21:05:50.931 13240 13240 E flutter : #1      MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:367)
+05-25 21:05:50.931 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:05:50.931 13240 13240 E flutter : #2      Nearby.requestConnection (package:nearby_connections/src/nearby.dart:266)  
+05-25 21:05:50.931 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:05:50.931 13240 13240 E flutter : #3      P2PService.connectToDevice (package:poker_dice_dash/services/p2p_service.dart:67)
+05-25 21:05:50.931 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:05:50.931 13240 13240 E flutter :
+05-25 21:06:06.341 13240 13240 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: PlatformException(Failure, 8003: STATUS_ALREADY_CONNECTED_TO_ENDPOINT, null, null)
+05-25 21:06:06.341 13240 13240 E flutter : #0      StandardMethodCodec.decodeEnvelope (package:flutter/src/services/message_codecs.dart:653)
+05-25 21:06:06.341 13240 13240 E flutter : #1      MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:367)
+05-25 21:06:06.341 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:06:06.341 13240 13240 E flutter : #2      Nearby.requestConnection (package:nearby_connections/src/nearby.dart:266)  
+05-25 21:06:06.341 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:06:06.341 13240 13240 E flutter : #3      P2PService.connectToDevice (package:poker_dice_dash/services/p2p_service.dart:67)
+05-25 21:06:06.341 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:06:06.341 13240 13240 E flutter :
+05-25 21:06:18.915 13240 13240 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: PlatformException(Failure, 8003: STATUS_ALREADY_CONNECTED_TO_ENDPOINT, null, null)
+05-25 21:06:18.915 13240 13240 E flutter : #0      StandardMethodCodec.decodeEnvelope (package:flutter/src/services/message_codecs.dart:653)
+05-25 21:06:18.915 13240 13240 E flutter : #1      MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:367)
+05-25 21:06:18.915 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:06:18.915 13240 13240 E flutter : #2      Nearby.requestConnection (package:nearby_connections/src/nearby.dart:266)  
+05-25 21:06:18.915 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:06:18.915 13240 13240 E flutter : #3      P2PService.connectToDevice (package:poker_dice_dash/services/p2p_service.dart:67)
+05-25 21:06:18.915 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:06:18.915 13240 13240 E flutter :
+05-25 21:06:30.409 13240 13240 I flutter : 🔌 Jugador desconectado: ZBUT
+05-25 21:06:51.771 13240 13240 I flutter : 🔧 setMultiplayer: true (isHost=false)
+05-25 21:06:53.971 13240 13240 I flutter : 🎫 Cliente recibió ASSIGN_SEAT: playerId=2
+05-25 21:06:53.976 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=waitingPlayers numPlayers=3
+05-25 21:06:53.982 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=waitingPlayers numPlayers=3
+05-25 21:07:00.288 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3
+05-25 21:07:00.293 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3
+05-25 21:07:00.297 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3    
+05-25 21:07:00.307 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3    
+05-25 21:07:42.922 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=betting numPlayers=3
+05-25 21:07:46.821 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=betting numPlayers=3
+05-25 21:07:46.832 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=2 status=diceTurn numPlayers=3
+05-25 21:07:46.840 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=2 status=diceTurn numPlayers=3
+05-25 21:07:46.920 13240 13240 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=2 status=diceTurn numPlayers=3
+05-25 21:08:21.508 13240 13240 I flutter : 🔌 Jugador desconectado: MP21
+05-25 21:08:31.609 13240 13240 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: PlatformException(Failure, 8002: STATUS_ALREADY_DISCOVERING, null, null)
+05-25 21:08:31.609 13240 13240 E flutter : #0      StandardMethodCodec.decodeEnvelope (package:flutter/src/services/message_codecs.dart:653)
+05-25 21:08:31.609 13240 13240 E flutter : #1      MethodChannel._invokeMethod (package:flutter/src/services/platform_channel.dart:367)
+05-25 21:08:31.609 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:08:31.609 13240 13240 E flutter : #2      Nearby.startDiscovery (package:nearby_connections/src/nearby.dart:209)     
+05-25 21:08:31.609 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:08:31.609 13240 13240 E flutter : #3      P2PService.startDiscovery (package:poker_dice_dash/services/p2p_service.dart:51)
+05-25 21:08:31.609 13240 13240 E flutter : <asynchronous suspension>
+05-25 21:08:31.609 13240 13240 E flutter :
+05-25 21:08:45.618 13240 13240 I flutter : 🔧 setMultiplayer: true (isHost=false)
+05-25 21:09:08.677 14461 14501 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+05-25 21:09:08.938 14461 14461 I flutter : Error: google_fonts was unable to load font Roboto-Regular because the following exception occurred:
+05-25 21:09:08.938 14461 14461 I flutter : Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 21:09:08.938 14461 14461 I flutter :
+05-25 21:09:08.938 14461 14461 I flutter : See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+05-25 21:09:08.938 14461 14461 I flutter : If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+05-25 21:09:08.938 14461 14461 I flutter :
+05-25 21:09:08.939 14461 14461 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-25 21:09:08.939 14461 14461 E flutter : #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:266)
+05-25 21:09:08.939 14461 14461 E flutter : <asynchronous suspension>
+05-25 21:09:08.939 14461 14461 E flutter : #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:172)  
+05-25 21:09:08.939 14461 14461 E flutter : <asynchronous suspension>
+05-25 21:09:08.939 14461 14461 E flutter : #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:109)
+05-25 21:09:08.939 14461 14461 E flutter : <asynchronous suspension>
+05-25 21:09:08.939 14461 14461 E flutter :
+05-25 21:09:31.303 14461 14461 I flutter : {2: 10, 3: 20}
+05-25 21:09:31.303 14461 14461 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-25 21:09:31.303 14461 14461 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-25 21:09:35.031 14461 14461 I flutter : 🔧 setMultiplayer: true (isHost=false)
+05-25 21:09:39.986 14461 14461 I flutter : 🎫 Cliente recibió ASSIGN_SEAT: playerId=2
+05-25 21:09:39.991 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=waitingPlayers numPlayers=3
+05-25 21:09:39.995 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=waitingPlayers numPlayers=3
+05-25 21:09:44.971 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3
+05-25 21:09:44.978 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3
+05-25 21:09:44.988 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3
+05-25 21:09:45.063 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=3
+05-25 21:09:50.075 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=betting numPlayers=3
+05-25 21:09:51.055 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=betting numPlayers=3
+05-25 21:09:51.067 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=2 status=diceTurn numPlayers=3
+05-25 21:09:51.070 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=2 status=diceTurn numPlayers=3
+05-25 21:09:51.074 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=2 status=diceTurn numPlayers=3    
+05-25 21:09:52.761 14461 14461 I flutter : Apuesta de 2: 10
+05-25 21:09:52.852 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=2 status=betting numPlayers=3
+05-25 21:09:52.861 14461 14461 I flutter : Apuesta de 2: 10
+05-25 21:09:52.878 14461 14461 I flutter : Apuesta de 2: 10
+05-25 21:09:53.062 14461 14461 I flutter : Apuesta de 2: 10
+05-25 21:09:53.897 14461 14461 I flutter : 🟦 CALL llamado: playerId=2 isHost=false
+05-25 21:09:54.152 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=2 status=betting numPlayers=3
+05-25 21:09:54.167 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=diceTurn numPlayers=3
+05-25 21:09:54.170 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=diceTurn numPlayers=3
+05-25 21:09:54.879 14461 14461 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=diceTurn numPlayers=3
+05-25 21:10:25.340 14461 14461 I flutter : 🔌 Jugador desconectado: K576
