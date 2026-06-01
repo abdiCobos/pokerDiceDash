@@ -22,6 +22,16 @@ void main() async {
   await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
   FirebaseCrashlytics.instance.setUserIdentifier('anon-${DateTime.now().millisecondsSinceEpoch}');
 
+  // Force-test: ensure Crashlytics is reporting
+  //await FirebaseCrashlytics.instance.crash(); // uncomment for test crash
+  FirebaseCrashlytics.instance.log('App started - Crashlytics initialized OK');
+  FirebaseCrashlytics.instance.recordError(
+    Exception('Crashlytics test - non-fatal error at startup'),
+    StackTrace.current,
+    fatal: false,
+    reason: 'Startup test',
+  );
+
   // Send any unsent crash reports from previous runs
   final didCrashOnLastRun = await FirebaseCrashlytics.instance.didCrashOnPreviousExecution();
   if (didCrashOnLastRun) {

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../models/blackjack_models.dart';
 import '../models/card_model.dart';
 import '../services/sound_service.dart';
@@ -236,28 +237,30 @@ class BlackjackProvider extends ChangeNotifier {
 
   void hit(String playerId) {
     try {
-      AppLogger().log('BJ:hit $playerId');
+      AppLogger().log('BJ:hit $playerId phase=${_state.phase}');
       if (_state.phase != BlackjackPhase.playerTurn) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
       if (pIdx < 0) return;
       final card = _draw();
       final updated = <BlackjackPlayer>[...players];
       final hands = <BlackjackHand>[...updated[pIdx].hands];
-      final hIdx = updated[pIdx].activeHandIndex;
+      final hIdx = _state.currentHandIndex < hands.length ? _state.currentHandIndex : hands.length - 1;
+      if (hIdx < 0 || hIdx >= hands.length) return;
       hands[hIdx].cards.add(card);
       SoundService().cardMix();
 
       final val = hands[hIdx].handValue;
+      AppLogger().log('BJ:hit hand=$hIdx val=$val cards=${hands[hIdx].cards.length}');
       if (val > 21) {
         hands[hIdx].isBusted = true;
         hands[hIdx].isStanding = true;
-        AppLogger().log('BJ:BUST $playerId=$val');
+        AppLogger().log('BJ:BUST $playerId=$val hand=$hIdx');
       } else if (val == 21) {
         hands[hIdx].isStanding = true;
-        AppLogger().log('BJ:21 $playerId=$val');
+        AppLogger().log('BJ:21 $playerId=$val hand=$hIdx');
       }
-      updated[pIdx] = updated[pIdx].copyWith(hands: hands);
-      _state = _state.copyWith(players: updated, deck: _state.deck);
+      updated[pIdx] = updated[pIdx].copyWith(hands: hands, activeHandIndex: hIdx);
+      _state = _state.copyWith(players: updated, deck: _state.deck, currentHandIndex: hIdx);
       _logAndNotify('hit');
 
       if (hands[hIdx].isFinished) {
@@ -271,6 +274,7 @@ class BlackjackProvider extends ChangeNotifier {
       }
     } catch (e, s) {
       AppLogger().error('BJ:hit crash: $e', s);
+      FirebaseCrashlytics.instance.recordError(e, s, fatal: false);
     }
   }
 
@@ -281,14 +285,15 @@ class BlackjackProvider extends ChangeNotifier {
       final pIdx = players.indexWhere((p) => p.id == playerId);
       if (pIdx < 0) return;
       final hands = <BlackjackHand>[...players[pIdx].hands];
-      final hIdx = players[pIdx].activeHandIndex;
-      if (hIdx >= hands.length) return;
+      final hIdx = _state.currentHandIndex < hands.length ? _state.currentHandIndex : hands.length - 1;
+      if (hIdx >= hands.length || hIdx < 0) return;
       hands[hIdx].isStanding = true;
+      AppLogger().log('BJ:stand hand=$hIdx value=${hands[hIdx].handValue}');
       final updated = <BlackjackPlayer>[...players];
       updated[pIdx] = players[pIdx].copyWith(hands: hands);
-      _state = _state.copyWith(players: updated);
+      _state = _state.copyWith(players: updated, currentHandIndex: hIdx);
       _logAndNotify('stand');
-      Future.delayed(const Duration(milliseconds: 300), _advanceToNextActivePlayer);
+      Future.delayed(const Duration(milliseconds: 400), _advanceToNextActivePlayer);
     } catch (e, s) {
       AppLogger().error('BJ:stand crash: $e', s);
     }
@@ -386,38 +391,59 @@ class BlackjackProvider extends ChangeNotifier {
       AppLogger().log('BJ:_dealerPlay');
       final dIdx = players.indexWhere((p) => p.isDealer);
       if (dIdx < 0) return;
-      var dealerPlayer = players[dIdx];
-      final dealerHand = dealerPlayer.hands[0];
+      final dealerPlayer = players[dIdx];
+      final dealerHand = BlackjackHand(
+        cards: List.from(dealerPlayer.hands[0].cards),
+        betAmount: dealerPlayer.hands[0].betAmount,
+        isStanding: dealerPlayer.hands[0].isStanding,
+        isBusted: dealerPlayer.hands[0].isBusted,
+      );
 
-      // Check if all players busted - dealer doesn't need to draw
       final allPlayersBusted = humanPlayers.every((p) =>
           p.hands.every((h) => h.isBusted || h.cards.isEmpty));
       AppLogger().log('BJ:allBusted=$allPlayersBusted');
 
       if (!allPlayersBusted) {
-        var updated = <BlackjackPlayer>[...players];
-        while (dealerHand.handValue < 17) {
-          dealerHand.cards.add(_draw());
-          updated[dIdx] = BlackjackPlayer(
-            id: dealerPlayer.id, name: dealerPlayer.name,
-            chipBalance: dealerPlayer.chipBalance,
-            isLocal: dealerPlayer.isLocal, isDealer: true,
-            hands: [dealerHand],
-          );
-          _state = _state.copyWith(players: updated, deck: _state.deck);
-          _logAndNotify('_dealerPlay-hit');
-          SoundService().cardMix();
-        }
+        _dealerDrawCardSequential(dIdx, dealerHand);
+        return;
       }
-
-      final dealerVal = dealerHand.handValue;
-      final dealerBj = dealerHand.isBlackjack;
-      AppLogger().log('BJ:dealerFinal=$dealerVal bj=$dealerBj');
 
       _resolveRound();
     } catch (e, s) {
       AppLogger().error('BJ:_dealerPlay crash: $e', s);
     }
+  }
+
+  void _dealerDrawCardSequential(int dIdx, BlackjackHand hand) {
+    if (hand.handValue >= 17) {
+      // Update state with final dealer hand and resolve
+      var updated = <BlackjackPlayer>[...players];
+      updated[dIdx] = BlackjackPlayer(
+        id: updated[dIdx].id, name: updated[dIdx].name,
+        chipBalance: updated[dIdx].chipBalance,
+        isLocal: updated[dIdx].isLocal, isDealer: true,
+        hands: [hand],
+      );
+      _state = _state.copyWith(players: updated);
+      _logAndNotify('_dealerDrawCard-done');
+      AppLogger().log('BJ:dealerFinal=${hand.handValue} bj=${hand.isBlackjack}');
+      Future.delayed(const Duration(milliseconds: 500), _resolveRound);
+      return;
+    }
+
+    hand.cards.add(_draw());
+    SoundService().cardMix();
+    var updated = <BlackjackPlayer>[...players];
+    updated[dIdx] = BlackjackPlayer(
+      id: updated[dIdx].id, name: updated[dIdx].name,
+      chipBalance: updated[dIdx].chipBalance,
+      isLocal: updated[dIdx].isLocal, isDealer: true,
+      hands: [hand],
+    );
+    _state = _state.copyWith(players: updated, deck: _state.deck);
+    _logAndNotify('_dealerDrawCard-hit-${hand.handValue}');
+
+    Future.delayed(const Duration(milliseconds: 700), () => _dealerDrawCardSequential(dIdx, hand));
   }
 
   void _resolveRound() {

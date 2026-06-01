@@ -139,6 +139,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           height: 112 * _s,
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: hand.cards.asMap().entries.map((e) {
               final isFirst = e.key == 0;
               final faceUp = showAll || !isFirst;
@@ -236,20 +237,18 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                 ? Text('M${handIdx + 1}', style: TextStyle(color: Colors.white38, fontSize: 10 * _s))
                 : const SizedBox.shrink(),
           ),
-          SizedBox(
-            height: 112 * _s,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+          Expanded(
+            child: Wrap(
+              direction: Axis.vertical,
+              spacing: 3 * _s,
+              runSpacing: 3 * _s,
               children: hand.cards.asMap().entries.map((e) {
-                return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 3 * _s),
-                  child: SizedBox(
-                    width: 80 * _s, height: 112 * _s,
-                    child: _AnimatedSlideIn(
-                      controller: _animFor('${player.id}_${handIdx}_${e.key}'),
-                      card: e.value,
-                      scale: _s * 0.7,
-                    ),
+                return SizedBox(
+                  width: 70 * _s, height: 100 * _s,
+                  child: _AnimatedSlideIn(
+                    controller: _animFor('${player.id}_${handIdx}_${e.key}'),
+                    card: e.value,
+                    scale: _s * 0.55,
                   ),
                 );
               }).toList(),
