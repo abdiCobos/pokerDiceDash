@@ -102,7 +102,9 @@ class _RoomListScreenState extends State<RoomListScreen> {
     final started = parts[3] == '1';
     GameMode mode = GameMode.diceDash;
     if (parts.length >= 5) {
-      mode = parts[4] == 'texasHoldem' ? GameMode.texasHoldem : GameMode.diceDash;
+      final modeStr = parts[4];
+      if (modeStr == 'texasHoldem') mode = GameMode.texasHoldem;
+      else if (modeStr == 'blackjack') mode = GameMode.blackjack;
     }
     return _RoomInfo(
       name: name,
@@ -289,6 +291,23 @@ class _RoomListScreenState extends State<RoomListScreen> {
       ),
     );
   }
+
+  String _gameModeLabel(GameMode mode) {
+    switch (mode) {
+      case GameMode.texasHoldem: return '♠️ Texas Hold\'em';
+      case GameMode.blackjack: return '🃏 21 Black Jack';
+      default: return '🎲 Poker Dice Dash';
+    }
+  }
+}
+
+// Top-level helper for _RoomCard
+String _gameModeLabel(GameMode mode) {
+  switch (mode) {
+    case GameMode.texasHoldem: return '♠️ Texas Hold\'em';
+    case GameMode.blackjack: return '🃏 21 Black Jack';
+    default: return '🎲 Poker Dice Dash';
+  }
 }
 
 class _RoomInfo {
@@ -360,7 +379,7 @@ class _RoomCard extends StatelessWidget {
                       ),
                       SizedBox(height: 2 * s),
                       Text(
-                        room.gameMode == GameMode.texasHoldem ? '♠️ Texas Hold\'em' : '🎲 Poker Dice Dash',
+                        _gameModeLabel(room.gameMode),
                         style: TextStyle(color: Colors.white54, fontSize: 10 * s),
                       ),
                     ],

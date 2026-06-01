@@ -3,6 +3,7 @@ import 'card_model.dart';
 enum GameMode {
   diceDash,
   texasHoldem,
+  blackjack,
 }
 
 enum GameStatus {

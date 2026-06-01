@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import 'game_table_screen.dart';
+import 'blackjack_table_screen.dart';
 import 'room_list_screen.dart';
 
 class LobbyScreen extends StatefulWidget {
@@ -247,6 +249,25 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       ),
                     ),
                     child: Text('Jugar Solo (Práctica)', style: TextStyle(fontSize: 18 * s)),
+                  ),
+                ),
+                SizedBox(height: 16 * s),
+                SizedBox(
+                  width: screenW * 0.75,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => ChangeNotifierProvider(create: (_) => BlackjackProvider()..initSinglePlayer(botCount: 0), child: const BlackjackTableScreen())),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade800,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 18 * s),
+                      textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
+                    ),
+                    child: Text('21 Black Jack (Práctica)', style: TextStyle(fontSize: 18 * s)),
                   ),
                 ),
                 SizedBox(height: 16 * s),
