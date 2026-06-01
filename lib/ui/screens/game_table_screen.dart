@@ -271,17 +271,7 @@ class _GameTableScreenState extends State<GameTableScreen>
                 ),
               ),
             ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 4 * _s),
-            decoration: BoxDecoration(
-              color: game.gameMode == GameMode.texasHoldem ? Colors.red.shade800 : Colors.amber.shade800,
-              borderRadius: BorderRadius.circular(6 * _s),
-            ),
-            child: Text(
-              game.gameMode == GameMode.texasHoldem ? '♠️ Texas' : '🎲 Dice Dash',
-              style: TextStyle(color: Colors.white, fontSize: 10 * _s, fontWeight: FontWeight.bold),
-            ),
-          ),
+
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:nearby_connections/nearby_connections.dart';
+import 'firebase_transport.dart';
 
 class DiscoveredDevice {
   final String endpointId;
@@ -13,6 +14,8 @@ class DiscoveredDevice {
 class P2PService {
   final Nearby _nearby = Nearby();
   final Strategy _strategy;
+  final bool _useFirebase;
+  FirebaseTransport? _firebase;
 
   final _devicesController = StreamController<DiscoveredDevice>.broadcast();
   final _messagesController = StreamController<Map<String, dynamic>>.broadcast();
@@ -29,9 +32,36 @@ class P2PService {
 
   P2PService({
     Strategy strategy = Strategy.P2P_CLUSTER,
-  })  : _strategy = strategy;
+    bool useFirebase = false,
+    FirebaseTransport? firebase,
+  })  : _strategy = strategy,
+        _useFirebase = useFirebase,
+        _firebase = firebase {
+    if (_useFirebase) {
+      _firebase ??= FirebaseTransport();
+      _wireFirebase();
+    }
+  }
+
+  void _wireFirebase() {
+    if (_firebase == null) return;
+    _firebase!.onDeviceFound.listen((d) => _devicesController.add(d));
+    _firebase!.onMessageReceived.listen((m) => _messagesController.add(m));
+    _firebase!.onConnected.listen((id) {
+      _connectedEndpoints.add(id);
+      _connectionController.add(id);
+    });
+    _firebase!.onDisconnected.listen((id) {
+      _connectedEndpoints.remove(id);
+      _disconnectionController.add(id);
+    });
+  }
 
   Future<void> startAdvertising(String deviceName) async {
+    if (_useFirebase) {
+      await _firebase!.startAdvertising(deviceName);
+      return;
+    }
     await _nearby.startAdvertising(
       deviceName,
       _strategy,
@@ -48,6 +78,10 @@ class P2PService {
   }
 
   Future<void> startDiscovery(String deviceName) async {
+    if (_useFirebase) {
+      await _firebase!.startDiscovery(deviceName);
+      return;
+    }
     await _nearby.startDiscovery(
       deviceName,
       _strategy,
@@ -64,6 +98,10 @@ class P2PService {
   }
 
   Future<void> connectToDevice(String endpointId) async {
+    if (_useFirebase) {
+      await _firebase!.connectToDevice(endpointId);
+      return;
+    }
     await _nearby.requestConnection(
       'device',
       endpointId,
@@ -113,31 +151,54 @@ class P2PService {
   }
 
   Future<void> sendMessage(String endpointId, Map<String, dynamic> data) async {
+    if (_useFirebase) {
+      await _firebase!.sendMessage(endpointId, data);
+      return;
+    }
     final jsonString = jsonEncode(data);
     final bytes = Uint8List.fromList(utf8.encode(jsonString));
     await _nearby.sendBytesPayload(endpointId, bytes);
   }
 
   Future<void> broadcastMessage(Map<String, dynamic> data) async {
+    if (_useFirebase) {
+      await _firebase!.broadcastMessage(data);
+      return;
+    }
     for (final endpointId in _connectedEndpoints) {
       await sendMessage(endpointId, data);
     }
   }
 
   Future<void> stopAdvertising() async {
+    if (_useFirebase) {
+      await _firebase!.stopAdvertising();
+      return;
+    }
     await _nearby.stopAdvertising();
   }
 
   Future<void> stopDiscovery() async {
+    if (_useFirebase) {
+      await _firebase!.stopDiscovery();
+      return;
+    }
     await _nearby.stopDiscovery();
   }
 
   Future<void> disconnectAll() async {
+    if (_useFirebase) {
+      await _firebase!.disconnectAll();
+      return;
+    }
     await _nearby.stopAllEndpoints();
     _connectedEndpoints.clear();
   }
 
   Future<void> dispose() async {
+    if (_useFirebase) {
+      _firebase!.dispose();
+    }
     await disconnectAll();
     await _devicesController.close();
     await _messagesController.close();

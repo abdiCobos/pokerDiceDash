@@ -8,6 +8,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/game_provider.dart';
 import 'services/p2p_service.dart';
+import 'services/firebase_transport.dart';
 import 'services/logger_service.dart';
 import 'ui/screens/lobby_screen.dart';
 
@@ -33,13 +34,18 @@ void main() async {
     DeviceOrientation.landscapeLeft,
   ]);
   final p2pService = P2PService();
+  final firebaseTransport = FirebaseTransport();
+  final globalP2PService = P2PService(useFirebase: true, firebase: firebaseTransport);
 
   final prefs = await SharedPreferences.getInstance();
   final hasSeenDisclaimer = prefs.getBool('disclaimer_seen') ?? false;
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => GameProvider(p2pService: p2pService),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => GameProvider(p2pService: p2pService)),
+        Provider<P2PService>.value(value: globalP2PService),
+      ],
       child: PokerDiceDashApp(showDisclaimer: !hasSeenDisclaimer, prefs: prefs),
     ),
   );

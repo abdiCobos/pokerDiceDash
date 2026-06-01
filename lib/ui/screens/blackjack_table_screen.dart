@@ -108,14 +108,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                     ...humans.map((p) => _buildPlayerArea(p, bj)),
 
                     // Mode badge
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 4 * _s),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10 * _s, vertical: 4 * _s),
-                        decoration: BoxDecoration(color: Colors.green.shade800, borderRadius: BorderRadius.circular(6 * _s)),
-                        child: Text('21 Black Jack', style: TextStyle(color: Colors.white, fontSize: 11 * _s, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
+
                   ],
                 );
               },
@@ -143,7 +136,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         Text(showAll ? '${dealer.handValue}' : '?', style: TextStyle(color: Colors.white70, fontSize: 12 * _s)),
         SizedBox(height: 4 * _s),
         SizedBox(
-          height: 90 * _s,
+          height: 120 * _s,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: dealer.hand.asMap().entries.map((e) {
@@ -152,9 +145,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 3 * _s),
                 child: faceUp
-                    ? SizedBox(width: 60 * _s, height: 84 * _s, child: _AnimatedCard(controller: _getCardAnim(dealer.id, e.key), card: e.value, scale: _s * 0.5))
+                    ? SizedBox(width: 80 * _s, height: 112 * _s, child: _AnimatedCard(controller: _getCardAnim(dealer.id, e.key), card: e.value, scale: _s * 0.5))
                     : Container(
-                        width: 60 * _s, height: 84 * _s,
+                        width: 80 * _s, height: 112 * _s,
                         decoration: BoxDecoration(color: Colors.blue.shade900, borderRadius: BorderRadius.circular(6), image: const DecorationImage(image: AssetImage('assets/images/cards/cardBack_red5.png'), fit: BoxFit.cover)),
                       ),
               );
@@ -210,13 +203,13 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           ),
           SizedBox(height: 4 * _s),
           SizedBox(
-            height: 84 * _s,
+            height: 120 * _s,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: player.hand.asMap().entries.map((e) => Padding(
                 padding: EdgeInsets.symmetric(horizontal: 3 * _s),
                 child: SizedBox(
-                  width: 60 * _s, height: 84 * _s,
+                  width: 60 * _s, height: 120 * _s,
                   child: _AnimatedCard(controller: _getCardAnim(player.id, e.key), card: e.value, scale: _s * 0.5),
                 ),
               )).toList(),
