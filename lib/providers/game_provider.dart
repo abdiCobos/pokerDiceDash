@@ -1994,7 +1994,6 @@ class GameProvider extends ChangeNotifier {
       return;
     }
     notifyListeners();
-    nextTurn();
   }
 
   void rebuyLocalPlayer() {
@@ -2044,9 +2043,6 @@ class GameProvider extends ChangeNotifier {
     }
 
     notifyListeners();
-
-    nextTurn();
-
   }
 
 

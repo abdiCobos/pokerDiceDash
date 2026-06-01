@@ -268,9 +268,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   void startDiscovering({bool useFirebase = false}) {
     final p2p = useFirebase ? context.read<P2PService>() : context.read<GameProvider>().p2pService;
-    if (useFirebase) {
-      p2p.startDiscovery('player');
-    }
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => RoomListScreen(useFirebase: useFirebase, p2pService: p2p)),

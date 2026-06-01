@@ -195,7 +195,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                         Navigator.pop(ctx);
                         _pendingName = nameController.text.trim().isEmpty ? 'Jugador' : nameController.text.trim();
                         _pendingPassword = requirePassword ? passController.text.trim() : '';
-                        final p2p = context.read<GameProvider>().p2pService;
+                        final p2p = widget.useFirebase ? widget.p2pService! : context.read<GameProvider>().p2pService;
                         p2p.connectToDevice(room.endpointId);
                       },
                       child: Text('Entrar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
