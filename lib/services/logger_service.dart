@@ -8,29 +8,45 @@ class AppLogger {
   AppLogger._();
 
   late FirebaseAnalytics _analytics;
+  bool _crashlyticsReady = false;
 
   void init() {
     _analytics = FirebaseAnalytics.instance;
+    _crashlyticsReady = true;
   }
 
   void log(String message) {
-    FirebaseCrashlytics.instance.log(message);
+    dev.log(message, name: 'AppLogger');
+    if (_crashlyticsReady) {
+      FirebaseCrashlytics.instance.log(message);
+      // Set as custom key so it appears in crash reports
+      FirebaseCrashlytics.instance.setCustomKey('log', message.length > 100 ? message.substring(0, 100) : message);
+    }
   }
 
   void event(String name, {Map<String, Object>? params}) {
-    _analytics.logEvent(name: name, parameters: params);
-    FirebaseCrashlytics.instance.log('event:$name${params != null ? ' $params' : ''}');
+    dev.log('EVENT: $name $params', name: 'AppLogger');
+    if (_crashlyticsReady) {
+      _analytics.logEvent(name: name, parameters: params);
+      FirebaseCrashlytics.instance.log('event:$name${params != null ? ' $params' : ''}');
+      FirebaseCrashlytics.instance.setCustomKey('last_event', name);
+    }
   }
 
   void error(String message, [StackTrace? stack]) {
-    FirebaseCrashlytics.instance.log('ERROR:$message');
-    if (stack != null) {
-      FirebaseCrashlytics.instance.recordError(message, stack, fatal: false);
-    } else {
-      FirebaseCrashlytics.instance.recordError(Exception(message), StackTrace.empty, fatal: false);
+    dev.log(message, name: 'AppLogger.error', level: 1000);
+    if (_crashlyticsReady) {
+      FirebaseCrashlytics.instance.log('ERROR:$message');
+      FirebaseCrashlytics.instance.setCustomKey('last_error', message.length > 100 ? message.substring(0, 100) : message);
+      final st = stack ?? StackTrace.current;
+      // recordError as non-fatal so it appears in dashboard
+      FirebaseCrashlytics.instance.recordError(
+        message,
+        st,
+        fatal: false,
+        reason: 'AppError',
+      );
     }
-    dev.log(message, name: 'AppLogger.error');
-    if (stack != null) dev.log(stack.toString(), name: 'AppLogger.error');
   }
 
   void setUser(String? id, String? name) {

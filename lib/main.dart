@@ -18,21 +18,9 @@ void main() async {
   await Firebase.initializeApp();
   AppLogger().init();
 
-  // Force Crashlytics collection in debug mode
   await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
   FirebaseCrashlytics.instance.setUserIdentifier('anon-${DateTime.now().millisecondsSinceEpoch}');
 
-  // Force-test: ensure Crashlytics is reporting
-  //await FirebaseCrashlytics.instance.crash(); // uncomment for test crash
-  FirebaseCrashlytics.instance.log('App started - Crashlytics initialized OK');
-  FirebaseCrashlytics.instance.recordError(
-    Exception('Crashlytics test - non-fatal error at startup'),
-    StackTrace.current,
-    fatal: false,
-    reason: 'Startup test',
-  );
-
-  // Send any unsent crash reports from previous runs
   final didCrashOnLastRun = await FirebaseCrashlytics.instance.didCrashOnPreviousExecution();
   if (didCrashOnLastRun) {
     await FirebaseCrashlytics.instance.sendUnsentReports();
@@ -58,6 +46,12 @@ void main() async {
   final globalP2PService = P2PService(useFirebase: true, firebase: firebaseTransport);
 
   final prefs = await SharedPreferences.getInstance();
+
+  // TEST: Force crash once to verify Crashlytics pipeline. Remove when confirmed.
+  if (prefs.getBool('crash_test_done') != true) {
+    prefs.setBool('crash_test_done', true);
+    FirebaseCrashlytics.instance.crash();
+  }
   final hasSeenDisclaimer = prefs.getBool('disclaimer_seen') ?? false;
 
   runApp(
