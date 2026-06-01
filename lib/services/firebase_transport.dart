@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'p2p_service.dart';
+import 'logger_service.dart';
 
 class FirebaseTransport {
   final _devicesController = StreamController<DiscoveredDevice>.broadcast();
@@ -38,12 +40,19 @@ class FirebaseTransport {
   Future<void> startAdvertising(String deviceName) async {
     _currentRoomId = 'room_${_randomId()}';
     _connectedEndpoints.add(_myId);
-    await FirebaseFirestore.instance.collection('lobby').doc(_currentRoomId).set({
-      'endpointId': _currentRoomId,
-      'endpointName': deviceName,
-      'createdAt': FieldValue.serverTimestamp(),
-      'hostId': _myId,
-    });
+    try {
+      await FirebaseFirestore.instance.collection('lobby').doc(_currentRoomId).set({
+        'endpointId': _currentRoomId,
+        'endpointName': deviceName,
+        'createdAt': FieldValue.serverTimestamp(),
+        'hostId': _myId,
+      });
+      dev.log('FirebaseTransport: lobby doc created: $_currentRoomId', name: 'Firebase');
+      AppLogger().log('FB_ADVERTISE_OK: room=$_currentRoomId hostId=$_myId');
+    } catch (e, s) {
+      dev.log('FirebaseTransport: FAILED to create lobby doc: $e', name: 'Firebase');
+      AppLogger().error('FB_ADVERTISE_FAIL: room=$_currentRoomId err=$e', s);
+    }
     _listenToRoomMessages();
     _connectionController.add(_myId);
   }
@@ -51,17 +60,28 @@ class FirebaseTransport {
   Future<void> startDiscovery(String deviceName) async {
     _lobbySub?.cancel();
     final Set<String> _seenRooms = {};
+    dev.log('FirebaseTransport: startDiscovery myId=$_myId', name: 'Firebase');
     _lobbySub = FirebaseFirestore.instance.collection('lobby').snapshots().listen((snapshot) {
+      dev.log('FirebaseTransport: lobby snapshot docs=${snapshot.docs.length} changes=${snapshot.docChanges.length}', name: 'Firebase');
       for (final change in snapshot.docChanges) {
         final data = change.doc.data();
-        if (data == null) continue;
+        if (data == null) {
+          dev.log('FirebaseTransport: null data in change type=${change.type}', name: 'Firebase');
+          continue;
+        }
         final endpointId = data['endpointId'] as String? ?? '';
         final hostId = data['hostId'] as String? ?? '';
-        if (hostId == _myId) continue;
+        dev.log('FirebaseTransport: found doc endpointId=$endpointId hostId=$hostId myId=$_myId type=${change.type}', name: 'Firebase');
+        
+        if (hostId == _myId) {
+          AppLogger().log('FB_DISCOVERY: skipping own room $endpointId (my hostId=$_myId)');
+          continue;
+        }
 
         if (change.type == DocumentChangeType.added) {
           if (!_seenRooms.contains(endpointId)) {
             _seenRooms.add(endpointId);
+            AppLogger().error('FB_ROOM_FOUND: endpointId=$endpointId name=${data['endpointName']}');
             _devicesController.add(DiscoveredDevice(
               endpointId: endpointId,
               endpointName: data['endpointName'] as String? ?? '',
@@ -72,6 +92,8 @@ class FirebaseTransport {
           _disconnectionController.add(endpointId);
         }
       }
+    }, onError: (e, s) {
+      AppLogger().error('FB_DISCOVERY_ERROR: $e', s);
     });
   }
 

@@ -31,11 +31,16 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
   void _startScanning() {
     final p2p = widget.useFirebase ? widget.p2pService! : context.read<GameProvider>().p2pService;
+    AppLogger().log('ROOMLIST: _startScanning useFirebase=${widget.useFirebase}');
 
     _deviceSub = p2p.onDeviceFound.listen((device) {
       if (!mounted) return;
+      AppLogger().log('ROOMLIST: onDeviceFound endpointId=${device.endpointId} endpointName=${device.endpointName}');
       final parsed = _parseRoomName(device.endpointName);
-      if (parsed == null) return;
+      if (parsed == null) {
+        AppLogger().log('ROOMLIST: _parseRoomName returned null for "${device.endpointName}"');
+        return;
+      }
       setState(() {
         final existing = _rooms.indexWhere((r) => r.endpointId == device.endpointId);
         if (existing >= 0) {
@@ -48,6 +53,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
     _connectionSub = p2p.onConnected.listen((endpointId) {
       if (!mounted) return;
+      AppLogger().log('ROOMLIST: onConnected endpointId=$endpointId');
       final game = context.read<GameProvider>();
       game.setHost(false);
       game.setMultiplayer(true);
