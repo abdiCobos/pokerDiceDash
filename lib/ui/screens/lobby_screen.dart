@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../services/logger_service.dart';
+import '../../services/p2p_service.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import 'game_table_screen.dart';
@@ -225,10 +226,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
     );
   }
 
-  void startDiscovering() {
+  void startDiscovering({bool useFirebase = false}) {
+    final p2p = useFirebase ? context.read<P2PService>() : context.read<GameProvider>().p2pService;
+    if (useFirebase) {
+      p2p.startDiscovery('player');
+    }
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const RoomListScreen()),
+      MaterialPageRoute(builder: (_) => RoomListScreen(useFirebase: useFirebase, p2pService: p2p)),
     );
   }
 
@@ -373,9 +378,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 SizedBox(
                   width: screenW * 0.75,
                   child: ElevatedButton(
-                    onPressed: startDiscovering,
+                    onPressed: () => startDiscovering(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade800,
+                      backgroundColor: Colors.blue.shade800,
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(vertical: 18 * s),
                       textStyle: TextStyle(
@@ -383,7 +388,21 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: Text('Unirse a Sala', style: TextStyle(fontSize: 18 * s)),
+                    child: Text('Unirse - Local', style: TextStyle(fontSize: 18 * s)),
+                  ),
+                ),
+                SizedBox(height: 16 * s),
+                SizedBox(
+                  width: screenW * 0.75,
+                  child: ElevatedButton(
+                    onPressed: () => startDiscovering(useFirebase: true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade700,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 18 * s),
+                      textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
+                    ),
+                    child: Text('Unirse - Global', style: TextStyle(fontSize: 18 * s)),
                   ),
                 ),
                 if (_isHosting) ...[

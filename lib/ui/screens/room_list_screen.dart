@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/p2p_service.dart';
 import '../../services/logger_service.dart';
 import '../../providers/game_provider.dart';
 import '../../models/game_state.dart';
@@ -8,7 +9,9 @@ import 'game_table_screen.dart';
 import 'lobby_screen.dart';
 
 class RoomListScreen extends StatefulWidget {
-  const RoomListScreen({super.key});
+  final bool useFirebase;
+  final P2PService? p2pService;
+  const RoomListScreen({super.key, this.useFirebase = false, this.p2pService});
 
   @override
   State<RoomListScreen> createState() => _RoomListScreenState();
@@ -27,7 +30,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
   }
 
   void _startScanning() {
-    final p2p = context.read<GameProvider>().p2pService;
+    final p2p = widget.useFirebase ? widget.p2pService! : context.read<GameProvider>().p2pService;
 
     _deviceSub = p2p.onDeviceFound.listen((device) {
       if (!mounted) return;

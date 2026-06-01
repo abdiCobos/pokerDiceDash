@@ -17,8 +17,6 @@ import '../models/hand_evaluator.dart';
 import '../services/p2p_service.dart';
 
 import '../services/sound_service.dart';
-import '../services/bot_service.dart';
-
 
 
 class GameProvider extends ChangeNotifier {
