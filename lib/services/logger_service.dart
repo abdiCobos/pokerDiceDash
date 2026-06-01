@@ -19,8 +19,7 @@ class AppLogger {
     dev.log(message, name: 'AppLogger');
     if (_crashlyticsReady) {
       FirebaseCrashlytics.instance.log(message);
-      // Set as custom key so it appears in crash reports
-      FirebaseCrashlytics.instance.setCustomKey('log', message.length > 100 ? message.substring(0, 100) : message);
+      FirebaseCrashlytics.instance.setCustomKey('last_log', message.length > 90 ? message.substring(0, 90) : message);
     }
   }
 
@@ -37,14 +36,13 @@ class AppLogger {
     dev.log(message, name: 'AppLogger.error', level: 1000);
     if (_crashlyticsReady) {
       FirebaseCrashlytics.instance.log('ERROR:$message');
-      FirebaseCrashlytics.instance.setCustomKey('last_error', message.length > 100 ? message.substring(0, 100) : message);
+      FirebaseCrashlytics.instance.setCustomKey('last_error', message.length > 90 ? message.substring(0, 90) : message);
       final st = stack ?? StackTrace.current;
-      // recordError as non-fatal so it appears in dashboard
       FirebaseCrashlytics.instance.recordError(
         message,
         st,
         fatal: false,
-        reason: 'AppError',
+        reason: message.length > 80 ? message.substring(0, 80) : message,
       );
     }
   }

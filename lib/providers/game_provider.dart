@@ -1975,7 +1975,7 @@ class GameProvider extends ChangeNotifier {
 
   void rebuyPlayer(String playerId) {
     final idx = _players.indexWhere((p) => p.id == playerId);
-    if (idx < 0) return;
+    if (idx < 0) { AppLogger().error('REBUY_FAIL: playerId=$playerId not found'); return; }
     final player = _players[idx];
     player.chipBalance = 1000;
     player.isBankrupt = false;

@@ -46,12 +46,6 @@ void main() async {
   final globalP2PService = P2PService(useFirebase: true, firebase: firebaseTransport);
 
   final prefs = await SharedPreferences.getInstance();
-
-  // TEST: Force crash once to verify Crashlytics pipeline. Remove when confirmed.
-  if (prefs.getBool('crash_test_done') != true) {
-    prefs.setBool('crash_test_done', true);
-    FirebaseCrashlytics.instance.crash();
-  }
   final hasSeenDisclaimer = prefs.getBool('disclaimer_seen') ?? false;
 
   runApp(

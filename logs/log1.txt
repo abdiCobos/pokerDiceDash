@@ -1,230 +1,381 @@
-abdi8@abdic MINGW64 ~/poker_dice_dash (master)
-$ adb -s U8RCMZVWMF4PDMVC logcat -s flutter
---------- beginning of main
-05-25 13:02:56.861 11632 12732 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
-05-25 13:02:57.330 11632 11632 I flutter : Error: google_fonts was unable to load font Roboto-Regular because the following exception occurred:
-05-25 13:02:57.330 11632 11632 I flutter : Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
-05-25 13:02:57.330 11632 11632 I flutter :
-05-25 13:02:57.330 11632 11632 I flutter : See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
-05-25 13:02:57.330 11632 11632 I flutter : If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
-05-25 13:02:57.330 11632 11632 I flutter :
-05-25 13:02:57.331 11632 11632 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
-05-25 13:02:57.331 11632 11632 E flutter : #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:266)
-05-25 13:02:57.331 11632 11632 E flutter : <asynchronous suspension>
-05-25 13:02:57.331 11632 11632 E flutter : #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:172)
-05-25 13:02:57.331 11632 11632 E flutter : <asynchronous suspension>
-05-25 13:02:57.331 11632 11632 E flutter : #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:109)
-05-25 13:02:57.331 11632 11632 E flutter : <asynchronous suspension>
-05-25 13:02:57.331 11632 11632 E flutter :
-05-25 13:03:52.825 11632 11632 I flutter : {2: 10, 3: 20}
-05-25 13:03:52.825 11632 11632 I flutter : 🔧 setMultiplayer: true (isHost=true)
-05-25 13:04:13.287 11632 11632 I flutter : 🪑 assignSeatToClient: endpointId=04J4
-05-25 13:04:53.119 11632 11632 I flutter : {1: 10, 0: 20}
-05-25 13:04:59.675 11632 11632 I flutter : Apuesta de 0: 20
-05-25 13:04:59.691 11632 11632 I flutter : Apuesta de 0: 20
-05-25 13:04:59.874 11632 11632 I flutter : Apuesta de 0: 20
-05-25 13:05:01.693 11632 11632 I flutter : Apuesta de 0: 20
-05-25 13:05:09.111 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:05:09.111 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:05:09.111 11632 11632 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
-05-25 13:05:15.334 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
-05-25 13:05:15.335 11632 11632 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
-05-25 13:05:17.658 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
-05-25 13:05:17.658 11632 11632 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
-05-25 13:05:17.658 11632 11632 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
-05-25 13:05:17.659 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
-05-25 13:05:17.659 11632 11632 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: RangeError (length): Invalid value: Not in inclusive range 0..1: 2
-05-25 13:05:17.659 11632 11632 E flutter : #0      GameProvider.advancePhase (package:poker_dice_dash/providers/game_provider.dart)
-05-25 13:05:17.659 11632 11632 E flutter : #1      GameProvider.nextTurn (package:poker_dice_dash/providers/game_provider.dart:368)
-05-25 13:05:17.659 11632 11632 E flutter : #2      GameProvider.call (package:poker_dice_dash/providers/game_provider.dart:873)
-05-25 13:05:17.659 11632 11632 E flutter : #3      GameProvider._processRemoteAction (package:poker_dice_dash/providers/game_provider.dart:1028)
-05-25 13:05:17.659 11632 11632 E flutter : #4      GameProvider._listenToMessages.<anonymous closure> (package:poker_dice_dash/providers/game_provider.dart:254)
-05-25 13:05:17.659 11632 11632 E flutter : #5      _RootZone.runUnaryGuarded (dart:async/zone.dart:1778)
-05-25 13:05:17.659 11632 11632 E flutter : #6      _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381)
-05-25 13:05:17.659 11632 11632 E flutter : #7      _DelayedData.perform (dart:async/stream_impl.dart:573)
-05-25 13:05:17.659 11632 11632 E flutter : #8      _PendingEvents.handleNext (dart:async/stream_impl.dart:678)
-05-25 13:05:17.659 11632 11632 E flutter : #9      _PendingEvents.schedule.<anonymous closure> (dart:async/stream_impl.dart:649)
-05-25 13:05:17.659 11632 11632 E flutter : #10     _microtaskLoop (dart:async/schedule_microtask.dart:40)
-05-25 13:05:17.659 11632 11632 E flutter : #11     _startMicrotaskLoop (dart:async/schedule_microtask.dart:49)
-05-25 13:05:17.659 11632 11632 E flutter :
-05-25 13:05:26.399 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:26.416 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:26.600 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:31.331 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:05:31.331 11632 11632 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
-05-25 13:05:38.177 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
-05-25 13:05:38.177 11632 11632 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
-05-25 13:05:40.114 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
-05-25 13:05:40.115 11632 11632 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
-05-25 13:05:40.115 11632 11632 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
-05-25 13:05:40.117 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
-05-25 13:05:40.118 11632 11632 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: RangeError (length): Invalid value: Not in inclusive range 0..1: 2
-05-25 13:05:40.118 11632 11632 E flutter : #0      GameProvider.advancePhase (package:poker_dice_dash/providers/game_provider.dart)
-05-25 13:05:40.118 11632 11632 E flutter : #1      GameProvider.nextTurn (package:poker_dice_dash/providers/game_provider.dart:368)
-05-25 13:05:40.118 11632 11632 E flutter : #2      GameProvider.call (package:poker_dice_dash/providers/game_provider.dart:873)
-05-25 13:05:40.118 11632 11632 E flutter : #3      GameProvider._processRemoteAction (package:poker_dice_dash/providers/game_provider.dart:1028)
-05-25 13:05:40.118 11632 11632 E flutter : #4      GameProvider._listenToMessages.<anonymous closure> (package:poker_dice_dash/providers/game_provider.dart:254)
-05-25 13:05:40.118 11632 11632 E flutter : #5      _RootZone.runUnaryGuarded (dart:async/zone.dart:1778)
-05-25 13:05:40.118 11632 11632 E flutter : #6      _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381)
-05-25 13:05:40.118 11632 11632 E flutter : #7      _DelayedData.perform (dart:async/stream_impl.dart:573)
-05-25 13:05:40.118 11632 11632 E flutter : #8      _PendingEvents.handleNext (dart:async/stream_impl.dart:678)
-05-25 13:05:40.118 11632 11632 E flutter : #9      _PendingEvents.schedule.<anonymous closure> (dart:async/stream_impl.dart:649)
-05-25 13:05:40.118 11632 11632 E flutter : #10     _microtaskLoop (dart:async/schedule_microtask.dart:40)
-05-25 13:05:40.118 11632 11632 E flutter : #11     _startMicrotaskLoop (dart:async/schedule_microtask.dart:49)
-05-25 13:05:40.118 11632 11632 E flutter :
-05-25 13:05:48.542 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:48.559 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:48.743 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:49.999 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:05:49.999 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:05:49.999 11632 11632 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
-05-25 13:05:51.684 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
-05-25 13:05:51.684 11632 11632 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
-05-25 13:05:55.367 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=RAISE playerId=1
-05-25 13:05:55.367 11632 11632 I flutter : 📨 _processRemoteAction: action=RAISE playerId=1 value=200
-05-25 13:05:55.368 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
-05-25 13:05:55.368 11632 11632 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[1]
-05-25 13:05:57.456 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:57.472 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:57.657 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:05:59.192 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:05:59.192 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:05:59.193 11632 11632 I flutter : RangeError (length): Invalid value: Not in inclusive range 0..1: 2
-05-25 13:05:59.194 11632 11632 I flutter : #0      GameProvider.advancePhase (package:poker_dice_dash/providers/game_provider.dart)
-05-25 13:05:59.194 11632 11632 I flutter : #1      GameProvider.nextTurn (package:poker_dice_dash/providers/game_provider.dart:368)
-05-25 13:05:59.194 11632 11632 I flutter : #2      GameProvider.call (package:poker_dice_dash/providers/game_provider.dart:873)
-05-25 13:05:59.194 11632 11632 I flutter : #3      _GameTableScreenState._buildActionPanel.<anonymous closure> (package:poker_dice_dash/ui/screens/game_table_screen.dart:617)
-05-25 13:05:59.194 11632 11632 I flutter : #4      _InkResponseState.handleTap (package:flutter/src/material/ink_well.dart:1222)
-05-25 13:05:59.194 11632 11632 I flutter : #5      GestureRecognizer.invokeCallback (package:flutter/src/gestures/recognizer.dart:345)
-05-25 13:05:59.194 11632 11632 I flutter : #6      TapGestureRecognizer.handleTapUp (package:flutter/src/gestures/tap.dart:758)
-05-25 13:05:59.194 11632 11632 I flutter : #7      BaseTapGestureRecognizer._checkUp (package:flutter/src/gestures/tap.dart:383)
-05-25 13:05:59.194 11632 11632 I flutter : #8      BaseTapGestureRecognizer.handlePrimaryPointer (package:flutter/src/gestures/tap.dart:314)
-05-25 13:05:59.194 11632 11632 I flutter : #9      PrimaryPointerGestureRecognizer.handleEvent (package:flutter/src/gestures/recognizer.dart:721)
-05-25 13:05:59.194 11632 11632 I flutter : #10     PointerRouter._dispatch (package:flutter/src/gestures/pointer_router.dart:97)
-05-25 13:05:59.194 11632 11632 I flutter : #11     PointerRouter._dispatchEventToRoutes.<anonymous closure> (package:flutter/src/gestures/pointer_router.dart:142)
-05-25 13:05:59.194 11632 11632 I flutter : #12     _LinkedHashMapMixin.forEach (dart:_compact_hash:765)
-05-25 13:05:59.194 11632 11632 I flutter : #13     PointerRouter._dispatchEventToRoutes (package:flutter/src/gestures/pointer_router.dart:140)
-05-25 13:05:59.194 11632 11632 I flutter : #14     PointerRouter.route (package:flutter/src/gestures/pointer_router.dart:130)
-05-25 13:05:59.194 11632 11632 I flutter : #15     GestureBinding.handleEvent (package:flutter/src/gestures/binding.dart:528)
-05-25 13:05:59.195 11632 11632 I flutter : #16     GestureBinding.dispatchEvent (package:flutter/src/gestures/binding.dart:498)
-05-25 13:05:59.195 11632 11632 I flutter : #17     RendererBinding.dispatchEvent (package:flutter/src/rendering/binding.dart:473)
-05-25 13:05:59.195 11632 11632 I flutter : #18     GestureBinding._handlePointerEventImmediately (package:flutter/src/gestures/binding.dart:437)
-05-25 13:05:59.195 11632 11632 I flutter : #19     GestureBinding.handlePointerEvent (package:flutter/src/gestures/binding.dart:394)
-05-25 13:05:59.195 11632 11632 I flutter : #20     GestureBinding._flushPointerEventQueue (package:flutter/src/gestures/binding.dart:341)
-05-25 13:05:59.195 11632 11632 I flutter : #21     GestureBinding._handlePointerDataPacket (package:flutter/src/gestures/binding.dart:308)
-05-25 13:05:59.195 11632 11632 I flutter : #22     _invoke1 (dart:ui/hooks.dart:372)
-05-25 13:05:59.195 11632 11632 I flutter : #23     PlatformDispatcher._dispatchPointerDataPacket (dart:ui/platform_dispatcher.dart:467)
-05-25 13:05:59.195 11632 11632 I flutter : #24     _dispatchPointerDataPacket (dart:ui/hooks.dart:307)
-05-25 13:06:02.904 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:06:02.921 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:06:03.105 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:06:04.042 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:06:04.043 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:06:04.043 11632 11632 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
-05-25 13:06:06.329 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
-05-25 13:06:06.329 11632 11632 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
-05-25 13:06:07.364 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
-05-25 13:06:07.364 11632 11632 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
-05-25 13:06:07.364 11632 11632 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
-05-25 13:06:07.366 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
-05-25 13:06:14.379 11632 11632 I flutter : {0: 10, 1: 20}
-05-25 13:06:18.499 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
-05-25 13:06:18.500 11632 11632 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
-05-25 13:06:28.240 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
-05-25 13:06:28.241 11632 11632 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
-05-25 13:06:28.241 11632 11632 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
-05-25 13:06:28.242 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
-05-25 13:06:28.243 11632 11632 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[1]
-05-25 13:06:30.379 11632 11632 I flutter : Apuesta de 0: 10
-05-25 13:06:30.395 11632 11632 I flutter : Apuesta de 0: 10
-05-25 13:06:30.581 11632 11632 I flutter : Apuesta de 0: 10
-05-25 13:06:33.521 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:06:33.521 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:06:42.251 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
-05-25 13:06:42.251 11632 11632 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
-05-25 13:06:45.036 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=RAISE playerId=1
-05-25 13:06:45.037 11632 11632 I flutter : 📨 _processRemoteAction: action=RAISE playerId=1 value=1309
-05-25 13:06:45.037 11632 11632 I flutter : 🟧 ALL-IN RAISE: 1 se queda sin fichas
-05-25 13:06:45.039 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
-05-25 13:06:47.540 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:06:47.557 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:06:47.741 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:06:57.237 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:06:57.237 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:07:03.302 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:07:03.319 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:07:03.502 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:07:06.785 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:07:06.785 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:07:13.790 11632 11632 I flutter : {1: 10, 0: 20}
-05-25 13:09:43.185 11632 11632 I flutter : Apuesta de 0: 20
-05-25 13:09:43.202 11632 11632 I flutter : Apuesta de 0: 20
-05-25 13:09:43.387 11632 11632 I flutter : Apuesta de 0: 20
-05-25 13:09:45.203 11632 11632 I flutter : Apuesta de 0: 20
-05-25 13:09:46.826 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:09:46.826 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:09:46.826 11632 11632 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
-05-25 13:09:53.675 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=ROLL_DICE playerId=1
-05-25 13:09:53.675 11632 11632 I flutter : 📨 _processRemoteAction: action=ROLL_DICE playerId=1 value=0
-05-25 13:09:55.499 11632 11632 I flutter : 🎮 Host recibió PLAYER_ACTION: action=CALL playerId=1
-05-25 13:09:55.499 11632 11632 I flutter : 📨 _processRemoteAction: action=CALL playerId=1 value=0
-05-25 13:09:55.500 11632 11632 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
-05-25 13:09:55.500 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
-05-25 13:09:55.500 11632 11632 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: RangeError (length): Invalid value: Not in inclusive range 0..1: 2
-05-25 13:09:55.500 11632 11632 E flutter : #0      GameProvider.advancePhase (package:poker_dice_dash/providers/game_provider.dart)
-05-25 13:09:55.500 11632 11632 E flutter : #1      GameProvider.nextTurn (package:poker_dice_dash/providers/game_provider.dart:368)
-05-25 13:09:55.500 11632 11632 E flutter : #2      GameProvider.call (package:poker_dice_dash/providers/game_provider.dart:873)
-05-25 13:09:55.500 11632 11632 E flutter : #3      GameProvider._processRemoteAction (package:poker_dice_dash/providers/game_provider.dart:1028)
-05-25 13:09:55.500 11632 11632 E flutter : #4      GameProvider._listenToMessages.<anonymous closure> (package:poker_dice_dash/providers/game_provider.dart:254)
-05-25 13:09:55.500 11632 11632 E flutter : #5      _RootZone.runUnaryGuarded (dart:async/zone.dart:1778)
-05-25 13:09:55.500 11632 11632 E flutter : #6      _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381)
-05-25 13:09:55.500 11632 11632 E flutter : #7      _DelayedData.perform (dart:async/stream_impl.dart:573)
-05-25 13:09:55.500 11632 11632 E flutter : #8      _PendingEvents.handleNext (dart:async/stream_impl.dart:678)
-05-25 13:09:55.500 11632 11632 E flutter : #9      _PendingEvents.schedule.<anonymous closure> (dart:async/stream_impl.dart:649)
-05-25 13:09:55.500 11632 11632 E flutter : #10     _microtaskLoop (dart:async/schedule_microtask.dart:40)
-05-25 13:09:55.500 11632 11632 E flutter : #11     _startMicrotaskLoop (dart:async/schedule_microtask.dart:49)
-05-25 13:09:55.500 11632 11632 E flutter :
-05-25 13:10:32.036 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:10:32.053 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:10:32.237 11632 11632 I flutter : Apuesta de 0: 0
-05-25 13:11:12.019 11632 11632 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
-05-25 13:11:12.020 11632 11632 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
-05-25 13:11:12.020 11632 11632 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
-05-25 13:11:34.426 11632 11632 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Null check operator used on a null value
-05-25 13:11:34.426 11632 11632 E flutter : #0      State.setState (package:flutter/src/widgets/framework.dart:1219)       
-05-25 13:11:34.426 11632 11632 E flutter : #1      _LobbyScreenState._startHostingInternal.<anonymous closure> (package:poker_dice_dash/ui/screens/lobby_screen.dart:171)
-05-25 13:11:34.426 11632 11632 E flutter : #2      Future._propagateToListeners.handleValueCallback (dart:async/future_impl.dart:948)
-05-25 13:11:34.426 11632 11632 E flutter : #3      Future._propagateToListeners (dart:async/future_impl.dart:977)
-05-25 13:11:34.426 11632 11632 E flutter : #4      Future._completeWithValue (dart:async/future_impl.dart:720)
-05-25 13:11:34.426 11632 11632 E flutter : #5      Future._asyncCompleteWithValue.<anonymous closure> (dart:async/future_impl.dart:804)
-05-25 13:11:34.426 11632 11632 E flutter : #6      _microtaskLoop (dart:async/schedule_microtask.dart:40)
-05-25 13:11:34.426 11632 11632 E flutter : #7      _startMicrotaskLoop (dart:async/schedule_microtask.dart:49)
-05-25 13:11:34.426 11632 11632 E flutter :
-05-25 13:12:11.927 11632 11632 I flutter : 🔧 setMultiplayer: true (isHost=false)
-05-25 13:12:14.031 11632 11632 I flutter : 🎫 Cliente recibió ASSIGN_SEAT: playerId=1
-05-25 13:12:14.142 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=waitingPlayers numPlayers=2
-05-25 13:12:14.215 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=waitingPlayers numPlayers=2
-05-25 13:12:18.060 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=diceTurn numPlayers=205-25 13:12:20.171 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=diceTurn numPlayers=205-25 13:12:20.185 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=diceTurn numPlayers=205-25 13:12:23.331 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=betting numPlayers=2
-05-25 13:12:25.456 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=betting numPlayers=2
-05-25 13:12:25.513 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=diceTurn numPlayers=205-25 13:12:29.116 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=betting numPlayers=2
-05-25 13:12:29.121 11632 11632 I flutter : Apuesta de 1: 0
-05-25 13:12:29.151 11632 11632 I flutter : Apuesta de 1: 0
-05-25 13:12:29.333 11632 11632 I flutter : Apuesta de 1: 0
-05-25 13:12:30.789 11632 11632 I flutter : 🟦 CALL llamado: playerId=1 isHost=false
-05-25 13:12:30.910 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=1 status=betting numPlayers=2
-05-25 13:12:30.916 11632 11632 I flutter : Apuesta de 1: 0
-05-25 13:12:31.434 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=diceTurn numPlayers=205-25 13:12:35.415 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=betting numPlayers=2
-05-25 13:12:42.395 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=betting numPlayers=2
-05-25 13:12:42.904 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=diceTurn numPlayers=205-25 13:12:46.750 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=betting numPlayers=2
-05-25 13:12:48.674 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=betting numPlayers=2
-05-25 13:12:50.358 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=betting numPlayers=2
-05-25 13:12:51.308 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=0 status=betting numPlayers=2
-05-25 13:12:51.373 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=-1 status=finished numPlayers=2
-05-25 13:12:51.401 11632 12732 E flutter : [ERROR:flutter/impeller/entity/contents/contents.cc(122)] Impeller validation: Contents::SetInheritedOpacity should never be called when Contents::CanAcceptOpacity returns false.
-05-25 13:12:51.401 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=-1 status=finished numPlayers=2
-05-25 13:12:53.333 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=-1 status=finished numPlayers=2
-05-25 13:12:53.422 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=-1 status=finished numPlayers=2
-05-25 13:12:54.174 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=-1 status=finished numPlayers=2
-05-25 13:12:55.283 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=-1 status=finished numPlayers=2
-05-25 13:12:58.279 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=-1 status=finished numPlayers=2
-05-25 13:13:05.361 11632 11632 I flutter : 📥 Cliente _syncStateFromMap: currentPlayerIndex=-1 status=finished numPlayers=2
+Fatal Exception: io.flutter.plugins.firebase.crashlytics.FirebaseCrashlyticsTestCrash: This is a test crash caused by calling .crash() in Dart.
+       at io.flutter.plugins.firebase.crashlytics.FlutterFirebaseCrashlyticsPlugin.lambda$crash$1(FlutterFirebaseCrashlyticsPlugin.java:110)
+       at android.os.Handler.handleCallback(Handler.java:958)
+       at android.os.Handler.dispatchMessage(Handler.java:99)
+       at android.os.Looper.loopOnce(Looper.java:222)
+       at android.os.Looper.loop(Looper.java:314)
+       at android.app.ActivityThread.main(ActivityThread.java:8857)
+       at java.lang.reflect.Method.invoke(Method.java)
+       at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:565)
+       at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1013)
+
+queued-work-looper:
+       at android.os.MessageQueue.nativePollOnce(MessageQueue.java)
+       at android.os.MessageQueue.next(MessageQueue.java:344)
+       at android.os.Looper.loopOnce(Looper.java:176)
+       at android.os.Looper.loop(Looper.java:314)
+       at android.os.HandlerThread.run(HandlerThread.java:67)
+
+pool-4-thread-1:
+       at android.database.sqlite.SQLiteConnection.nativeExecute(SQLiteConnection.java)
+       at android.database.sqlite.SQLiteConnection.execute(SQLiteConnection.java:730)
+       at android.database.sqlite.SQLiteSession.endTransactionUnchecked(SQLiteSession.java:439)
+       at android.database.sqlite.SQLiteSession.endTransaction(SQLiteSession.java:403)
+       at android.database.sqlite.SQLiteDatabase.endTransaction(SQLiteDatabase.java:757)
+       at com.google.android.datatransport.runtime.scheduling.persistence.SQLiteEventStore.runCriticalSection(SQLiteEventStore.java:794)
+       at com.google.android.datatransport.runtime.scheduling.DefaultScheduler.lambda$schedule$1(DefaultScheduler.java:81)
+       at com.google.android.datatransport.runtime.SafeLoggingExecutor$SafeLoggingRunnable.run(SafeLoggingExecutor.java:47)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+Timer-1:
+       at java.lang.Object.wait(Object.java)
+       at java.lang.Object.wait(Object.java:405)
+       at java.lang.Object.wait(Object.java:543)
+       at java.util.TimerThread.mainLoop(Timer.java:599)
+       at java.util.TimerThread.run(Timer.java:577)
+
+flutter-worker-0:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+pool-8-thread-2:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+SurfaceSyncGroupTimer:
+       at android.os.MessageQueue.nativePollOnce(MessageQueue.java)
+       at android.os.MessageQueue.next(MessageQueue.java:344)
+       at android.os.Looper.loopOnce(Looper.java:176)
+       at android.os.Looper.loop(Looper.java:314)
+       at android.os.HandlerThread.run(HandlerThread.java:67)
+
+Firebase Blocking Thread #0:
+       at java.io.FileDescriptor.sync(FileDescriptor.java)
+       at androidx.datastore.core.FileWriteScope.writeData(FileStorage.kt:202)
+       at androidx.datastore.core.DataStoreImpl$writeData$2.invokeSuspend(DataStoreImpl.kt:353)
+       at androidx.datastore.core.DataStoreImpl$writeData$2.invoke(DataStoreImpl.kt:13)
+       at androidx.datastore.core.DataStoreImpl$writeData$2.invoke(DataStoreImpl.kt:13)
+       at androidx.datastore.core.FileStorageConnection.writeScope(FileStorage.kt:118)
+       at androidx.datastore.core.DataStoreImpl.writeData$datastore_core_release(DataStoreImpl.kt:348)
+       at androidx.datastore.core.DataStoreImpl$transformAndWrite$2.invokeSuspend(DataStoreImpl.kt:337)
+       at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+       at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:101)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0(CustomThreadFactory.java:47)
+       at java.lang.Thread.run(Thread.java:1564)
+
+FinalizerWatchdogDaemon:
+       at java.lang.Object.wait(Object.java)
+       at java.lang.Object.wait(Object.java:405)
+       at java.lang.Object.wait(Object.java:543)
+       at java.lang.Daemons$FinalizerWatchdogDaemon.sleepUntilNeeded(Daemons.java:483)
+       at java.lang.Daemons$FinalizerWatchdogDaemon.runInternal(Daemons.java:463)
+       at java.lang.Daemons$Daemon.run(Daemons.java:135)
+       at java.lang.Thread.run(Thread.java:1564)
+
+Firebase Background Thread #0:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+       at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+       at java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3797)
+       at java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3738)
+       at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1712)
+       at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1080)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0(CustomThreadFactory.java:47)
+       at java.lang.Thread.run(Thread.java:1564)
+
+Firebase Background Thread #1:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+       at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+       at java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3797)
+       at java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3738)
+       at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1712)
+       at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1080)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0(CustomThreadFactory.java:47)
+       at java.lang.Thread.run(Thread.java:1564)
+
+ScionFrontendApi:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+       at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1763)
+       at java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+ProcessStablePhenotypeFlag:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+       at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1763)
+       at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1236)
+       at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:953)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1080)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+ReferenceQueueDaemon:
+       at java.lang.Object.wait(Object.java)
+       at java.lang.Object.wait(Object.java:405)
+       at java.lang.Object.wait(Object.java:543)
+       at java.lang.Daemons$ReferenceQueueDaemon.runInternal(Daemons.java:262)
+       at java.lang.Daemons$Daemon.run(Daemons.java:135)
+       at java.lang.Thread.run(Thread.java:1564)
+
+FinalizerDaemon:
+       at java.lang.Object.wait(Object.java)
+       at java.lang.Object.wait(Object.java:405)
+       at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:207)
+       at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:228)
+       at java.lang.Daemons$FinalizerDaemon.runInternal(Daemons.java:350)
+       at java.lang.Daemons$Daemon.run(Daemons.java:135)
+       at java.lang.Thread.run(Thread.java:1564)
+
+Measurement Worker:
+       at android.os.BinderProxy.transactNative(BinderProxy.java)
+       at android.os.BinderProxy.transact(BinderProxy.java:639)
+       at m7.bn.b(:com.google.android.gms.dynamite_measurementdynamite@261934029@26.19.34 (190400-0):8)
+       at m7.qs.e(:com.google.android.gms.dynamite_measurementdynamite@261934029@26.19.34 (190400-0):10)
+       at m7.uw.run(:com.google.android.gms.dynamite_measurementdynamite@261934029@26.19.34 (190400-0):77)
+       at m7.vu.t(:com.google.android.gms.dynamite_measurementdynamite@261934029@26.19.34 (190400-0):41)
+       at m7.vu.Q(:com.google.android.gms.dynamite_measurementdynamite@261934029@26.19.34 (190400-0):9)
+       at m7.vo.run(:com.google.android.gms.dynamite_measurementdynamite@261934029@26.19.34 (190400-0):28)
+       at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:520)
+       at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+       at m7.rq.run(:com.google.android.gms.dynamite_measurementdynamite@261934029@26.19.34 (190400-0):48)
+
+Firebase Background Thread #2:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+       at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+       at java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3797)
+       at java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3738)
+       at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1712)
+       at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1080)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0(CustomThreadFactory.java:47)
+       at java.lang.Thread.run(Thread.java:1564)
+
+13329-ScoutStateMachine:
+       at android.os.MessageQueue.nativePollOnce(MessageQueue.java)
+       at android.os.MessageQueue.next(MessageQueue.java:344)
+       at android.os.Looper.loopOnce(Looper.java:176)
+       at android.os.Looper.loop(Looper.java:314)
+       at android.os.HandlerThread.run(HandlerThread.java:67)
+
+Firebase Background Thread #3:
+       at dalvik.system.VMStack.getThreadStackTrace(VMStack.java)
+       at java.lang.Thread.getStackTrace(Thread.java:2843)
+       at java.lang.Thread.getAllStackTraces(Thread.java:2910)
+       at com.google.firebase.crashlytics.internal.common.CrashlyticsReportDataCapture.populateThreadsList(CrashlyticsReportDataCapture.java:343)
+       at com.google.firebase.crashlytics.internal.common.CrashlyticsReportDataCapture.populateExecutionData(CrashlyticsReportDataCapture.java:314)
+       at com.google.firebase.crashlytics.internal.common.CrashlyticsReportDataCapture.populateEventApplicationData(CrashlyticsReportDataCapture.java:261)
+       at com.google.firebase.crashlytics.internal.common.CrashlyticsReportDataCapture.captureEventData(CrashlyticsReportDataCapture.java:112)
+       at com.google.firebase.crashlytics.internal.common.SessionReportingCoordinator.persistEvent(SessionReportingCoordinator.java:337)
+       at com.google.firebase.crashlytics.internal.common.SessionReportingCoordinator.persistFatalEvent(SessionReportingCoordinator.java:130)
+       at com.google.firebase.crashlytics.internal.common.CrashlyticsController$2.call(CrashlyticsController.java:219)
+       at com.google.firebase.crashlytics.internal.common.CrashlyticsController$2.call(CrashlyticsController.java:205)
+       at com.google.firebase.crashlytics.internal.concurrency.CrashlyticsWorker.lambda$submitTask$2(CrashlyticsWorker.java:118)
+       at com.google.android.gms.tasks.zze.run(zze.java:1)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0(CustomThreadFactory.java:47)
+       at java.lang.Thread.run(Thread.java:1564)
+
+Okio Watchdog:
+       at java.lang.Object.wait(Object.java)
+       at java.lang.Object.wait(Object.java:405)
+       at java.lang.Object.wait(Object.java:543)
+       at com.android.okhttp.okio.AsyncTimeout.awaitTimeout(AsyncTimeout.java:313)
+       at com.android.okhttp.okio.AsyncTimeout.access$000(AsyncTimeout.java:42)
+       at com.android.okhttp.okio.AsyncTimeout$Watchdog.run(AsyncTimeout.java:288)
+
+Firebase Blocking Thread #1:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0(CustomThreadFactory.java:47)
+       at java.lang.Thread.run(Thread.java:1564)
+
+pool-8-thread-4:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+DefaultDispatcher-worker-3:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.park(CoroutineScheduler.kt:858)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.tryPark(CoroutineScheduler.kt:806)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:754)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:707)
+
+pool-8-thread-5:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+pool-8-thread-1:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+pool-8-thread-3:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+FramePredictInitTh:
+       at android.os.MessageQueue.nativePollOnce(MessageQueue.java)
+       at android.os.MessageQueue.next(MessageQueue.java:344)
+       at android.os.Looper.loopOnce(Looper.java:176)
+       at android.os.Looper.loop(Looper.java:314)
+       at android.os.HandlerThread.run(HandlerThread.java:67)
+
+OkHttp ConnectionPool:
+       at java.lang.Object.wait(Object.java)
+       at com.android.okhttp.ConnectionPool$1.run(ConnectionPool.java:106)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+flutter-worker-1:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at java.lang.Thread.run(Thread.java:1564)
+
+DefaultDispatcher-worker-1:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.park(CoroutineScheduler.kt:858)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.tryPark(CoroutineScheduler.kt:806)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:754)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:707)
+
+Firebase Blocking Thread #2:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0(CustomThreadFactory.java:47)
+       at java.lang.Thread.run(Thread.java:1564)
+
+FileObserver:
+       at android.os.FileObserver$ObserverThread.observe(FileObserver.java)
+       at android.os.FileObserver$ObserverThread.run(FileObserver.java:116)
+
+DefaultDispatcher-worker-2:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.park(CoroutineScheduler.kt:858)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.tryPark(CoroutineScheduler.kt:806)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:754)
+       at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:707)
+
+Timer-0:
+       at java.lang.Object.wait(Object.java)
+       at java.lang.Object.wait(Object.java:405)
+       at java.lang.Object.wait(Object.java:543)
+       at java.util.TimerThread.mainLoop(Timer.java:599)
+       at java.util.TimerThread.run(Timer.java:577)
+
+Firebase Blocking Thread #3:
+       at jdk.internal.misc.Unsafe.park(Unsafe.java)
+       at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+       at java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+       at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+       at java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+       at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+       at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1079)
+       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1140)
+       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+       at com.google.firebase.concurrent.CustomThreadFactory.lambda$newThread$0(CustomThreadFactory.java:47)
+       at java.lang.Thread.run(Thread.java:1564)
+
+GmsDynamite:
+       at java.lang.Object.wait(Object.java)
+       at java.lang.Object.wait(Object.java:405)
+       at java.lang.Object.wait(Object.java:543)
+       at com.google.android.gms.dynamite.zza.run(com.google.android.gms:play-services-basement@@18.9.0:2)
+
+GoogleApiHandler:
+       at android.os.MessageQueue.nativePollOnce(MessageQueue.java)
+       at android.os.MessageQueue.next(MessageQueue.java:344)
+       at android.os.Looper.loopOnce(Looper.java:176)
+       at android.os.Looper.loop(Looper.java:314)
+       at android.os.HandlerThread.run(HandlerThread.java:67)
