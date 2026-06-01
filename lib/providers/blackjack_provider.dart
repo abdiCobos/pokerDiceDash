@@ -1,4 +1,3 @@
-import '../services/logger_service.dart';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import '../models/blackjack_models.dart';
@@ -16,21 +15,33 @@ class BlackjackProvider extends ChangeNotifier {
   int get currentPlayerIndex => _state.currentPlayerIndex;
   String? get message => _state.message;
   bool _isMultiplayer = false;
-  bool get isMultiplayer => _isMultiplayer;
 
   static final _random = Random();
 
-  void initSinglePlayer({int botCount = 0}) {
-    AppLogger().event('blackjack_start', params: {'bot_count': botCount.toString()});
-    _isMultiplayer = false;
-    final list = <BlackjackPlayer>[];
-    list.add(BlackjackPlayer(id: 'dealer', name: 'Dealer', isDealer: true, chipBalance: 99999));
-    list.add(BlackjackPlayer(id: '0', name: 'Tú', chipBalance: 1000, isLocal: true));
-    for (var i = 0; i < botCount; i++) {
-      list.add(BlackjackPlayer(id: '${i + 1}', name: 'Bot ${i + 1}', chipBalance: 1000));
+  void _logAndNotify(String method) {
+    try {
+      AppLogger().log('BJ:$method');
+      notifyListeners();
+    } catch (e, s) {
+      AppLogger().error('BJ:$method failed: $e', s);
     }
-    _state = BlackjackState(players: list, deck: _freshDeck(), phase: BlackjackPhase.betting);
-    notifyListeners();
+  }
+
+  void initSinglePlayer({int botCount = 0}) {
+    try {
+      AppLogger().event('blackjack_start', params: {'bot_count': botCount.toString()});
+      _isMultiplayer = false;
+      final list = <BlackjackPlayer>[];
+      list.add(BlackjackPlayer(id: 'dealer', name: 'Dealer', isDealer: true, chipBalance: 99999));
+      list.add(BlackjackPlayer(id: '0', name: 'Tú', chipBalance: 1000, isLocal: true));
+      for (var i = 0; i < botCount; i++) {
+        list.add(BlackjackPlayer(id: '${i + 1}', name: 'Bot ${i + 1}', chipBalance: 1000));
+      }
+      _state = BlackjackState(players: list, deck: _freshDeck(), phase: BlackjackPhase.betting);
+      _logAndNotify('initSinglePlayer');
+    } catch (e, s) {
+      AppLogger().error('BJ:initSinglePlayer crash: $e', s);
+    }
   }
 
   List<CardModel> _freshDeck() {
@@ -58,235 +69,440 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void placeBet(String playerId, int amount) {
-    AppLogger().event('blackjack_bet', params: {'player_id': playerId, 'amount': amount.toString()});
-    final idx = players.indexWhere((p) => p.id == playerId);
-    if (idx < 0) return;
-    final p = players[idx];
-    if (amount <= 0 || amount > p.chipBalance) return;
-    final updated = <BlackjackPlayer>[...players];
-    updated[idx] = BlackjackPlayer(
-      id: p.id, name: p.name, chipBalance: p.chipBalance - amount,
-      isLocal: p.isLocal, isDealer: p.isDealer, betAmount: amount,
-    );
-    _state = _state.copyWith(players: updated);
-    notifyListeners();
+    try {
+      AppLogger().log('BJ:placeBet $playerId=$amount');
+      final idx = players.indexWhere((p) => p.id == playerId);
+      if (idx < 0) return;
+      final p = players[idx];
+      if (amount <= 0 || amount > p.chipBalance) return;
+      final updated = <BlackjackPlayer>[...players];
+      final hand = BlackjackHand(betAmount: amount);
+      updated[idx] = BlackjackPlayer(
+        id: p.id, name: p.name, chipBalance: p.chipBalance - amount,
+        isLocal: p.isLocal, isDealer: p.isDealer,
+        hands: [hand], totalBet: amount,
+      );
+      _state = _state.copyWith(players: updated);
+      _logAndNotify('placeBet');
 
-    final humanPlayers = updated.where((p) => !p.isDealer && p.betAmount > 0).toList();
-    AppLogger().log('🎰 Apuesta: $playerId=$amount, humanosConApuesta=${humanPlayers.length}');
-
-    if (humanPlayers.length >= 1 && humanPlayers.every((p) => p.betAmount > 0)) {
-      Future.delayed(const Duration(milliseconds: 300), _startDealing);
+      final bettors = updated.where((p) => !p.isDealer && p.totalBet > 0).toList();
+      AppLogger().log('BJ:bettors=${bettors.length}');
+      if (bettors.length >= 1 && bettors.every((p) => p.totalBet > 0)) {
+        _startDealingSequence();
+      }
+    } catch (e, s) {
+      AppLogger().error('BJ:placeBet crash: $e', s);
     }
   }
 
-  void _startDealing() {
-    final updated = <BlackjackPlayer>[...players];
-    for (var i = 0; i < updated.length; i++) {
-      updated[i] = BlackjackPlayer(
-        id: updated[i].id, name: updated[i].name, chipBalance: updated[i].chipBalance,
-        isLocal: updated[i].isLocal, isDealer: updated[i].isDealer,
-        betAmount: updated[i].betAmount, hand: [],
-        isStanding: false, isBusted: false,
-      );
-    }
-    // Deal 2 cards each
-    for (var round = 0; round < 2; round++) {
+  void _startDealingSequence() {
+    try {
+      AppLogger().log('BJ:_startDealingSequence');
+      final updated = <BlackjackPlayer>[...players];
       for (var i = 0; i < updated.length; i++) {
-        updated[i].hand.add(_draw());
+        updated[i] = BlackjackPlayer(
+          id: updated[i].id, name: updated[i].name, chipBalance: updated[i].chipBalance,
+          isLocal: updated[i].isLocal, isDealer: updated[i].isDealer,
+          hands: [BlackjackHand(betAmount: updated[i].totalBet)],
+          totalBet: updated[i].totalBet,
+        );
       }
-    }
-    SoundService().cardMix();
-    _state = BlackjackState(players: updated, deck: _state.deck, phase: BlackjackPhase.dealing);
-    notifyListeners();
+      _state = BlackjackState(players: updated, deck: _state.deck, phase: BlackjackPhase.dealing);
+      _logAndNotify('_startDealingSequence-phase');
 
-    Future.delayed(const Duration(milliseconds: 800), () {
-      // Auto-stand for blackjack players
-      for (var i = 0; i < _state.players.length; i++) {
-        if (!_state.players[i].isDealer && _state.players[i].isBlackjack) {
-          final u = <BlackjackPlayer>[..._state.players];
-          u[i] = BlackjackPlayer(
-            id: u[i].id, name: u[i].name, chipBalance: u[i].chipBalance,
-            isLocal: u[i].isLocal, isDealer: u[i].isDealer,
-            hand: u[i].hand, betAmount: u[i].betAmount,
-            isStanding: true, isBusted: false,
-          );
-          _state = _state.copyWith(players: u);
+      // Deal cards one by one with delays
+      _dealCardsSequentially(updated);
+    } catch (e, s) {
+      AppLogger().error('BJ:_startDealingSequence crash: $e', s);
+    }
+  }
+
+  int _getNextDealIndex(int currentPlayerSlot, int dealRound) {
+    // Deal round 0: each player gets 1st card (in order, ending with dealer face-up)
+    // Deal round 1: each player gets 2nd card (in order, dealer gets hole card face-down)
+    // Total: 2 * players.length cards
+    return (dealRound * players.length) + currentPlayerSlot;
+  }
+
+  void _dealCardsSequentially(List<BlackjackPlayer> playerList) {
+    var dealStep = 0;
+    final maxSteps = playerList.length * 2;
+
+    void dealNextCard() {
+      if (dealStep >= maxSteps) {
+        Future.delayed(const Duration(milliseconds: 400), _afterDealComplete);
+        return;
+      }
+      final round = dealStep ~/ playerList.length;
+      final slot = dealStep % playerList.length;
+
+      final updated = <BlackjackPlayer>[..._state.players];
+      final card = _draw();
+      updated[slot].hands[0].cards.add(card);
+      if (dealStep % playerList.length == 0) {
+        SoundService().cardMix();
+      }
+      _state = _state.copyWith(players: updated, deck: _state.deck);
+      _logAndNotify('_dealCardsSequentially-$dealStep');
+      dealStep++;
+      Future.delayed(const Duration(milliseconds: 350), dealNextCard);
+    }
+
+    dealNextCard();
+  }
+
+  void _afterDealComplete() {
+    try {
+      AppLogger().log('BJ:_afterDealComplete');
+      var updated = <BlackjackPlayer>[..._state.players];
+      final dealerIdx = updated.indexWhere((p) => p.isDealer);
+      if (dealerIdx < 0) return;
+
+      // If dealer has blackjack, end round
+      final dealerBj = updated[dealerIdx].hands[0].isBlackjack;
+      AppLogger().log('BJ:dealerBJ=$dealerBj dealerVal=${updated[dealerIdx].hands[0].handValue}');
+
+      // Auto-stand for player blackjacks
+      for (var i = 0; i < updated.length; i++) {
+        if (updated[i].isDealer) continue;
+        if (updated[i].hands[0].isBlackjack) {
+          updated[i].hands[0].isStanding = true;
         }
       }
-      _state = _state.copyWith(phase: BlackjackPhase.playerTurn, currentPlayerIndex: 0);
-      _advanceToNextActivePlayer();
-      notifyListeners();
-    });
+
+      _state = _state.copyWith(players: updated);
+      _logAndNotify('_afterDealComplete');
+
+      if (dealerBj && dealerIdx == updated.length - 1) {
+        // All players lose unless they also have BJ
+        Future.delayed(const Duration(milliseconds: 500), _startDealerTurn);
+      } else {
+        _state = _state.copyWith(phase: BlackjackPhase.playerTurn, currentPlayerIndex: 0, currentHandIndex: 0);
+        _logAndNotify('_afterDealComplete-playerTurn');
+        Future.delayed(const Duration(milliseconds: 300), _advanceToNextActivePlayer);
+      }
+    } catch (e, s) {
+      AppLogger().error('BJ:_afterDealComplete crash: $e', s);
+    }
   }
 
   void _advanceToNextActivePlayer() {
-    final humans = humanPlayers;
-    if (humans.isEmpty) {
-      _startDealerTurn();
-      return;
-    }
-    // Find next player that hasn't acted yet
-    var idx = _state.currentPlayerIndex;
-    for (var loop = 0; loop < humans.length; loop++) {
-      final p = humans[idx];
-      if (!p.isStanding && !p.isBusted && !p.isBlackjack) {
-        _state = _state.copyWith(currentPlayerIndex: idx);
-        notifyListeners();
-        // Auto-play bot
-        if (_isMultiplayer || !p.isLocal) {
-          Future.delayed(const Duration(milliseconds: 600), () => _autoPlayBot(p.id));
+    try {
+      final humans = humanPlayers;
+      if (humans.isEmpty) { _startDealerTurn(); return; }
+
+      var pIdx = _state.currentPlayerIndex;
+      var hIdx = 0;
+      for (var loop = 0; loop < humans.length * 5; loop++) {
+        final p = humans[pIdx];
+        // Check all hands of this player
+        for (hIdx = 0; hIdx < p.hands.length; hIdx++) {
+          if (!p.hands[hIdx].isFinished && p.hands[hIdx].cards.length >= 2) {
+            _state = _state.copyWith(currentPlayerIndex: pIdx, currentHandIndex: hIdx);
+            _logAndNotify('_advanceToNextActivePlayer-$pIdx-$hIdx');
+            // Auto-play bot
+            if (!p.isLocal) {
+              Future.delayed(const Duration(milliseconds: 600), () => _autoPlayBot(p.id));
+            }
+            return;
+          }
         }
-        return;
+        pIdx = (pIdx + 1) % humans.length;
       }
-      idx = (idx + 1) % humans.length;
+      _startDealerTurn();
+    } catch (e, s) {
+      AppLogger().error('BJ:_advanceToNextActivePlayer crash: $e', s);
     }
-    _startDealerTurn();
   }
 
   void _autoPlayBot(String playerId) {
-    final p = _state.players.firstWhere((p) => p.id == playerId);
-    if (p.handValue < 17) {
-      hit(playerId);
-    } else {
-      stand(playerId);
+    try {
+      final pIdx = players.indexWhere((p) => p.id == playerId);
+      if (pIdx < 0) return;
+      final p = players[pIdx];
+      final h = p.currentHand;
+      if (h.handValue < 17) {
+        hit(playerId);
+      } else {
+        stand(playerId);
+      }
+    } catch (e, s) {
+      AppLogger().error('BJ:_autoPlayBot crash: $e', s);
     }
   }
 
   void hit(String playerId) {
-    if (_state.phase != BlackjackPhase.playerTurn) return;
-    final idx = _state.players.indexWhere((p) => p.id == playerId);
-    if (idx < 0) return;
-    final card = _draw();
-    final updated = <BlackjackPlayer>[..._state.players];
-    updated[idx].hand.add(card);
-    SoundService().cardMix();
+    try {
+      AppLogger().log('BJ:hit $playerId');
+      if (_state.phase != BlackjackPhase.playerTurn) return;
+      final pIdx = players.indexWhere((p) => p.id == playerId);
+      if (pIdx < 0) return;
+      final card = _draw();
+      final updated = <BlackjackPlayer>[...players];
+      final hands = <BlackjackHand>[...updated[pIdx].hands];
+      final hIdx = updated[pIdx].activeHandIndex;
+      hands[hIdx].cards.add(card);
+      SoundService().cardMix();
 
-    if (updated[idx].handValue > 21) {
-      updated[idx] = BlackjackPlayer(
-        id: updated[idx].id, name: updated[idx].name, chipBalance: updated[idx].chipBalance,
-        isLocal: updated[idx].isLocal, isDealer: updated[idx].isDealer,
-        hand: updated[idx].hand, betAmount: updated[idx].betAmount,
-        isStanding: true, isBusted: true,
-      );
-      AppLogger().log('💥 BUST: $playerId=${updated[idx].handValue}');
-    }
-    _state = _state.copyWith(players: updated, deck: _state.deck);
-    notifyListeners();
+      final val = hands[hIdx].handValue;
+      if (val > 21) {
+        hands[hIdx].isBusted = true;
+        hands[hIdx].isStanding = true;
+        AppLogger().log('BJ:BUST $playerId=$val');
+      } else if (val == 21) {
+        hands[hIdx].isStanding = true;
+        AppLogger().log('BJ:21 $playerId=$val');
+      }
+      updated[pIdx] = updated[pIdx].copyWith(hands: hands);
+      _state = _state.copyWith(players: updated, deck: _state.deck);
+      _logAndNotify('hit');
 
-    if (updated[idx].isBusted) {
-      Future.delayed(const Duration(milliseconds: 500), _advanceToNextActivePlayer);
+      if (hands[hIdx].isFinished) {
+        Future.delayed(const Duration(milliseconds: 400), _advanceToNextActivePlayer);
+      } else if (hands[hIdx].isDoubledDown) {
+        hands[hIdx].isStanding = true;
+        updated[pIdx] = updated[pIdx].copyWith(hands: hands);
+        _state = _state.copyWith(players: updated);
+        _logAndNotify('hit-doubledDown');
+        Future.delayed(const Duration(milliseconds: 400), _advanceToNextActivePlayer);
+      }
+    } catch (e, s) {
+      AppLogger().error('BJ:hit crash: $e', s);
     }
   }
 
   void stand(String playerId) {
-    if (_state.phase != BlackjackPhase.playerTurn) return;
-    final idx = _state.players.indexWhere((p) => p.id == playerId);
-    if (idx < 0) return;
-    final updated = <BlackjackPlayer>[..._state.players];
-    updated[idx] = BlackjackPlayer(
-      id: updated[idx].id, name: updated[idx].name, chipBalance: updated[idx].chipBalance,
-      isLocal: updated[idx].isLocal, isDealer: updated[idx].isDealer,
-      hand: updated[idx].hand, betAmount: updated[idx].betAmount,
-      isStanding: true, isBusted: updated[idx].isBusted,
-    );
-    _state = _state.copyWith(players: updated);
-    notifyListeners();
-    Future.delayed(const Duration(milliseconds: 300), _advanceToNextActivePlayer);
+    try {
+      AppLogger().log('BJ:stand $playerId');
+      if (_state.phase != BlackjackPhase.playerTurn) return;
+      final pIdx = players.indexWhere((p) => p.id == playerId);
+      if (pIdx < 0) return;
+      final hands = <BlackjackHand>[...players[pIdx].hands];
+      final hIdx = players[pIdx].activeHandIndex;
+      if (hIdx >= hands.length) return;
+      hands[hIdx].isStanding = true;
+      final updated = <BlackjackPlayer>[...players];
+      updated[pIdx] = players[pIdx].copyWith(hands: hands);
+      _state = _state.copyWith(players: updated);
+      _logAndNotify('stand');
+      Future.delayed(const Duration(milliseconds: 300), _advanceToNextActivePlayer);
+    } catch (e, s) {
+      AppLogger().error('BJ:stand crash: $e', s);
+    }
+  }
+
+  void doubleDown(String playerId) {
+    try {
+      AppLogger().log('BJ:doubleDown $playerId');
+      if (_state.phase != BlackjackPhase.playerTurn) return;
+      final pIdx = players.indexWhere((p) => p.id == playerId);
+      if (pIdx < 0) return;
+      final hands = <BlackjackHand>[...players[pIdx].hands];
+      final hIdx = players[pIdx].activeHandIndex;
+      if (hIdx >= hands.length) return;
+      final extraBet = hands[hIdx].betAmount;
+      if (players[pIdx].chipBalance < extraBet) return;
+      hands[hIdx] = hands[hIdx].copyWith(betAmount: hands[hIdx].betAmount * 2, isDoubledDown: true);
+      final updated = <BlackjackPlayer>[...players];
+      updated[pIdx] = players[pIdx].copyWith(
+        hands: hands,
+        chipBalance: players[pIdx].chipBalance - extraBet,
+        totalBet: players[pIdx].totalBet + extraBet,
+      );
+      _state = _state.copyWith(players: updated);
+      _logAndNotify('doubleDown');
+      // Deal exactly one more card
+      hit(playerId);
+    } catch (e, s) {
+      AppLogger().error('BJ:doubleDown crash: $e', s);
+    }
+  }
+
+  void splitPair(String playerId) {
+    try {
+      AppLogger().log('BJ:splitPair $playerId');
+      if (_state.phase != BlackjackPhase.playerTurn) return;
+      final pIdx = players.indexWhere((p) => p.id == playerId);
+      if (pIdx < 0) return;
+      final p = players[pIdx];
+      if (!p.canSplit) return;
+      final betPerHand = p.hands[0].betAmount;
+      if (p.chipBalance < betPerHand) return;
+
+      final cards = p.hands[0].cards;
+      final hand1 = BlackjackHand(cards: [cards[0]], betAmount: betPerHand);
+      final hand2 = BlackjackHand(cards: [cards[1]], betAmount: betPerHand);
+
+      // Deal one card to each hand
+      hand1.cards.add(_draw());
+      SoundService().cardMix();
+      _state = _state.copyWith(deck: _state.deck);
+      _logAndNotify('splitPair-card1');
+
+      hand2.cards.add(_draw());
+      SoundService().cardMix();
+
+      final updated = <BlackjackPlayer>[...players];
+      updated[pIdx] = p.copyWith(
+        hands: [hand1, hand2],
+        chipBalance: p.chipBalance - betPerHand,
+        totalBet: p.totalBet + betPerHand,
+        activeHandIndex: 0,
+      );
+      _state = _state.copyWith(players: updated, deck: _state.deck, currentHandIndex: 0);
+      _logAndNotify('splitPair');
+
+      // Check for 21 in first hand
+      if (hand1.handValue == 21) {
+        hand1.isStanding = true;
+        updated[pIdx] = updated[pIdx].copyWith(hands: [hand1, hand2]);
+        _state = _state.copyWith(players: updated);
+        _logAndNotify('splitPair-firstHand21');
+        _advanceToNextActivePlayer();
+      }
+    } catch (e, s) {
+      AppLogger().error('BJ:splitPair crash: $e', s);
+    }
   }
 
   void _startDealerTurn() {
-    final d = dealer;
-    if (d == null) return;
-    _state = _state.copyWith(phase: BlackjackPhase.dealerTurn, message: 'Turno del Dealer');
-    notifyListeners();
-    Future.delayed(const Duration(milliseconds: 500), _dealerPlay);
+    try {
+      AppLogger().log('BJ:_startDealerTurn');
+      final dIdx = players.indexWhere((p) => p.isDealer);
+      if (dIdx < 0) return;
+      _state = _state.copyWith(phase: BlackjackPhase.dealerTurn);
+      _logAndNotify('_startDealerTurn');
+      Future.delayed(const Duration(milliseconds: 400), _dealerPlay);
+    } catch (e, s) {
+      AppLogger().error('BJ:_startDealerTurn crash: $e', s);
+    }
   }
 
   void _dealerPlay() {
-    final d = dealer;
-    if (d == null) return;
-    final updated = <BlackjackPlayer>[..._state.players];
-    final dIdx = updated.indexWhere((p) => p.isDealer);
+    try {
+      AppLogger().log('BJ:_dealerPlay');
+      final dIdx = players.indexWhere((p) => p.isDealer);
+      if (dIdx < 0) return;
+      var dealerPlayer = players[dIdx];
+      final dealerHand = dealerPlayer.hands[0];
 
-    // Dealer hits until 17+
-    while (updated[dIdx].handValue < 17) {
-      updated[dIdx].hand.add(_draw());
-      SoundService().cardMix();
-    }
-    _state = _state.copyWith(players: updated, deck: _state.deck);
-    notifyListeners();
+      // Check if all players busted - dealer doesn't need to draw
+      final allPlayersBusted = humanPlayers.every((p) =>
+          p.hands.every((h) => h.isBusted || h.cards.isEmpty));
+      AppLogger().log('BJ:allBusted=$allPlayersBusted');
 
-    final dealerVal = updated[dIdx].handValue;
-    final dealerBj = updated[dIdx].isBlackjack;
-    AppLogger().log('🎰 Dealer: $dealerVal (${dealerBj ? "BJ" : ""})');
-
-    // Resolve bets
-    final results = <String, String>{};
-    for (var i = 0; i < updated.length; i++) {
-      if (updated[i].isDealer) continue;
-      final p = updated[i];
-      int winAmount = 0;
-      String result = '';
-
-      if (p.isBusted) {
-        result = '💥 Bust - Pierde ${p.betAmount}';
-        winAmount = 0;
-      } else if (dealerVal > 21) {
-        winAmount = p.isBlackjack ? (p.betAmount * 2.5).toInt() : p.betAmount * 2;
-        result = p.isBlackjack ? '🃏 Blackjack! Gana $winAmount' : '✅ Dealer bust - Gana $winAmount';
-      } else if (p.isBlackjack && !dealerBj) {
-        winAmount = (p.betAmount * 2.5).toInt();
-        result = '🃏 Blackjack! Gana $winAmount';
-      } else if (p.handValue > dealerVal) {
-        winAmount = p.betAmount * 2;
-        result = '✅ ${p.handValue} vs $dealerVal - Gana $winAmount';
-      } else if (p.handValue == dealerVal) {
-        winAmount = p.betAmount;
-        result = '🤝 Empate ${p.handValue} - Recupera $winAmount';
-      } else {
-        result = '❌ ${p.handValue} vs $dealerVal - Pierde ${p.betAmount}';
+      if (!allPlayersBusted) {
+        var updated = <BlackjackPlayer>[...players];
+        while (dealerHand.handValue < 17) {
+          dealerHand.cards.add(_draw());
+          updated[dIdx] = BlackjackPlayer(
+            id: dealerPlayer.id, name: dealerPlayer.name,
+            chipBalance: dealerPlayer.chipBalance,
+            isLocal: dealerPlayer.isLocal, isDealer: true,
+            hands: [dealerHand],
+          );
+          _state = _state.copyWith(players: updated, deck: _state.deck);
+          _logAndNotify('_dealerPlay-hit');
+          SoundService().cardMix();
+        }
       }
 
-      updated[i] = BlackjackPlayer(
-        id: updated[i].id, name: updated[i].name,
-        chipBalance: updated[i].chipBalance + winAmount,
-        isLocal: updated[i].isLocal, isDealer: updated[i].isDealer,
-        hand: updated[i].hand, betAmount: updated[i].betAmount,
-        isStanding: updated[i].isStanding, isBusted: updated[i].isBusted,
-      );
-      results[updated[i].id] = result;
+      final dealerVal = dealerHand.handValue;
+      final dealerBj = dealerHand.isBlackjack;
+      AppLogger().log('BJ:dealerFinal=$dealerVal bj=$dealerBj');
+
+      _resolveRound();
+    } catch (e, s) {
+      AppLogger().error('BJ:_dealerPlay crash: $e', s);
     }
+  }
 
-    final msgs = results.values.join('\n');
-    _state = _state.copyWith(players: updated, phase: BlackjackPhase.roundEnd, message: msgs);
-    SoundService().chipsWin();
-    notifyListeners();
+  void _resolveRound() {
+    try {
+      AppLogger().log('BJ:_resolveRound');
+      final dIdx = players.indexWhere((p) => p.isDealer);
+      if (dIdx < 0) return;
+      const dealerIdx = 0; // dealer is always first in list
+      final dealerVal = players[dIdx].hands[0].handValue;
 
-    // Auto new round after delay
-    AppLogger().event('blackjack_round_end');
-    Future.delayed(const Duration(seconds: 4), newRound);
+      final results = <String, String>{};
+      var finalPlayers = <BlackjackPlayer>[...players];
+
+      for (var i = 0; i < finalPlayers.length; i++) {
+        if (finalPlayers[i].isDealer) continue;
+        var p = finalPlayers[i];
+        int totalWinnings = 0;
+
+        for (var h = 0; h < p.hands.length; h++) {
+          final hand = p.hands[h];
+          if (hand.cards.isEmpty) continue;
+          int winAmount = 0;
+
+          if (hand.isBusted) {
+            winAmount = 0;
+          } else if (dealerVal > 21) {
+            winAmount = hand.isBlackjack ? (hand.betAmount * 2.5).round() : hand.betAmount * 2;
+          } else if (hand.isBlackjack) {
+            winAmount = (hand.betAmount * 2.5).round();
+          } else if (hand.handValue > dealerVal) {
+            winAmount = hand.betAmount * 2;
+          } else if (hand.handValue == dealerVal) {
+            winAmount = hand.betAmount;
+          }
+          totalWinnings += winAmount;
+        }
+
+        final netChange = totalWinnings - p.totalBet;
+        p = p.copyWith(chipBalance: p.chipBalance + totalWinnings);
+
+        final dealerHand = finalPlayers[dIdx].hands[0];
+        String result;
+        if (p.hands.any((h) => h.isBusted)) {
+          result = '💥 Bust - Pierdes ${p.totalBet}';
+        } else if (dealerVal > 21) {
+          result = '✅ Dealer bust - Ganas ${netChange > 0 ? "+$netChange" : netChange}';
+        } else if (p.isBlackjack) {
+          result = '🃏 Blackjack! Ganas +${netChange}';
+        } else if (p.hands.any((h) => h.handValue > dealerVal)) {
+          result = '✅ Ganas con: ${p.hands.map((h) => h.handValue.toString()).join(" & ")} - +${netChange}';
+        } else if (p.hands.any((h) => h.handValue == dealerVal)) {
+          result = '🤝 Empate - Recuperas ${totalWinnings}';
+        } else {
+          result = '❌ Dealer gana con: $dealerVal - Pierdes ${p.totalBet}';
+        }
+        AppLogger().log('BJ:result $i: $result');
+        results[p.id] = result;
+        finalPlayers[i] = p;
+      }
+
+      final msgs = results.values.join('\n');
+      _state = _state.copyWith(players: finalPlayers, phase: BlackjackPhase.roundEnd, message: msgs);
+      SoundService().chipsWin();
+      _logAndNotify('_resolveRound');
+
+      AppLogger().event('blackjack_round_end');
+    } catch (e, s) {
+      AppLogger().error('BJ:_resolveRound crash: $e', s);
+    }
   }
 
   void newRound() {
-    if (_isMultiplayer) return;
-    final updated = <BlackjackPlayer>[..._state.players];
-    for (var i = 0; i < updated.length; i++) {
-      if (updated[i].chipBalance <= 0 && !updated[i].isDealer) {
+    try {
+      if (_isMultiplayer) return;
+      var updated = <BlackjackPlayer>[..._state.players];
+      for (var i = 0; i < updated.length; i++) {
+        final balance = updated[i].chipBalance <= 0 && !updated[i].isDealer
+            ? 1000 : updated[i].chipBalance;
         updated[i] = BlackjackPlayer(
-          id: updated[i].id, name: updated[i].name, chipBalance: 1000,
+          id: updated[i].id, name: updated[i].name, chipBalance: balance,
           isLocal: updated[i].isLocal, isDealer: updated[i].isDealer,
-          betAmount: 0,
-        );
-      } else {
-        updated[i] = BlackjackPlayer(
-          id: updated[i].id, name: updated[i].name, chipBalance: updated[i].chipBalance,
-          isLocal: updated[i].isLocal, isDealer: updated[i].isDealer,
-          betAmount: 0, hand: [],
-          isStanding: false, isBusted: false,
+          hands: [BlackjackHand()], totalBet: 0,
         );
       }
+      _state = BlackjackState(players: updated, deck: _freshDeck(), phase: BlackjackPhase.betting);
+      _logAndNotify('newRound');
+    } catch (e, s) {
+      AppLogger().error('BJ:newRound crash: $e', s);
     }
-    _state = BlackjackState(players: updated, deck: _freshDeck(), phase: BlackjackPhase.betting);
-    notifyListeners();
   }
 }

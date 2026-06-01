@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 
@@ -22,10 +23,14 @@ class AppLogger {
   }
 
   void error(String message, [StackTrace? stack]) {
-    FirebaseCrashlytics.instance.log(message);
+    FirebaseCrashlytics.instance.log('ERROR:$message');
     if (stack != null) {
-      FirebaseCrashlytics.instance.recordError(message, stack);
+      FirebaseCrashlytics.instance.recordError(message, stack, fatal: false);
+    } else {
+      FirebaseCrashlytics.instance.recordError(Exception(message), StackTrace.empty, fatal: false);
     }
+    dev.log(message, name: 'AppLogger.error');
+    if (stack != null) dev.log(stack.toString(), name: 'AppLogger.error');
   }
 
   void setUser(String? id, String? name) {

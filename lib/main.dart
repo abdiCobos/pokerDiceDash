@@ -18,6 +18,16 @@ void main() async {
   await Firebase.initializeApp();
   AppLogger().init();
 
+  // Force Crashlytics collection in debug mode
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+  FirebaseCrashlytics.instance.setUserIdentifier('anon-${DateTime.now().millisecondsSinceEpoch}');
+
+  // Send any unsent crash reports from previous runs
+  final didCrashOnLastRun = await FirebaseCrashlytics.instance.didCrashOnPreviousExecution();
+  if (didCrashOnLastRun) {
+    await FirebaseCrashlytics.instance.sendUnsentReports();
+  }
+
   FlutterError.onError = (errorDetails) {
     AppLogger().error('FlutterError: ${errorDetails.exceptionAsString()}', errorDetails.stack);
     FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
