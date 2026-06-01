@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../services/logger_service.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -568,7 +569,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     final currentBet = game.currentBet;
     final playerBet = game.getPlayerBet(activePlayer.id);
     final amountToCall = currentBet - playerBet;
-    debugPrint('Apuesta de ${activePlayer.id}: $playerBet');
+    AppLogger().log('Apuesta de ${activePlayer.id}: $playerBet');
     final isAllInCall = amountToCall >= activePlayer.chipBalance;
 
     String callLabel;
@@ -890,7 +891,7 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                   child: InkWell(
                     onTap: () {
                       final allInRaise = maxBalance - amountToCall;
-                      debugPrint('ALL IN tap: maxBalance=$maxBalance amountToCall=$amountToCall allInRaise=$allInRaise');
+                      AppLogger().log('ALL IN tap: maxBalance=$maxBalance amountToCall=$amountToCall allInRaise=$allInRaise');
                       if (allInRaise > 0) {
                         setState(() => raiseAmount = allInRaise);
                       }

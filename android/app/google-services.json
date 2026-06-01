@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1064121685449",
+    "project_id": "poker-dice-dash",
+    "storage_bucket": "poker-dice-dash.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064121685449:android:e135b320f388f4cd668418",
+        "android_client_info": {
+          "package_name": "com.example.poker_dice_dash"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBab9RSAhk-TfRIQaCYways5N67hG7uXsU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

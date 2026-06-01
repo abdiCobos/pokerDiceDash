@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/logger_service.dart';
 import '../../providers/game_provider.dart';
 import '../../models/game_state.dart';
 import 'game_table_screen.dart';
@@ -63,7 +64,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
       final type = msg['type'];
       if (type == 'JOIN_REJECTED') {
         final reason = msg['reason'] as String? ?? '';
-        debugPrint('🚫 JOIN_REJECTED recibido: $reason');
+        AppLogger().log('🚫 JOIN_REJECTED recibido: $reason');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

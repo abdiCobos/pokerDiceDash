@@ -1,8 +1,10 @@
+import '../services/logger_service.dart';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import '../models/blackjack_models.dart';
 import '../models/card_model.dart';
 import '../services/sound_service.dart';
+import '../services/logger_service.dart';
 
 class BlackjackProvider extends ChangeNotifier {
   BlackjackState _state = BlackjackState();
@@ -19,6 +21,7 @@ class BlackjackProvider extends ChangeNotifier {
   static final _random = Random();
 
   void initSinglePlayer({int botCount = 0}) {
+    AppLogger().event('blackjack_start', params: {'bot_count': botCount.toString()});
     _isMultiplayer = false;
     final list = <BlackjackPlayer>[];
     list.add(BlackjackPlayer(id: 'dealer', name: 'Dealer', isDealer: true, chipBalance: 99999));
@@ -34,9 +37,11 @@ class BlackjackProvider extends ChangeNotifier {
     const suits = [Suit.hearts, Suit.diamonds, Suit.clubs, Suit.spades];
     const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     final deck = <CardModel>[];
-    for (final s in suits) {
-      for (final v in values) {
-        deck.add(CardModel(value: v, suit: s));
+    for (var d = 0; d < 6; d++) {
+      for (final s in suits) {
+        for (final v in values) {
+          deck.add(CardModel(value: v, suit: s));
+        }
       }
     }
     deck.shuffle(_random);
@@ -44,7 +49,7 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   CardModel _draw() {
-    if (_state.deck.isEmpty) {
+    if (_state.deck.length < 20) {
       _state = _state.copyWith(deck: _freshDeck());
     }
     final card = _state.deck.last;
@@ -53,6 +58,7 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void placeBet(String playerId, int amount) {
+    AppLogger().event('blackjack_bet', params: {'player_id': playerId, 'amount': amount.toString()});
     final idx = players.indexWhere((p) => p.id == playerId);
     if (idx < 0) return;
     final p = players[idx];
@@ -66,7 +72,7 @@ class BlackjackProvider extends ChangeNotifier {
     notifyListeners();
 
     final humanPlayers = updated.where((p) => !p.isDealer && p.betAmount > 0).toList();
-    debugPrint('🎰 Apuesta: $playerId=$amount, humanosConApuesta=${humanPlayers.length}');
+    AppLogger().log('🎰 Apuesta: $playerId=$amount, humanosConApuesta=${humanPlayers.length}');
 
     if (humanPlayers.length >= 1 && humanPlayers.every((p) => p.betAmount > 0)) {
       Future.delayed(const Duration(milliseconds: 300), _startDealing);
@@ -162,7 +168,7 @@ class BlackjackProvider extends ChangeNotifier {
         hand: updated[idx].hand, betAmount: updated[idx].betAmount,
         isStanding: true, isBusted: true,
       );
-      debugPrint('💥 BUST: $playerId=${updated[idx].handValue}');
+      AppLogger().log('💥 BUST: $playerId=${updated[idx].handValue}');
     }
     _state = _state.copyWith(players: updated, deck: _state.deck);
     notifyListeners();
@@ -212,7 +218,7 @@ class BlackjackProvider extends ChangeNotifier {
 
     final dealerVal = updated[dIdx].handValue;
     final dealerBj = updated[dIdx].isBlackjack;
-    debugPrint('🎰 Dealer: $dealerVal (${dealerBj ? "BJ" : ""})');
+    AppLogger().log('🎰 Dealer: $dealerVal (${dealerBj ? "BJ" : ""})');
 
     // Resolve bets
     final results = <String, String>{};
@@ -257,6 +263,7 @@ class BlackjackProvider extends ChangeNotifier {
     notifyListeners();
 
     // Auto new round after delay
+    AppLogger().event('blackjack_round_end');
     Future.delayed(const Duration(seconds: 4), newRound);
   }
 

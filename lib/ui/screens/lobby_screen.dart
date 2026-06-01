@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
+import '../../services/logger_service.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import 'game_table_screen.dart';
@@ -19,6 +20,7 @@ class LobbyScreen extends StatefulWidget {
 
 class _LobbyScreenState extends State<LobbyScreen> {
   bool _isHosting = false;
+  GameMode _selectedMode = GameMode.diceDash;
   final TextEditingController _roomNameController = TextEditingController();
   final TextEditingController _roomPasswordController = TextEditingController();
   final TextEditingController _playerNameController = TextEditingController();
@@ -93,6 +95,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     ),
                   ),
                   SizedBox(height: 12 * s),
+                  _buildModeSelector(s),
+                  SizedBox(height: 12 * s),
                   TextField(
                     controller: _roomNameController,
                     style: TextStyle(color: Colors.white, fontSize: 14 * s),
@@ -129,7 +133,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       TextButton(
                         onPressed: () {
                           Navigator.pop(ctx);
-                          _startHostingInternal(_roomNameController.text.trim().isEmpty ? '${Platform.localHostname}-Poker' : _roomNameController.text.trim(), _roomPasswordController.text.trim());
+                          _startHostingInternal(
+                            _roomNameController.text.trim().isEmpty ? '${Platform.localHostname}-Poker' : _roomNameController.text.trim(),
+                            _roomPasswordController.text.trim(),
+                          );
                         },
                         child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
                       ),
@@ -151,6 +158,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     game.setHost(true);
     game.setMultiplayer(true);
+    game.setGameMode(_selectedMode);
     game.setPlayerName(
       _playerNameController.text.trim().isEmpty ? 'Host' : _playerNameController.text.trim(),
     );
@@ -184,7 +192,37 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final name = _roomNameController.text.trim().isEmpty
         ? '${Platform.localHostname}-Poker'
         : _roomNameController.text.trim();
-    return '$name|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}';
+    return '$name|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}|${_selectedMode.name}';
+  }
+
+  Widget _buildModeSelector(double s) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Modo de juego', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+        SizedBox(height: 8 * s),
+        Wrap(
+          spacing: 8 * s,
+          children: GameMode.values.map((mode) {
+            final selected = _selectedMode == mode;
+            String label;
+            Color color;
+            switch (mode) {
+              case GameMode.diceDash: label = '🎲 Dice Dash'; color = Colors.amber; break;
+              case GameMode.texasHoldem: label = '♠️ Texas'; color = Colors.red; break;
+              case GameMode.blackjack: label = '🃏 21'; color = Colors.green; break;
+            }
+            return ChoiceChip(
+              label: Text(label, style: TextStyle(color: selected ? Colors.white : Colors.white70, fontSize: 11 * s)),
+              selected: selected,
+              selectedColor: color,
+              backgroundColor: Colors.white10,
+              onSelected: (v) => setState(() => _selectedMode = mode),
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 
   void startDiscovering() {
@@ -231,6 +269,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       game.setHost(true);
                       game.setMultiplayer(false);
                       game.setGameMode(GameMode.diceDash);
+                      AppLogger().event('practice_mode_selected', params: {'mode': 'dice_dash'});
                       game.resetGame();
                       Navigator.pushReplacement(
                         context,
@@ -279,6 +318,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       game.setHost(true);
                       game.setMultiplayer(false);
                       game.setGameMode(GameMode.texasHoldem);
+                      AppLogger().event('practice_mode_selected', params: {'mode': 'texas_holdem'});
                       game.resetGame();
                       Navigator.pushReplacement(
                         context,
