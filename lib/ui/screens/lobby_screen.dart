@@ -21,6 +21,7 @@ class LobbyScreen extends StatefulWidget {
 
 class _LobbyScreenState extends State<LobbyScreen> {
   bool _isHosting = false;
+  bool _isGlobalHost = false;
   GameMode _selectedMode = GameMode.diceDash;
   final TextEditingController _roomNameController = TextEditingController();
   final TextEditingController _roomPasswordController = TextEditingController();
@@ -57,7 +58,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
     ].request();
   }
 
-  void startHosting() {
+  void startHosting({bool global = false}) {
+    _isGlobalHost = global;
     _showCreateRoomDialog();
   }
 
@@ -82,7 +84,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Crear Sala', style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold)),
+                  Text(_isGlobalHost ? 'Crear Sala Global' : 'Crear Sala Local', style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold)),
                   SizedBox(height: 16 * s),
                   TextField(
                     controller: _playerNameController,
@@ -152,14 +154,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
     );
   }
 
-  void _startHostingInternal(String roomName, String password) {
+  void _startHostingInternal(String roomName, String password, {bool global = false}) {
     setState(() => _isHosting = true);
     final game = context.read<GameProvider>();
-    final p2p = game.p2pService;
+    final p2p = global ? context.read<P2PService>() : game.p2pService;
 
     game.setHost(true);
     game.setMultiplayer(true);
     game.setGameMode(_selectedMode);
+    AppLogger().event('create_room', params: {'mode': _selectedMode.name, 'transport': global ? 'firebase' : 'nearby'});
     game.setPlayerName(
       _playerNameController.text.trim().isEmpty ? 'Host' : _playerNameController.text.trim(),
     );
@@ -345,7 +348,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 SizedBox(
                   width: screenW * 0.75,
                   child: ElevatedButton(
-                    onPressed: _isHosting ? null : startHosting,
+                    onPressed: _isHosting ? null : () => startHosting(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber.shade700,
                       foregroundColor: Colors.white,
@@ -388,14 +391,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: Text('Unirse - Local', style: TextStyle(fontSize: 18 * s)),
+                    child: Text('Crear Sala Global', style: TextStyle(fontSize: 18 * s)),
                   ),
                 ),
                 SizedBox(height: 16 * s),
                 SizedBox(
                   width: screenW * 0.75,
                   child: ElevatedButton(
-                    onPressed: () => startDiscovering(useFirebase: true),
+                    onPressed: () => startDiscovering(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal.shade700,
                       foregroundColor: Colors.white,
