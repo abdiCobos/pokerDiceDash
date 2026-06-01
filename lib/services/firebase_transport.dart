@@ -85,6 +85,8 @@ class FirebaseTransport {
           if (data == null) continue;
           final senderId = data['senderId'] as String? ?? '';
           if (senderId == _myId) continue;
+          final targetId = data['targetId'] as String?;
+          if (targetId != null && targetId != _myId) continue; // Point-to-point message not for us
           final rawData = data['data'];
           if (rawData == null) continue;
           final msg = Map<String, dynamic>.from(rawData as Map);
@@ -96,7 +98,7 @@ class FirebaseTransport {
   }
 
   Future<void> sendMessage(String endpointId, Map<String, dynamic> data) async {
-    await _writeMessage(data);
+    await _writeMessage(data, targetId: endpointId);
   }
 
   Future<void> broadcastMessage(Map<String, dynamic> data) async {
@@ -108,11 +110,12 @@ class FirebaseTransport {
     }
   }
 
-  Future<void> _writeMessage(Map<String, dynamic> data) async {
+  Future<void> _writeMessage(Map<String, dynamic> data, {String? targetId}) async {
     await FirebaseFirestore.instance
         .collection('rooms').doc(_currentRoomId).collection('messages')
         .add({
       'senderId': _myId,
+      if (targetId != null) 'targetId': targetId,
       'data': data,
       'timestamp': FieldValue.serverTimestamp(),
     });

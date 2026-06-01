@@ -71,84 +71,112 @@ class _LobbyScreenState extends State<LobbyScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
-        final s = (MediaQuery.of(ctx).size.shortestSide / 400).clamp(0.75, 1.35);
-        return Dialog(
-          backgroundColor: const Color(0xFF1A1A2E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14 * s),
-            side: const BorderSide(color: Colors.amber, width: 2),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.all(20 * s),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(_isGlobalHost ? 'Crear Sala Global' : 'Crear Sala Local', style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 16 * s),
-                  TextField(
-                    controller: _playerNameController,
-                    style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                    textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(
-                      labelText: 'Tu nombre',
-                      labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
-                      focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
-                    ),
-                  ),
-                  SizedBox(height: 12 * s),
-                  _buildModeSelector(s),
-                  SizedBox(height: 12 * s),
-                  TextField(
-                    controller: _roomNameController,
-                    style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                    textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(
-                      labelText: 'Nombre de la sala',
-                      labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
-                      focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
-                    ),
-                  ),
-                  SizedBox(height: 12 * s),
-                  TextField(
-                    controller: _roomPasswordController,
-                    obscureText: true,
-                    style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                    textInputAction: TextInputAction.done,
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña (opcional)',
-                      labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)), borderRadius: BorderRadius.circular(8 * s)),
-                      focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.amber), borderRadius: BorderRadius.circular(8 * s)),
-                    ),
-                  ),
-                  SizedBox(height: 20 * s),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            final s = (MediaQuery.of(dialogCtx).size.shortestSide / 400).clamp(0.75, 1.35);
+            return Dialog(
+              backgroundColor: const Color(0xFF1A1A2E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14 * s),
+                side: const BorderSide(color: Colors.amber, width: 2),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(20 * s),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      Text(
+                        _isGlobalHost ? 'Crear Sala Global' : 'Crear Sala Local',
+                        style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(width: 8 * s),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          _startHostingInternal(
-                            _roomNameController.text.trim().isEmpty ? '${Platform.localHostname}-Poker' : _roomNameController.text.trim(),
-                            _roomPasswordController.text.trim(),
-                          );
-                        },
-                        child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                      SizedBox(height: 16 * s),
+                      TextField(
+                        controller: _playerNameController,
+                        style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Tu nombre',
+                          labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.amber),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 12 * s),
+                      _buildModeSelector(s, setDialogState),
+                      SizedBox(height: 12 * s),
+                      TextField(
+                        controller: _roomNameController,
+                        style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Nombre de la sala',
+                          labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.amber),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 12 * s),
+                      TextField(
+                        controller: _roomPasswordController,
+                        obscureText: true,
+                        style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña (opcional)',
+                          labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.amber),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20 * s),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogCtx),
+                            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                          ),
+                          SizedBox(width: 8 * s),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(dialogCtx);
+                              _startHostingInternal(
+                                _roomNameController.text.trim().isEmpty
+                                    ? '${Platform.localHostname}-Poker'
+                                    : _roomNameController.text.trim(),
+                                _roomPasswordController.text.trim(),
+                                global: _isGlobalHost,
+                              );
+                            },
+                            child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -199,7 +227,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return '$name|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}|${_selectedMode.name}';
   }
 
-  Widget _buildModeSelector(double s) {
+  Widget _buildModeSelector(double s, StateSetter setDialogState) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -212,16 +240,25 @@ class _LobbyScreenState extends State<LobbyScreen> {
             String label;
             Color color;
             switch (mode) {
-              case GameMode.diceDash: label = '🎲 Dice Dash'; color = Colors.amber; break;
-              case GameMode.texasHoldem: label = '♠️ Texas'; color = Colors.red; break;
-              case GameMode.blackjack: label = '🃏 21'; color = Colors.green; break;
+              case GameMode.diceDash:
+                label = '🎲 Dice Dash';
+                color = Colors.amber;
+              case GameMode.texasHoldem:
+                label = '♠️ Texas';
+                color = Colors.red;
+              case GameMode.blackjack:
+                label = '🃏 21';
+                color = Colors.green;
             }
             return ChoiceChip(
               label: Text(label, style: TextStyle(color: selected ? Colors.white : Colors.white70, fontSize: 11 * s)),
               selected: selected,
               selectedColor: color,
               backgroundColor: Colors.white10,
-              onSelected: (v) => setState(() => _selectedMode = mode),
+              onSelected: (v) {
+                setState(() => _selectedMode = mode);
+                setDialogState(() {});
+              },
             );
           }).toList(),
         ),
@@ -260,165 +297,165 @@ class _LobbyScreenState extends State<LobbyScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/images/menulogo/menulogo.png',
-                  width: screenW * 0.85,
-                  fit: BoxFit.contain,
-                ),
-                SizedBox(height: 50 * s),
-                SizedBox(
-                  width: screenW * 0.75,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final game = context.read<GameProvider>();
-                      game.setHost(true);
-                      game.setMultiplayer(false);
-                      game.setGameMode(GameMode.diceDash);
-                      AppLogger().event('practice_mode_selected', params: {'mode': 'dice_dash'});
-                      game.resetGame();
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const GameTableScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber,
-                      foregroundColor: Colors.black,
-                      padding: EdgeInsets.symmetric(vertical: 18 * s),
-                      textStyle: TextStyle(
-                        fontSize: 18 * s,
-                        fontWeight: FontWeight.bold,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/menulogo/menulogo.png',
+                    width: screenW * 0.85,
+                    fit: BoxFit.contain,
+                  ),
+                  SizedBox(height: 50 * s),
+                  SizedBox(
+                    width: screenW * 0.75,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final game = context.read<GameProvider>();
+                        game.setHost(true);
+                        game.setMultiplayer(false);
+                        game.setGameMode(GameMode.diceDash);
+                        AppLogger().event('practice_mode_selected', params: {'mode': 'dice_dash'});
+                        game.resetGame();
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const GameTableScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.symmetric(vertical: 18 * s),
+                        textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
                       ),
+                      child: Text('Jugar Solo (Práctica)', style: TextStyle(fontSize: 18 * s)),
                     ),
-                    child: Text('Jugar Solo (Práctica)', style: TextStyle(fontSize: 18 * s)),
                   ),
-                ),
-                SizedBox(height: 16 * s),
-                SizedBox(
-                  width: screenW * 0.75,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => ChangeNotifierProvider(create: (_) => BlackjackProvider()..initSinglePlayer(botCount: 0), child: const BlackjackTableScreen())),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade800,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 18 * s),
-                      textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
-                    ),
-                    child: Text('21 Black Jack (Práctica)', style: TextStyle(fontSize: 18 * s)),
-                  ),
-                ),
-                SizedBox(height: 16 * s),
-                SizedBox(
-                  width: screenW * 0.75,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final game = context.read<GameProvider>();
-                      game.setHost(true);
-                      game.setMultiplayer(false);
-                      game.setGameMode(GameMode.texasHoldem);
-                      AppLogger().event('practice_mode_selected', params: {'mode': 'texas_holdem'});
-                      game.resetGame();
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const GameTableScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade800,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 18 * s),
-                      textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
-                    ),
-                    child: Text('Texas Hold\'em (Práctica)', style: TextStyle(fontSize: 18 * s)),
-                  ),
-                ),
-                SizedBox(height: 16 * s),
-                SizedBox(
-                  width: screenW * 0.75,
-                  child: ElevatedButton(
-                    onPressed: _isHosting ? null : () => startHosting(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber.shade700,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 18 * s),
-                      textStyle: TextStyle(
-                        fontSize: 18 * s,
-                        fontWeight: FontWeight.bold,
+                  SizedBox(height: 16 * s),
+                  SizedBox(
+                    width: screenW * 0.75,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChangeNotifierProvider(
+                              create: (_) => BlackjackProvider()..initSinglePlayer(botCount: 0),
+                              child: const BlackjackTableScreen(),
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade800,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 18 * s),
+                        textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
                       ),
+                      child: Text('21 Black Jack (Práctica)', style: TextStyle(fontSize: 18 * s)),
                     ),
-                    child: _isHosting
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 20 * s,
-                                height: 20 * s,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                  ),
+                  SizedBox(height: 16 * s),
+                  SizedBox(
+                    width: screenW * 0.75,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final game = context.read<GameProvider>();
+                        game.setHost(true);
+                        game.setMultiplayer(false);
+                        game.setGameMode(GameMode.texasHoldem);
+                        AppLogger().event('practice_mode_selected', params: {'mode': 'texas_holdem'});
+                        game.resetGame();
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const GameTableScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade800,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 18 * s),
+                        textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
+                      ),
+                      child: Text("Texas Hold'em (Práctica)", style: TextStyle(fontSize: 18 * s)),
+                    ),
+                  ),
+                  SizedBox(height: 16 * s),
+                  SizedBox(
+                    width: screenW * 0.75,
+                    child: ElevatedButton(
+                      onPressed: _isHosting ? null : () => startHosting(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber.shade700,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 18 * s),
+                        textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
+                      ),
+                      child: _isHosting
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 20 * s,
+                                  height: 20 * s,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 ),
-                              ),
-                              SizedBox(width: 12 * s),
-                              Text('Esperando jugadores...', style: TextStyle(fontSize: 16 * s)),
-                            ],
-                          )
-                        : Text('Crear Sala (Host)', style: TextStyle(fontSize: 18 * s)),
+                                SizedBox(width: 12 * s),
+                                Text('Esperando jugadores...', style: TextStyle(fontSize: 16 * s)),
+                              ],
+                            )
+                          : Text('Crear Sala (Host)', style: TextStyle(fontSize: 18 * s)),
+                    ),
                   ),
-                ),
-                SizedBox(height: 16 * s),
-                SizedBox(
-                  width: screenW * 0.75,
-                  child: ElevatedButton(
-                    onPressed: () => startDiscovering(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade800,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 18 * s),
-                      textStyle: TextStyle(
-                        fontSize: 18 * s,
-                        fontWeight: FontWeight.bold,
+                  SizedBox(height: 16 * s),
+                  SizedBox(
+                    width: screenW * 0.75,
+                    child: ElevatedButton(
+                      onPressed: () => startDiscovering(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade800,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 18 * s),
+                        textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
                       ),
+                      child: Text('Unirse - Local', style: TextStyle(fontSize: 18 * s)),
                     ),
-                    child: Text('Crear Sala Global', style: TextStyle(fontSize: 18 * s)),
                   ),
-                ),
-                SizedBox(height: 16 * s),
-                SizedBox(
-                  width: screenW * 0.75,
-                  child: ElevatedButton(
-                    onPressed: () => startDiscovering(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal.shade700,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 18 * s),
-                      textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
+                  SizedBox(height: 16 * s),
+                  SizedBox(
+                    width: screenW * 0.75,
+                    child: ElevatedButton(
+                      onPressed: _isHosting ? null : () => startHosting(global: true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal.shade700,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 18 * s),
+                        textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
+                      ),
+                      child: Text('Crear Sala Global', style: TextStyle(fontSize: 18 * s)),
                     ),
-                    child: Text('Unirse - Global', style: TextStyle(fontSize: 18 * s)),
                   ),
-                ),
-                if (_isHosting) ...[
-                  SizedBox(height: 24 * s),
-                  CircularProgressIndicator(color: Colors.amber, strokeWidth: 2),
-                  SizedBox(height: 12 * s),
-                  Text(
-                    'Esperando jugadores...',
-                    style: TextStyle(color: Colors.white70, fontSize: 15 * s),
+                  SizedBox(height: 16 * s),
+                  SizedBox(
+                    width: screenW * 0.75,
+                    child: ElevatedButton(
+                      onPressed: () => startDiscovering(useFirebase: true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal.shade700,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 18 * s),
+                        textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
+                      ),
+                      child: Text('Unirse - Global', style: TextStyle(fontSize: 18 * s)),
+                    ),
                   ),
+                  if (_isHosting) ...[
+                    SizedBox(height: 24 * s),
+                    CircularProgressIndicator(color: Colors.amber, strokeWidth: 2),
+                    SizedBox(height: 12 * s),
+                    Text('Esperando jugadores...', style: TextStyle(color: Colors.white70, fontSize: 15 * s)),
+                  ],
                 ],
-              ],
-            ),
+              ),
             ),
           ),
         ),
