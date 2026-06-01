@@ -1,0 +1,534 @@
+$ adb -s U8RCMZVWMF4PDMVC logcat -s flutter
+* daemon not running; starting now at tcp:5037
+* daemon started successfully
+--------- beginning of main
+05-28 20:18:01.371 23389 23431 I flutter : [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+05-28 20:18:01.569 23389 23389 I flutter : Error: google_fonts was unable to load font Roboto-Regular because the following exception occurred:
+05-28 20:18:01.569 23389 23389 I flutter : Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-28 20:18:01.569 23389 23389 I flutter : 
+05-28 20:18:01.569 23389 23389 I flutter : See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.05-28 20:18:01.569 23389 23389 I flutter : If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+05-28 20:18:01.569 23389 23389 I flutter : 
+05-28 20:18:01.569 23389 23389 E flutter : [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/7f3ec5073a282c666c9a0063573345841229caf50ed34d33017e20d441bf5caf.ttf
+05-28 20:18:01.569 23389 23389 E flutter : #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:266)
+05-28 20:18:01.569 23389 23389 E flutter : <asynchronous suspension>
+05-28 20:18:01.569 23389 23389 E flutter : #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:172)   
+05-28 20:18:01.569 23389 23389 E flutter : <asynchronous suspension>
+05-28 20:18:01.569 23389 23389 E flutter : #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:109)
+05-28 20:18:01.569 23389 23389 E flutter : <asynchronous suspension>
+05-28 20:18:01.569 23389 23389 E flutter :
+05-28 20:18:12.251 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:18:12.251 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.251 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.252 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.252 23389 23389 I flutter : 🔧 setMultiplayer: false (isHost=true)
+05-28 20:18:12.252 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:18:12.252 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.252 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.252 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:18:12.252 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.252 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.280 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:18:12.280 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.280 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:12.973 23389 23389 I flutter : AudioPlayers Exception: AudioPlayerException(
+05-28 20:18:12.973 23389 23389 I flutter :      AssetSource(path: sounds/cardmix.ogg, mimeType: null),
+05-28 20:18:12.973 23389 23389 I flutter :      PlatformException(AndroidAudioError, Failed to set source. For troubleshooting, see: https://github.com/bluefireteam/audioplayers/blob/main/troubleshooting.md, MEDIA_ERROR_UNKNOWN {what:1}, MEDIA_ERROR_SYSTEM, null)
+05-28 20:18:25.267 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:25.267 23389 23389 I flutter : 🔧 setMultiplayer: false (isHost=true)
+05-28 20:18:25.267 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:18:25.267 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:25.267 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:25.267 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:18:25.268 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:25.268 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:25.290 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:18:25.290 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:25.291 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:28.766 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:28.767 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:18:28.776 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:18:28.958 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:18:29.557 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:18:29.557 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:29.557 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:18:29.557 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:18:29.557 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
+05-28 20:18:29.557 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:29.557 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:18:30.058 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:21.332 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:21.341 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:21.358 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:21.542 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:22.357 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:19:22.357 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:22.357 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:19:22.357 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:19:22.357 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=2 playersActed=[0, 1]
+05-28 20:19:22.357 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:22.358 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:22.860 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:24.826 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:24.840 23389 23389 I flutter : Apuesta de 2: 10
+05-28 20:19:24.857 23389 23389 I flutter : Apuesta de 2: 10
+05-28 20:19:25.041 23389 23389 I flutter : Apuesta de 2: 10
+05-28 20:19:25.431 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:19:25.431 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:25.432 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:19:25.432 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:19:25.432 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=3 playersActed=[0, 1, 2]
+05-28 20:19:25.432 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:25.432 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:25.932 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:26.074 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:26.074 23389 23389 I flutter : Apuesta de 3: 20
+05-28 20:19:26.090 23389 23389 I flutter : Apuesta de 3: 20
+05-28 20:19:26.274 23389 23389 I flutter : Apuesta de 3: 20
+05-28 20:19:26.728 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:19:26.729 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:26.729 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:19:26.729 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:19:26.729 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:26.729 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:29.948 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:29.948 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:29.956 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:30.140 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:30.643 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:19:30.643 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:30.643 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:19:30.643 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:19:30.643 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=3 playersActed=[2]
+05-28 20:19:30.643 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:30.643 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:31.214 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:31.222 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:31.238 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:31.423 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:31.874 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:19:31.874 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:31.874 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:19:31.874 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:19:31.874 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[2, 3]
+05-28 20:19:31.874 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:31.874 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:32.452 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:32.455 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:32.471 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:32.655 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:33.122 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:19:33.122 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:33.123 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:19:33.123 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:19:33.123 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[2, 3, 0]
+05-28 20:19:33.123 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:33.123 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:33.712 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:33.721 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:33.738 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:33.922 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:34.403 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:19:34.403 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:34.403 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:19:34.403 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:19:34.403 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:34.403 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:35.956 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:35.956 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:35.979 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:36.004 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:36.187 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:37.958 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:37.970 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:39.964 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:19:39.964 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:39.964 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:19:39.964 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:19:39.964 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=3 playersActed=[2]
+05-28 20:19:39.964 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:39.964 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:40.641 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:40.652 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:40.669 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:40.836 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:41.326 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:19:41.326 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:41.326 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:19:41.326 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:19:41.326 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[2, 3]
+05-28 20:19:41.326 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:41.326 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:41.898 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:41.902 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:41.918 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:42.103 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:42.569 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:19:42.569 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:42.569 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:19:42.569 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:19:42.569 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[2, 3, 0]
+05-28 20:19:42.569 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:42.569 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:43.092 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:43.101 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:43.118 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:43.302 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:43.696 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:19:43.696 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:43.697 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:19:43.697 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:19:43.697 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:43.697 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:45.244 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:45.245 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:45.260 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:45.269 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:45.451 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:47.246 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:47.251 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:19:47.812 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:19:47.812 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:47.812 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:19:47.812 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:19:47.812 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=3 playersActed=[2]
+05-28 20:19:47.812 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:47.812 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:48.312 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:48.316 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:48.320 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:48.339 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:48.517 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:50.322 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:50.322 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:50.356 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:50.725 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:50.733 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:19:54.595 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:19:54.595 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:54.595 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:19:54.595 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:19:54.595 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[2, 3]
+05-28 20:19:54.595 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:54.595 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:55.214 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:55.214 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:55.215 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:55.234 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:55.414 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:57.215 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:57.231 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:19:57.651 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:19:57.651 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:57.651 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:19:57.651 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:19:57.651 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[2, 3, 0]
+05-28 20:19:57.651 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:57.651 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:58.196 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:58.197 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:58.213 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:58.397 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:19:58.905 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:19:58.905 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:58.905 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:19:58.905 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:19:58.905 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:58.906 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:19:58.918 23389 23431 E flutter : [ERROR:flutter/impeller/entity/contents/contents.cc(122)] Impeller validation: Contents::SetInheritedOpacity should never be called when Contents::CanAcceptOpacity returns false.
+05-28 20:19:58.921 23389 23431 E flutter : [ERROR:flutter/impeller/entity/contents/contents.cc(122)] Impeller validation: Contents::SetInheritedOpacity should never be called when Contents::CanAcceptOpacity returns false.
+05-28 20:19:58.921 23389 23431 E flutter : [ERROR:flutter/impeller/entity/contents/contents.cc(122)] Impeller validation: Contents::SetInheritedOpacity should never be called when Contents::CanAcceptOpacity returns false.
+05-28 20:20:00.907 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:00.907 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:02.910 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:05.909 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 4(3)=10 BB=Tú(0)=20 dealerIndex=2
+05-28 20:20:05.909 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:15.843 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:15.858 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:15.875 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:16.059 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:16.924 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:20:16.924 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:16.924 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:20:16.924 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:20:16.924 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=2 playersActed=[1]
+05-28 20:20:16.924 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:16.924 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:17.428 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:17.551 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:17.557 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:17.574 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:17.741 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:18.101 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:20:18.101 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:18.101 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:20:18.101 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:20:18.101 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=3 playersActed=[1, 2]
+05-28 20:20:18.101 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:18.101 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:18.602 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:18.680 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:18.690 23389 23389 I flutter : Apuesta de 3: 10
+05-28 20:20:18.707 23389 23389 I flutter : Apuesta de 3: 10
+05-28 20:20:18.874 23389 23389 I flutter : Apuesta de 3: 10
+05-28 20:20:19.230 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:20:19.230 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:19.230 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:20:19.230 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:20:19.230 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[1, 2, 3]
+05-28 20:20:19.230 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:19.231 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:19.731 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:20.068 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:20.073 23389 23389 I flutter : Apuesta de 0: 20
+05-28 20:20:20.090 23389 23389 I flutter : Apuesta de 0: 20
+05-28 20:20:20.257 23389 23389 I flutter : Apuesta de 0: 20
+05-28 20:20:20.614 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:20:20.614 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:20.614 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:20:20.614 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:20:20.614 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:20.614 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:22.456 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:22.457 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:22.473 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:22.656 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:22.969 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:20:22.969 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:22.969 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:20:22.969 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:20:22.969 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[3]
+05-28 20:20:22.969 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:22.969 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:23.492 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:23.505 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:23.522 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:23.706 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:24.037 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:20:24.037 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:24.037 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:20:24.037 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:20:24.037 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[3, 0]
+05-28 20:20:24.037 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:24.037 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:24.474 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:24.488 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:24.505 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:24.689 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:24.920 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:20:24.920 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:24.920 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:20:24.920 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:20:24.920 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=2 playersActed=[3, 0, 1]
+05-28 20:20:24.920 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:24.920 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:25.388 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:25.389 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:25.405 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:25.589 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:25.830 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:20:25.830 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:25.830 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:20:25.830 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:20:25.830 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:25.830 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:26.882 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:26.888 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:26.904 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:27.089 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:27.388 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:20:27.388 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:27.389 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:20:27.389 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:20:27.389 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[3]
+05-28 20:20:27.389 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:27.389 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:27.907 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:27.921 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:27.937 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:28.122 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:28.434 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:20:28.435 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:28.435 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:20:28.435 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:20:28.435 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[3, 0]
+05-28 20:20:28.435 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:28.435 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:28.968 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:28.970 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:28.987 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:29.155 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:29.476 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:20:29.476 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:29.476 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:20:29.476 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:20:29.476 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=2 playersActed=[3, 0, 1]
+05-28 20:20:29.476 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:29.476 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:30.019 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:30.020 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:30.037 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:30.221 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:30.489 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:20:30.489 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:30.489 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:20:30.489 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:20:30.489 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:30.489 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:31.355 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:31.370 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:31.386 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:31.570 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:20:31.807 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:20:31.807 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:31.807 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:20:31.807 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:20:31.807 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[3]
+05-28 20:20:31.808 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:31.808 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:32.272 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:32.286 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:32.303 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:32.487 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:20:32.777 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:20:32.777 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:32.777 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:20:32.777 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:20:32.777 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[3, 0]
+05-28 20:20:32.777 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:32.777 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:33.259 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:33.270 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:33.286 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:33.470 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:20:33.764 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:20:33.764 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:33.764 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:20:33.764 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:20:33.764 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=2 playersActed=[3, 0, 1]
+05-28 20:20:33.764 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:33.764 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:34.293 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:34.302 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:34.319 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:34.487 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:20:34.880 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:20:34.880 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:34.881 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:20:34.881 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:20:34.881 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:34.881 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:34.892 23389 23431 E flutter : [ERROR:flutter/impeller/entity/contents/contents.cc(122)] Impeller validation: Contents::SetInheritedOpacity should never be called when Contents::CanAcceptOpacity returns false.
+05-28 20:20:36.884 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:36.884 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:37.783 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:38.886 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:20:41.886 23389 23389 I flutter : 🎯 BLINDS: SB=Tú(0)=10 BB=Jugador 2(1)=20 dealerIndex=3
+05-28 20:20:41.886 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:28.367 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:28.367 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:28.382 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:21:28.402 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:21:28.568 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:21:30.368 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:30.385 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:21:32.099 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:21:32.099 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:32.099 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:21:32.099 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:21:32.099 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=3 playersActed=[2]
+05-28 20:21:32.099 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:32.099 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:32.601 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:32.637 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:32.650 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:21:32.667 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:21:32.835 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:21:33.094 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:21:33.094 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:33.094 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:21:33.094 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:21:33.094 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=0 playersActed=[2, 3]
+05-28 20:21:33.094 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:33.094 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:33.536 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:33.550 23389 23389 I flutter : Apuesta de 0: 10
+05-28 20:21:33.567 23389 23389 I flutter : Apuesta de 0: 10
+05-28 20:21:33.594 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:33.600 23389 23389 I flutter : Apuesta de 0: 10
+05-28 20:21:33.734 23389 23389 I flutter : Apuesta de 0: 10
+05-28 20:21:34.014 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:21:34.014 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:34.014 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:21:34.015 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:21:34.015 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[2, 3, 0]
+05-28 20:21:34.015 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:34.015 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:34.434 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:34.434 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:34.434 23389 23389 I flutter : Apuesta de 1: 20
+05-28 20:21:34.454 23389 23389 I flutter : Apuesta de 1: 20
+05-28 20:21:34.515 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:34.516 23389 23389 I flutter : Apuesta de 1: 20
+05-28 20:21:34.633 23389 23389 I flutter : Apuesta de 1: 20
+05-28 20:21:36.436 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:36.450 23389 23389 I flutter : Apuesta de 1: 20
+05-28 20:21:37.486 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:21:37.486 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:37.486 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:21:37.486 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:21:37.486 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:37.486 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:42.161 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:42.164 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:21:42.181 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:21:42.365 23389 23389 I flutter : Apuesta de 0: 0
+05-28 20:21:42.552 23389 23389 I flutter : 🟦 CALL llamado: playerId=0 isHost=true
+05-28 20:21:42.552 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:42.553 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=0 status=GameStatus.betting
+05-28 20:21:42.553 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=1
+05-28 20:21:42.553 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=1 playersActed=[0]
+05-28 20:21:42.553 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:42.553 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:42.950 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:42.964 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:21:42.980 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:21:43.164 23389 23389 I flutter : Apuesta de 1: 0
+05-28 20:21:43.390 23389 23389 I flutter : 🟦 CALL llamado: playerId=1 isHost=true
+05-28 20:21:43.390 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:43.390 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=1 status=GameStatus.betting
+05-28 20:21:43.390 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=2
+05-28 20:21:43.390 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=2 playersActed=[0, 1]
+05-28 20:21:43.391 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:43.391 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:43.838 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:43.847 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:21:43.864 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:21:44.048 23389 23389 I flutter : Apuesta de 2: 0
+05-28 20:21:44.459 23389 23389 I flutter : 🟦 CALL llamado: playerId=2 isHost=true
+05-28 20:21:44.459 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:44.459 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=2 status=GameStatus.betting
+05-28 20:21:44.459 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=3
+05-28 20:21:44.459 23389 23389 I flutter : 🔄 nextTurn result: nextIndex=3 playersActed=[0, 1, 2]
+05-28 20:21:44.459 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:44.459 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:44.922 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:44.930 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:21:44.947 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:21:45.131 23389 23389 I flutter : Apuesta de 3: 0
+05-28 20:21:45.582 23389 23389 I flutter : 🟦 CALL llamado: playerId=3 isHost=true
+05-28 20:21:45.582 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:45.582 23389 23389 I flutter : 🔄 nextTurn: currentPlayerIndex=3 status=GameStatus.betting
+05-28 20:21:45.582 23389 23389 I flutter : 🔄 nextTurn stats: active=4 unF=4 allIn=0 acted=4
+05-28 20:21:45.582 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:21:45.582 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:22:00.601 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:22:00.601 23389 23389 I flutter : 🔧 setMultiplayer: false (isHost=true)
+05-28 20:22:00.602 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:22:00.602 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:22:00.602 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:22:00.602 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:22:00.602 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:22:00.602 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:22:00.625 23389 23389 I flutter : 🎯 BLINDS: SB=Jugador 3(2)=10 BB=Jugador 4(3)=20 dealerIndex=1
+05-28 20:22:00.625 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes
+05-28 20:22:00.625 23389 23389 I flutter : 📡 broadcastState: enviando a 0 clientes

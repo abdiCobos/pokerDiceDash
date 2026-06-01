@@ -6,6 +6,7 @@ import '../models/player_model.dart';
 import '../models/card_model.dart';
 import '../models/hand_evaluator.dart';
 import '../services/p2p_service.dart';
+import '../services/sound_service.dart';
 
 class GameProvider extends ChangeNotifier {
   final P2PService _p2pService;
@@ -101,6 +102,7 @@ class GameProvider extends ChangeNotifier {
     shuffleAndDeal();
     _state = _state.copyWith(status: GameStatus.diceTurn, phase: PokerPhase.preFlop);
     notifyListeners();
+    SoundService().cardMix();
   }
 
   List<CardModel> _generateDeck() {
@@ -560,6 +562,7 @@ class GameProvider extends ChangeNotifier {
       }
       _totalContributions.clear();
       _flyingPotAmount = splitAmount;
+      SoundService().chipsWin();
 
       if (winners.length > 1) {
         setCentralMessage('¡Empate! Bote dividido con ${bestHandResult.rankName}');
@@ -650,6 +653,7 @@ class GameProvider extends ChangeNotifier {
     final random = Random();
     _die1 = random.nextInt(6) + 1;
     _die2 = random.nextInt(6) + 1;
+    SoundService().diceRoll();
 
     bool swapFlag = _state.mustSwapHands;
 
@@ -668,6 +672,7 @@ class GameProvider extends ChangeNotifier {
       if (activeIdx < _players.length) {
         _addContribution(_players[activeIdx].id, extra);
       }
+      SoundService().chipsMultiply();
       setCentralMessage('Dados de la suerte. El Pot aumenta un 30%');
     }
 
@@ -819,6 +824,7 @@ class GameProvider extends ChangeNotifier {
     await Future.delayed(const Duration(seconds: 2));
 
     _isChaosSwapping = true;
+    SoundService().caosCard();
     notifyListeners();
     await Future.delayed(const Duration(milliseconds: 300));
 
@@ -856,6 +862,7 @@ class GameProvider extends ChangeNotifier {
     _players[idx].isFolded = true;
     _playersActedThisPhase.add(playerId);
     _isBetting = true;
+    SoundService().cardFold();
     notifyListeners();
 
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -923,6 +930,7 @@ class GameProvider extends ChangeNotifier {
     _currentBet += amount;
     _betsThisPhase[playerId] = (_betsThisPhase[playerId] ?? 0) + totalDeduction;
     _addContribution(playerId, totalDeduction);
+    SoundService().chipsRaise();
 
     if (totalDeduction >= player.chipBalance && totalDeduction > 0) {
       debugPrint('🟧 ALL-IN RAISE: $playerId se queda sin fichas');

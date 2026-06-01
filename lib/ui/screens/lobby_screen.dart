@@ -214,22 +214,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.casino, size: 90 * s, color: Colors.amber),
-                SizedBox(height: 24 * s),
-                Text(
-                  'POKER DICE DASH',
-                  style: TextStyle(
-                    color: Colors.amber,
-                    fontSize: 32 * s,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black,
-                        blurRadius: 8,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
-                  ),
+                Image.asset(
+                  'assets/images/menulogo/menulogo.png',
+                  width: screenW * 0.85,
+                  fit: BoxFit.contain,
                 ),
                 SizedBox(height: 50 * s),
                 SizedBox(

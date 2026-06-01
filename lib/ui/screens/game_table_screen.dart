@@ -585,6 +585,13 @@ class _GameTableScreenState extends State<GameTableScreen>
                 ? [
                     Text('ALL-IN - Solo lanza dados',
                         style: TextStyle(color: Colors.orange, fontSize: 11 * _s, fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 8),
+                    _ActionButton(
+                      label: 'CONTINUAR',
+                      color: Colors.orange,
+                      enabled: !blocked,
+                      onTap: !blocked ? () => game.call(activePlayer.id) : null,
+                    ),
                   ]
                 : [
               _ActionButton(
