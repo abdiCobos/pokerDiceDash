@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
+import '../../models/game_state.dart';
 import 'game_table_screen.dart';
 import 'lobby_screen.dart';
 
@@ -99,12 +100,17 @@ class _RoomListScreenState extends State<RoomListScreen> {
     final maxPlayers = int.tryParse(countParts[1]) ?? 4;
     final hasPassword = parts[2] == '1';
     final started = parts[3] == '1';
+    GameMode mode = GameMode.diceDash;
+    if (parts.length >= 5) {
+      mode = parts[4] == 'texasHoldem' ? GameMode.texasHoldem : GameMode.diceDash;
+    }
     return _RoomInfo(
       name: name,
       playerCount: playerCount,
       maxPlayers: maxPlayers,
       hasPassword: hasPassword,
       started: started,
+      gameMode: mode,
       endpointId: '',
     );
   }
@@ -291,6 +297,7 @@ class _RoomInfo {
   final int maxPlayers;
   final bool hasPassword;
   final bool started;
+  final GameMode gameMode;
   String endpointId;
 
   _RoomInfo({
@@ -299,6 +306,7 @@ class _RoomInfo {
     required this.maxPlayers,
     required this.hasPassword,
     required this.started,
+    required this.gameMode,
     required this.endpointId,
   });
 
@@ -309,6 +317,7 @@ class _RoomInfo {
       maxPlayers: maxPlayers,
       hasPassword: hasPassword,
       started: started,
+      gameMode: gameMode,
       endpointId: endpointId ?? this.endpointId,
     );
   }
@@ -348,6 +357,11 @@ class _RoomCard extends StatelessWidget {
                       Text(
                         room.started ? 'En juego' : 'Esperando',
                         style: TextStyle(color: room.started ? Colors.orange : Colors.green, fontSize: 10 * s),
+                      ),
+                      SizedBox(height: 2 * s),
+                      Text(
+                        room.gameMode == GameMode.texasHoldem ? '♠️ Texas Hold\'em' : '🎲 Poker Dice Dash',
+                        style: TextStyle(color: Colors.white54, fontSize: 10 * s),
                       ),
                     ],
                   ),

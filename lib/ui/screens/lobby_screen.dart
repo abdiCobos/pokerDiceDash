@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
+import '../../models/game_state.dart';
 import 'game_table_screen.dart';
 import 'room_list_screen.dart';
 
@@ -227,6 +228,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       final game = context.read<GameProvider>();
                       game.setHost(true);
                       game.setMultiplayer(false);
+                      game.setGameMode(GameMode.diceDash);
                       game.resetGame();
                       Navigator.pushReplacement(
                         context,
@@ -245,6 +247,32 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       ),
                     ),
                     child: Text('Jugar Solo (Práctica)', style: TextStyle(fontSize: 18 * s)),
+                  ),
+                ),
+                SizedBox(height: 16 * s),
+                SizedBox(
+                  width: screenW * 0.75,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final game = context.read<GameProvider>();
+                      game.setHost(true);
+                      game.setMultiplayer(false);
+                      game.setGameMode(GameMode.texasHoldem);
+                      game.resetGame();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const GameTableScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade800,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 18 * s),
+                      textStyle: TextStyle(fontSize: 18 * s, fontWeight: FontWeight.bold),
+                    ),
+                    child: Text('Texas Hold\'em (Práctica)', style: TextStyle(fontSize: 18 * s)),
                   ),
                 ),
                 SizedBox(height: 16 * s),

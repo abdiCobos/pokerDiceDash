@@ -270,6 +270,17 @@ class _GameTableScreenState extends State<GameTableScreen>
                 ),
               ),
             ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 4 * _s),
+            decoration: BoxDecoration(
+              color: game.gameMode == GameMode.texasHoldem ? Colors.red.shade800 : Colors.amber.shade800,
+              borderRadius: BorderRadius.circular(6 * _s),
+            ),
+            child: Text(
+              game.gameMode == GameMode.texasHoldem ? '♠️ Texas' : '🎲 Dice Dash',
+              style: TextStyle(color: Colors.white, fontSize: 10 * _s, fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );
@@ -503,20 +514,21 @@ class _GameTableScreenState extends State<GameTableScreen>
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Positioned(
-          bottom: _screenH * 0.04,
-          right: _screenW * 0.03,
-          child: Transform.scale(
-            scale: _s,
-            child: FloatingActionButton.extended(
-              onPressed: canRoll ? game.rollDice : null,
-              backgroundColor: canRoll ? const Color(0xFFFFA726) : Colors.grey.shade700,
-              foregroundColor: Colors.black,
-              icon: const Icon(Icons.casino),
-              label: const Text('Lanzar Dados', style: TextStyle(fontWeight: FontWeight.bold)),
+        if (game.gameMode == GameMode.diceDash)
+          Positioned(
+            bottom: _screenH * 0.04,
+            right: _screenW * 0.03,
+            child: Transform.scale(
+              scale: _s,
+              child: FloatingActionButton.extended(
+                onPressed: canRoll ? game.rollDice : null,
+                backgroundColor: canRoll ? const Color(0xFFFFA726) : Colors.grey.shade700,
+                foregroundColor: Colors.black,
+                icon: const Icon(Icons.casino),
+                label: const Text('Lanzar Dados', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
             ),
           ),
-        ),
         if (canStart)
           Positioned(
             bottom: _screenH * 0.28,

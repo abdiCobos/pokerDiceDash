@@ -1,5 +1,10 @@
 import 'card_model.dart';
 
+enum GameMode {
+  diceDash,
+  texasHoldem,
+}
+
 enum GameStatus {
   waitingPlayers,
   dealing,

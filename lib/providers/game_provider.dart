@@ -13,6 +13,7 @@ class GameProvider extends ChangeNotifier {
   StreamSubscription? _messageSubscription;
 
   bool _isMultiplayer = false;
+  GameMode _gameMode = GameMode.diceDash;
 
   GameState _state = GameState(status: GameStatus.diceTurn);
   final List<PlayerModel> _players = [];
@@ -74,6 +75,19 @@ class GameProvider extends ChangeNotifier {
       return;
     }
 
+    // Texas Holdem: 3 bots, direct into betting (no dice)
+    if (_gameMode == GameMode.texasHoldem) {
+      _players.add(PlayerModel(id: '0', name: 'Tú', chipBalance: 1000, isLocal: true));
+      _players.add(PlayerModel(id: '1', name: 'Jugador 2', chipBalance: 1000));
+      _players.add(PlayerModel(id: '2', name: 'Jugador 3', chipBalance: 1000));
+      shuffleAndDeal();
+      _state = _state.copyWith(status: GameStatus.betting, phase: PokerPhase.preFlop);
+      notifyListeners();
+      SoundService().cardMix();
+      return;
+    }
+
+    // Dice Dash: 4 players, diceTurn
     _players.add(PlayerModel(
       id: '0',
       name: 'Tú',
@@ -126,6 +140,7 @@ class GameProvider extends ChangeNotifier {
   int get die2 => _die2;
   int get diceTotal => _die1 + _die2;
   bool get isHost => _isHost;
+  GameMode get gameMode => _gameMode;
   int get pot => _totalContributions.values.fold(0, (a, b) => a + b);
   List<CardModel> get communityCards => _state.communityCards;
   int get revealedCommunityCount => _state.revealedCommunityCount;
@@ -191,7 +206,7 @@ class GameProvider extends ChangeNotifier {
     final hasPassword = _roomPassword.isNotEmpty;
     final count = _players.length;
     final started = _matchStarted;
-    final metadata = '$_roomName|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}';
+    final metadata = '$_roomName|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}|${_gameMode.name}';
     _p2pService.stopAdvertising();
     _p2pService.startAdvertising(metadata);
   }
@@ -245,6 +260,11 @@ class GameProvider extends ChangeNotifier {
 
   void setHost(bool value) {
     _isHost = value;
+    notifyListeners();
+  }
+
+  void setGameMode(GameMode mode) {
+    _gameMode = mode;
     notifyListeners();
   }
 
@@ -417,9 +437,10 @@ class GameProvider extends ChangeNotifier {
       return;
     }
 
+    final nextStatus = _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn;
     _state = _state.copyWith(
       currentPlayerIndex: nextIndex,
-      status: GameStatus.diceTurn,
+      status: nextStatus,
     );
     debugPrint('🔄 nextTurn result: nextIndex=$nextIndex playersActed=${_playersActedThisPhase.toList()}');
     _luckySevenApplied = false;
@@ -447,7 +468,7 @@ class GameProvider extends ChangeNotifier {
         _state = _state.copyWith(
           phase: PokerPhase.flop,
           currentPlayerIndex: 0,
-          status: GameStatus.diceTurn,
+          status: _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn,
           revealedCommunityCount: 3,
           turnsCompleted: 0,
         );
@@ -457,7 +478,7 @@ class GameProvider extends ChangeNotifier {
         _state = _state.copyWith(
           phase: PokerPhase.turn,
           currentPlayerIndex: 0,
-          status: GameStatus.diceTurn,
+          status: _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn,
           revealedCommunityCount: 4,
           turnsCompleted: 0,
         );
@@ -467,7 +488,7 @@ class GameProvider extends ChangeNotifier {
         _state = _state.copyWith(
           phase: PokerPhase.river,
           currentPlayerIndex: 0,
-          status: GameStatus.diceTurn,
+          status: _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn,
           revealedCommunityCount: 5,
           turnsCompleted: 0,
         );
@@ -614,7 +635,8 @@ class GameProvider extends ChangeNotifier {
     if (!_isHost || _players.length < 2) return;
     _matchStarted = true;
     shuffleAndDeal();
-    _state = _state.copyWith(status: GameStatus.diceTurn, phase: PokerPhase.preFlop);
+    final startStatus = _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn;
+    _state = _state.copyWith(status: startStatus, phase: PokerPhase.preFlop);
     updateAdvertisedName();
     notifyListeners();
     broadcastState();
@@ -646,6 +668,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   void rollDice() {
+    if (_gameMode == GameMode.texasHoldem) return;
     if (!_isHost) {
       _sendPlayerAction('ROLL_DICE');
       return;
@@ -1000,6 +1023,7 @@ class GameProvider extends ChangeNotifier {
     'die2': _die2,
     'mustSwapHands': _state.mustSwapHands,
     'totalContributions': Map.from(_totalContributions),
+    'gameMode': _gameMode.name,
     'betsThisPhase': Map.from(_betsThisPhase),
     'winningCards': _winningCards?.map((c) => c.toMap()).toList(),
   };
@@ -1015,6 +1039,9 @@ class GameProvider extends ChangeNotifier {
 
   void _syncStateFromMap(Map<String, dynamic> state) {
     debugPrint('📥 Cliente _syncStateFromMap: currentPlayerIndex=${state['currentPlayerIndex']} status=${state['status']} numPlayers=${(state['players'] as List?)?.length}');
+    if (state['gameMode'] != null) {
+      _gameMode = GameMode.values.byName(state['gameMode'] as String);
+    }
     _currentBet = state['currentBet'] as int? ?? _currentBet;
     _die1 = state['die1'] as int? ?? _die1;
     _die2 = state['die2'] as int? ?? _die2;
