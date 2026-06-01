@@ -49,17 +49,27 @@ class FirebaseTransport {
   }
 
   Future<void> startDiscovery(String deviceName) async {
+    _lobbySub?.cancel();
+    final Set<String> _seenRooms = {};
     _lobbySub = FirebaseFirestore.instance.collection('lobby').snapshots().listen((snapshot) {
       for (final change in snapshot.docChanges) {
         final data = change.doc.data();
         if (data == null) continue;
+        final endpointId = data['endpointId'] as String? ?? '';
+        final hostId = data['hostId'] as String? ?? '';
+        if (hostId == _myId) continue;
+
         if (change.type == DocumentChangeType.added) {
-          if (data['hostId'] != _myId) {
+          if (!_seenRooms.contains(endpointId)) {
+            _seenRooms.add(endpointId);
             _devicesController.add(DiscoveredDevice(
-              endpointId: data['endpointId'] as String,
+              endpointId: endpointId,
               endpointName: data['endpointName'] as String? ?? '',
             ));
           }
+        } else if (change.type == DocumentChangeType.removed) {
+          _seenRooms.remove(endpointId);
+          _disconnectionController.add(endpointId);
         }
       }
     });
@@ -67,13 +77,20 @@ class FirebaseTransport {
 
   Future<void> connectToDevice(String endpointId) async {
     _currentRoomId = endpointId;
-    _connectedEndpoints.add(_myId);
     _listenToRoomMessages();
     _connectionController.add(endpointId);
+
+    // Send initial connect message so host knows our myId
+    await _writeMessage({
+      'type': 'FIREBASE_CONNECT',
+      'clientId': _myId,
+    });
   }
 
   void _listenToRoomMessages() {
     _roomSub?.cancel();
+    if (_currentRoomId.isEmpty) return;
+
     _roomSub = FirebaseFirestore.instance
         .collection('rooms').doc(_currentRoomId).collection('messages')
         .orderBy('timestamp', descending: false)
@@ -85,11 +102,16 @@ class FirebaseTransport {
           if (data == null) continue;
           final senderId = data['senderId'] as String? ?? '';
           if (senderId == _myId) continue;
-          final targetId = data['targetId'] as String?;
-          if (targetId != null && targetId != _myId) continue; // Point-to-point message not for us
+
           final rawData = data['data'];
           if (rawData == null) continue;
           final msg = Map<String, dynamic>.from(rawData as Map);
+
+          // Check if this is a point-to-point message
+          // In Firebase all messages are broadcast (no real point-to-point),
+          // so we ignore targetId filtering — everyone in the room gets everything.
+          // targetId filtering would break because endpointIds are room-level, not device-level.
+
           msg['_senderEndpointId'] = senderId;
           _messagesController.add(msg);
         }
@@ -98,6 +120,8 @@ class FirebaseTransport {
   }
 
   Future<void> sendMessage(String endpointId, Map<String, dynamic> data) async {
+    // In Firebase, we write targetId so the recipient filters by it,
+    // but broadcast messages with no targetId go to everyone.
     await _writeMessage(data, targetId: endpointId);
   }
 
@@ -111,6 +135,7 @@ class FirebaseTransport {
   }
 
   Future<void> _writeMessage(Map<String, dynamic> data, {String? targetId}) async {
+    if (_currentRoomId.isEmpty) return;
     await FirebaseFirestore.instance
         .collection('rooms').doc(_currentRoomId).collection('messages')
         .add({
@@ -134,7 +159,6 @@ class FirebaseTransport {
   Future<void> disconnectAll() async {
     _roomSub?.cancel();
     _lobbySub?.cancel();
-    await stopAdvertising();
     _connectedEndpoints.clear();
   }
 

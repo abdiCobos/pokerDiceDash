@@ -38,6 +38,7 @@ class BlackjackProvider extends ChangeNotifier {
         list.add(BlackjackPlayer(id: '${i + 1}', name: 'Bot ${i + 1}', chipBalance: 1000));
       }
       _state = BlackjackState(players: list, deck: _freshDeck(), phase: BlackjackPhase.betting);
+      AppLogger().log('BJ:Creados 6 mazos (312 cartas) - inicial');
       _logAndNotify('initSinglePlayer');
     } catch (e, s) {
       AppLogger().error('BJ:initSinglePlayer crash: $e', s);
@@ -56,12 +57,14 @@ class BlackjackProvider extends ChangeNotifier {
       }
     }
     deck.shuffle(_random);
+    AppLogger().log('BJ:Mazo nuevo: 312 cartas (6 decks)');
     return deck;
   }
 
   CardModel _draw() {
     if (_state.deck.length < 20) {
-      _state = _state.copyWith(deck: _freshDeck());
+      _state = _state.copyWith(deck: _freshDeck(), message: 'Barajando 6 mazos nuevos...', clearMessage: false);
+      AppLogger().log('BJ:Reshuffle - quedaban ${_state.deck.length} cartas - barajando otros 6 mazos');
     }
     final card = _state.deck.last;
     _state = _state.copyWith(deck: _state.deck.sublist(0, _state.deck.length - 1));

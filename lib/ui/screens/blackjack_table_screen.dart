@@ -71,6 +71,15 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                 return Column(
                   children: [
                     SizedBox(height: _screenH * 0.005),
+                    // Deck counter
+                    if (bj.state.deck.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 2 * _s),
+                        child: Text(
+                          'Mazo: ${bj.state.deck.length} / 312 cartas',
+                          style: TextStyle(color: Colors.white38, fontSize: 10 * _s),
+                        ),
+                      ),
                     if (dealer != null) _buildDealerArea(dealer, bj),
                     Expanded(
                       child: bj.message != null

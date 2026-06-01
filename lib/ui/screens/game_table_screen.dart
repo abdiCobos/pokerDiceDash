@@ -556,6 +556,10 @@ class _GameTableScreenState extends State<GameTableScreen>
     final blocked = game.isBetting || game.isChaosSwapping || game.centralMessage != null;
     if (!isMyTurn && widget.isMultiplayer) return const SizedBox.shrink();
 
+    // In Texas Hold'em, all-in players should still get to see FOLD/CALL/RAISE
+    // (they can only call with their remaining chips, which is handled in call())
+    final showAllInControls = isAllIn && game.gameMode == GameMode.texasHoldem;
+
     final currentBet = game.currentBet;
     final playerBet = game.getPlayerBet(activePlayer.id);
     final amountToCall = currentBet - playerBet;
@@ -584,17 +588,11 @@ class _GameTableScreenState extends State<GameTableScreen>
           SizedBox(height: 4 * _s),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: isAllIn
+            children: (isAllIn && !showAllInControls)
                 ? [
-                    Text('ALL-IN - Solo lanza dados',
-                        style: TextStyle(color: Colors.orange, fontSize: 11 * _s, fontWeight: FontWeight.bold)),
+                    Text('ALL-IN', style: TextStyle(color: Colors.orange, fontSize: 11 * _s, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
-                    _ActionButton(
-                      label: 'CONTINUAR',
-                      color: Colors.orange,
-                      enabled: !blocked,
-                      onTap: !blocked ? () => game.call(activePlayer.id) : null,
-                    ),
+                    _ActionButton(label: 'CONTINUAR', color: Colors.orange, enabled: !blocked, onTap: !blocked ? () => game.call(activePlayer.id) : null),
                   ]
                 : [
               _ActionButton(

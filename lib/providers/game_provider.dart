@@ -1972,6 +1972,31 @@ class GameProvider extends ChangeNotifier {
 
 
 
+
+  void rebuyPlayer(String playerId) {
+    final idx = _players.indexWhere((p) => p.id == playerId);
+    if (idx < 0) return;
+    final player = _players[idx];
+    player.chipBalance = 1000;
+    player.isBankrupt = false;
+    player.isFolded = false;
+    _playersActedThisPhase.remove(player.id);
+    _isBetting = false;
+    AppLogger().log('REBUY: ${player.name} recibe 1000 fichas');
+    if (_state.status == GameStatus.finished || _state.phase == PokerPhase.showdown) {
+      AppLogger().log('REBUY en partida terminada - iniciando nueva ronda');
+      _matchStarted = true;
+      _winnerId = null;
+      _isPotFlying = false;
+      _centralMessage = null;
+      broadcastState();
+      scheduleNewRound();
+      return;
+    }
+    notifyListeners();
+    nextTurn();
+  }
+
   void rebuyLocalPlayer() {
 
     if (!_isHost) {
