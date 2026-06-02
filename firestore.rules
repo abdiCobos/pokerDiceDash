@@ -1,9 +1,10 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Development mode: allow everything without auth
+    // Lock down before production!
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }

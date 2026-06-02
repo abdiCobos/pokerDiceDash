@@ -73,29 +73,32 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
 
                 // Local/single player: use simple column layout
     final useCircle = widget.isMultiplayer && humans.length > 1;
+    final showBetOrActions = ((bj.phase == BlackjackPhase.betting || bj.phase == BlackjackPhase.playerTurn) && humans.any((p) => p.isLocal));
     return Column(
-                  children: [
-                    SizedBox(height: 4 * _s),
-                    if (bj.state.deck.isNotEmpty)
-                      Text('Mazo: ${bj.state.deck.length} / 312 cartas', style: TextStyle(color: Colors.white38, fontSize: 10 * _s)),
-                    if (dealer != null) _buildDealerArea(dealer, bj),
-                    SizedBox(height: 4 * _s),
-                    Expanded(
-                      child: isWaiting
-                        ? _buildWaitingRoom(bj)
-                        : bj.message != null
-                          ? Center(child: _messageBox(bj))
-                          : useCircle
-                            ? _buildPlayerCircle(humans, bj)
-                            : _buildPlayerColumn(humans, bj),
-                    ),
-                    if (bj.phase == BlackjackPhase.roundEnd && bj.isHost)
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 4 * _s),
-                        child: ElevatedButton(onPressed: bj.newRound, style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: EdgeInsets.symmetric(horizontal: 24 * _s, vertical: 12 * _s)), child: Text('Nueva Ronda', style: TextStyle(fontSize: 16 * _s, color: Colors.white, fontWeight: FontWeight.bold))),
-                      ),
-                  ],
-                );
+      children: [
+        SizedBox(height: 4 * _s),
+        if (bj.state.deck.isNotEmpty)
+          Text('Mazo: ${bj.state.deck.length} / 312 cartas', style: TextStyle(color: Colors.white38, fontSize: 10 * _s)),
+        if (dealer != null) _buildDealerArea(dealer, bj),
+        Expanded(
+          child: isWaiting
+            ? _buildWaitingRoom(bj)
+            : bj.message != null
+              ? Center(child: _messageBox(bj))
+              : useCircle
+                ? _buildPlayerCircle(humans, bj)
+                : _buildPlayerColumn(humans, bj),
+        ),
+        // Player controls fixed at bottom
+        if (showBetOrActions)
+          ...humans.where((p) => p.isLocal).map((p) => _buildBottomPlayerArea(p, bj)),
+        if (bj.phase == BlackjackPhase.roundEnd && bj.isHost)
+          Padding(
+            padding: EdgeInsets.only(bottom: 4 * _s),
+            child: ElevatedButton(onPressed: bj.newRound, style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: EdgeInsets.symmetric(horizontal: 24 * _s, vertical: 12 * _s)), child: Text('Nueva Ronda', style: TextStyle(fontSize: 16 * _s, color: Colors.white, fontWeight: FontWeight.bold))),
+          ),
+      ],
+    );
               },
             ),
           ),
@@ -236,7 +239,6 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
 
   Widget _buildPlayerArea(BlackjackPlayer player, BlackjackProvider bj) {
     final isCurrent = bj.humanPlayers.isNotEmpty && bj.currentPlayerIndex < bj.humanPlayers.length && bj.humanPlayers[bj.currentPlayerIndex].id == player.id;
-    final isBetting = bj.phase == BlackjackPhase.betting;
     final isPlayerTurn = bj.phase == BlackjackPhase.playerTurn && isCurrent;
 
     return Container(
@@ -253,10 +255,34 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           _buildPlayerHeader(player, isPlayerTurn),
           SizedBox(height: 2 * _s),
           ...player.hands.asMap().entries.map((e) => _buildHandRow(player, e.key, e.value, isPlayerTurn, bj)),
-          SizedBox(height: 2 * _s),
-          if (isBetting && player.isLocal) _buildBetChips(player, bj),
-          if (isPlayerTurn && player.isLocal) _buildActionButtons(player, bj),
-          if (isPlayerTurn && !player.isLocal) Text('Pensando...', style: TextStyle(color: Colors.white38, fontSize: 12 * _s)),
+          if (!player.isLocal && isPlayerTurn) Padding(
+            padding: EdgeInsets.only(top: 2 * _s),
+            child: Text('Pensando...', style: TextStyle(color: Colors.white38, fontSize: 12 * _s)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomPlayerArea(BlackjackPlayer player, BlackjackProvider bj) {
+    final isBetting = bj.phase == BlackjackPhase.betting;
+    final isPlayerTurn = bj.phase == BlackjackPhase.playerTurn && bj.humanPlayers.isNotEmpty && bj.currentPlayerIndex < bj.humanPlayers.length && bj.humanPlayers[bj.currentPlayerIndex].id == player.id;
+
+    return Container(
+      width: _screenW,
+      padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 6 * _s),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12 * _s)),
+        border: Border(top: BorderSide(color: Colors.amber.withValues(alpha: 0.4), width: 1)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildPlayerHeader(player, isPlayerTurn),
+          SizedBox(height: 4 * _s),
+          if (isBetting) _buildBetChips(player, bj),
+          if (isPlayerTurn) _buildActionButtons(player, bj),
         ],
       ),
     );
