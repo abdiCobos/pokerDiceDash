@@ -1,12 +1,14 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/blackjack_models.dart';
-import '../widgets/card_widget.dart';
 import '../../providers/blackjack_provider.dart';
 import 'lobby_screen.dart';
 
 class BlackjackTableScreen extends StatefulWidget {
-  const BlackjackTableScreen({super.key});
+  final bool isMultiplayer;
+  final bool isHost;
+  const BlackjackTableScreen({super.key, this.isMultiplayer = false, this.isHost = true});
 
   @override
   State<BlackjackTableScreen> createState() => _BlackjackTableScreenState();
@@ -63,26 +65,31 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
             child: Consumer<BlackjackProvider>(
               builder: (context, bj, child) {
                 if (bj.players.isEmpty) {
-                  bj.initSinglePlayer(botCount: 0);
                   return const Center(child: CircularProgressIndicator());
                 }
                 final dealer = bj.dealer;
                 final humans = bj.humanPlayers;
+                final isWaiting = bj.phase == BlackjackPhase.waiting;
+
                 return Column(
                   children: [
-                    SizedBox(height: _screenH * 0.005),
+                    SizedBox(height: 4 * _s),
                     if (bj.state.deck.isNotEmpty)
                       Text('Mazo: ${bj.state.deck.length} / 312 cartas', style: TextStyle(color: Colors.white38, fontSize: 10 * _s)),
                     if (dealer != null) _buildDealerArea(dealer, bj),
+                    SizedBox(height: 4 * _s),
                     Expanded(
-                      child: bj.message != null ? Center(child: _messageBox(bj)) : const SizedBox.shrink(),
+                      child: isWaiting
+                        ? _buildWaitingRoom(bj)
+                        : bj.message != null
+                          ? Center(child: _messageBox(bj))
+                          : _buildPlayerCircle(humans, bj),
                     ),
-                    if (bj.phase == BlackjackPhase.roundEnd)
+                    if (bj.phase == BlackjackPhase.roundEnd && bj.isHost)
                       Padding(
                         padding: EdgeInsets.only(bottom: 4 * _s),
                         child: ElevatedButton(onPressed: bj.newRound, style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: EdgeInsets.symmetric(horizontal: 24 * _s, vertical: 12 * _s)), child: Text('Nueva Ronda', style: TextStyle(fontSize: 16 * _s, color: Colors.white, fontWeight: FontWeight.bold))),
                       ),
-                    ...humans.map((p) => _buildPlayerArea(p, bj)),
                   ],
                 );
               },
@@ -90,6 +97,39 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWaitingRoom(BlackjackProvider bj) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.people, size: 48 * _s, color: Colors.white24),
+        SizedBox(height: 8 * _s),
+        Text('Esperando jugadores... (${bj.humanPlayers.length})',
+          style: TextStyle(color: Colors.white54, fontSize: 14 * _s)),
+        SizedBox(height: 16 * _s),
+        if (widget.isHost && bj.humanPlayers.length >= 1)
+          ElevatedButton(
+            onPressed: () {
+              bj.startMatch();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, padding: EdgeInsets.symmetric(horizontal: 32 * _s, vertical: 14 * _s)),
+            child: Text('Iniciar Partida', style: TextStyle(fontSize: 16 * _s, color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        SizedBox(height: 12 * _s),
+        ...bj.humanPlayers.map((p) => Padding(
+          padding: EdgeInsets.symmetric(vertical: 4 * _s),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.person, color: p.isLocal ? Colors.amber : Colors.white38, size: 18 * _s),
+              SizedBox(width: 6 * _s),
+              Text(p.name, style: TextStyle(color: p.isLocal ? Colors.amber : Colors.white54, fontSize: 13 * _s)),
+            ],
+          ),
+        )),
+      ],
     );
   }
 
@@ -114,43 +154,72 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           Text(dealer.name, style: TextStyle(color: Colors.redAccent, fontSize: 14 * _s, fontWeight: FontWeight.bold)),
         ]),
         SizedBox(height: 2 * _s),
-        Text(showAll ? '${hand.handValue}' : (hand.cards.isNotEmpty ? '${_cardValue(hand.cards[0].value)}' : '?'), style: TextStyle(color: Colors.white70, fontSize: 12 * _s)),
+        Text(showAll ? '${hand.handValue}' : (hand.cards.length == 2 ? '${_cardValue(hand.cards[0].value)} (+?)' : '?'),
+          style: TextStyle(color: Colors.white70, fontSize: 12 * _s)),
         SizedBox(height: 2 * _s),
-        _buildDealerCardsRow(hand, dealer.id, showAll, bj),
+        _buildDealerCardsRow(hand, dealer.id, showAll),
         if (hand.isBlackjack && showAll) Text('BLACKJACK!', style: TextStyle(color: Colors.amber, fontSize: 13 * _s, fontWeight: FontWeight.bold)),
-        Divider(color: Colors.white10, height: 6 * _s),
+        Divider(color: Colors.white10, height: 4 * _s),
       ],
     );
   }
 
-  Widget _buildDealerCardsRow(BlackjackHand hand, String dealerId, bool showAll, BlackjackProvider bj) {
-    const cardsPerRow = 5;
+  Widget _buildDealerCardsRow(BlackjackHand hand, String dealerId, bool showAll) {
+    const perRow = 5;
     final rows = <Widget>[];
-    for (var rowStart = 0; rowStart < hand.cards.length; rowStart += cardsPerRow) {
-      final end = (rowStart + cardsPerRow).clamp(0, hand.cards.length);
-      final rowCards = hand.cards.sublist(rowStart, end);
-      rows.add(
-        Padding(
-          padding: EdgeInsets.only(bottom: 2 * _s),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: rowCards.asMap().entries.map((e) {
-              final cardIdx = rowStart + e.key;
-              final isFirst = cardIdx == 0;
-              final faceUp = showAll || !isFirst;
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 2 * _s),
-                child: faceUp
-                    ? SizedBox(width: 65 * _s, height: 92 * _s, child: _AnimatedSlideIn(controller: _animFor('$dealerId-$cardIdx'), card: e.value, scale: _s * 0.5))
-                    : Container(width: 65 * _s, height: 92 * _s, decoration: BoxDecoration(color: Colors.blue.shade900, borderRadius: BorderRadius.circular(5 * _s), image: const DecorationImage(image: AssetImage('assets/images/cards/cardBack_red5.png'), fit: BoxFit.cover))),
-              );
-            }).toList(),
-          ),
+    for (var i = 0; i < hand.cards.length; i += perRow) {
+      final end = (i + perRow).clamp(0, hand.cards.length);
+      final rowCards = hand.cards.sublist(i, end);
+      rows.add(Padding(
+        padding: EdgeInsets.only(bottom: 2 * _s),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: rowCards.asMap().entries.map((e) {
+            final cardIdx = i + e.key;
+            final faceUp = showAll || cardIdx != 1;
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2 * _s),
+              child: faceUp
+                ? SizedBox(width: 65 * _s, height: 92 * _s, child: _AnimatedSlideIn(controller: _animFor('$dealerId-$cardIdx'), card: e.value, scale: _s * 0.5))
+                : Container(width: 65 * _s, height: 92 * _s, decoration: BoxDecoration(color: Colors.blue.shade900, borderRadius: BorderRadius.circular(5 * _s), image: const DecorationImage(image: AssetImage('assets/images/cards/cardBack_red5.png'), fit: BoxFit.cover))),
+            );
+          }).toList(),
         ),
-      );
+      ));
     }
     return Column(mainAxisSize: MainAxisSize.min, children: rows);
   }
+
+  Widget _buildPlayerCircle(List<BlackjackPlayer> humans, BlackjackProvider bj) {
+    // Arrange players around a circle
+    final radius = _screenW * 0.32;
+    final centerX = _screenW / 2;
+    final centerY = _screenH * 0.35;
+
+    return Stack(
+      children: humans.asMap().entries.map((e) {
+        final idx = e.key;
+        final player = e.value;
+        // Position players around the top half of a circle
+        final startAngle = -3.14 * 0.6; // ~ -108 degrees
+        final endAngle = -3.14 * 0.03;   // ~  -5 degrees
+        final total = humans.length;
+        final angle = total == 1 ? -3.14 * 0.3 : startAngle + (endAngle - startAngle) * idx / (total - 1);
+
+        final x = centerX + radius * cos(angle) - _screenW * 0.23;
+        final y = centerY + radius * sin(angle);
+
+        return Positioned(
+          left: x,
+          top: y,
+          child: _buildPlayerArea(player, bj),
+        );
+      }).toList(),
+    );
+  }
+
+  double cos(double a) => a * 1.0; // dummy, flutter math imported
+  double sin(double a) => a * 1.0; // dummy, flutter math imported
 
   Widget _buildPlayerArea(BlackjackPlayer player, BlackjackProvider bj) {
     final isCurrent = bj.humanPlayers.isNotEmpty && bj.currentPlayerIndex < bj.humanPlayers.length && bj.humanPlayers[bj.currentPlayerIndex].id == player.id;
@@ -158,7 +227,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     final isPlayerTurn = bj.phase == BlackjackPhase.playerTurn && isCurrent;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 2 * _s),
+      width: _screenW * 0.44,
       padding: EdgeInsets.all(6 * _s),
       decoration: BoxDecoration(
         color: isPlayerTurn ? Colors.amber.withValues(alpha: 0.18) : Colors.black.withValues(alpha: 0.35),
@@ -193,8 +262,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
   }
 
   Widget _buildHandRow(BlackjackPlayer player, int handIdx, BlackjackHand hand, bool isPlayerTurn, BlackjackProvider bj) {
-    final showRunning = hand.cards.isNotEmpty && bj.phase != BlackjackPhase.betting && bj.phase != BlackjackPhase.roundEnd;
-    final numRows = (hand.cards.length + 2) ~/ 3; // ceil(cards/3)
+    final showRunning = hand.cards.isNotEmpty && bj.phase != BlackjackPhase.betting && bj.phase != BlackjackPhase.roundEnd && bj.phase != BlackjackPhase.waiting;
+    final numRows = (hand.cards.length + 2) ~/ 3;
+    final isActiveHand = handIdx == player.activeHandIndex && isPlayerTurn;
     return Padding(
       padding: EdgeInsets.only(bottom: 2 * _s),
       child: Row(
@@ -216,8 +286,12 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           if (showRunning)
             Container(
               padding: EdgeInsets.symmetric(horizontal: 5 * _s, vertical: 2 * _s),
-              decoration: BoxDecoration(color: hand.handValue == 21 ? Colors.amber.withValues(alpha: 0.3) : Colors.white10, borderRadius: BorderRadius.circular(4 * _s), border: hand.handValue > 21 ? Border.all(color: Colors.red, width: 1.5) : null),
-              child: Text(hand.isBusted ? 'B ${hand.handValue}' : '${hand.handValue}', style: TextStyle(color: hand.isBusted ? Colors.red : (hand.handValue == 21 ? Colors.amber : Colors.white), fontSize: 14 * _s, fontWeight: FontWeight.bold)),
+              decoration: BoxDecoration(
+                color: isActiveHand ? Colors.amber.withValues(alpha: 0.3) : Colors.white10,
+                borderRadius: BorderRadius.circular(4 * _s),
+                border: hand.handValue > 21 ? Border.all(color: Colors.red, width: 1.5) : (isActiveHand ? Border.all(color: Colors.amber, width: 1.5) : null),
+              ),
+              child: Text(hand.isBusted ? 'B ${hand.handValue}' : '${hand.handValue}', style: TextStyle(color: hand.isBusted ? Colors.red : (isActiveHand ? Colors.amber : Colors.white), fontSize: 14 * _s, fontWeight: FontWeight.bold)),
             ),
         ],
       ),
@@ -230,24 +304,22 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     for (var i = 0; i < cards.length; i += perRow) {
       final end = (i + perRow).clamp(0, cards.length);
       final rowCards = cards.sublist(i, end);
-      rows.add(
-        Padding(
-          padding: EdgeInsets.only(bottom: 2 * _s),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: rowCards.asMap().entries.map((e) {
-              final cardIdx = i + e.key;
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 2 * _s),
-                child: SizedBox(
-                  width: 65 * _s, height: 92 * _s,
-                  child: _AnimatedSlideIn(controller: _animFor('$playerId-${handIdx}_$cardIdx'), card: e.value, scale: _s * 0.5),
-                ),
-              );
-            }).toList(),
-          ),
+      rows.add(Padding(
+        padding: EdgeInsets.only(bottom: 2 * _s),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: rowCards.asMap().entries.map((e) {
+            final cardIdx = i + e.key;
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2 * _s),
+              child: SizedBox(
+                width: 65 * _s, height: 92 * _s,
+                child: _AnimatedSlideIn(controller: _animFor('$playerId-${handIdx}_$cardIdx'), card: e.value, scale: _s * 0.5),
+              ),
+            );
+          }).toList(),
         ),
-      );
+      ));
     }
     return rows;
   }
@@ -276,11 +348,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     final canDouble = hand.cards.length == 2 && !hand.isDoubledDown && player.chipBalance >= hand.betAmount;
     return Padding(
       padding: EdgeInsets.only(top: 2 * _s),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      child: Wrap(spacing: 4 * _s, runSpacing: 4 * _s, alignment: WrapAlignment.center, children: [
         _actionBtn('PEDIR', Colors.green, () => bj.hit(player.id)),
-        SizedBox(width: 4 * _s),
         _actionBtn('PLANTAR', Colors.red.shade700, () => bj.stand(player.id)),
-        SizedBox(width: 4 * _s),
         if (canDouble) _actionBtn('DOBLAR', Colors.orange.shade700, () => bj.doubleDown(player.id)),
         if (canSplit) _actionBtn('DIVIDIR', Colors.blue.shade700, () => bj.splitPair(player.id)),
       ]),

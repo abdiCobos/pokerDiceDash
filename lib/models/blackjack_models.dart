@@ -131,7 +131,7 @@ class BlackjackPlayer {
   );
 }
 
-enum BlackjackPhase { betting, dealing, playerTurn, dealerTurn, roundEnd }
+enum BlackjackPhase { waiting, betting, dealing, playerTurn, dealerTurn, roundEnd }
 
 class BlackjackState {
   final List<BlackjackPlayer> players;

@@ -209,13 +209,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => BlackjackProvider()..initSinglePlayer(botCount: 0),
-            child: const BlackjackTableScreen(),
+            create: (_) => BlackjackProvider()..initMultiplayer(asHost: true),
+            child: const BlackjackTableScreen(isMultiplayer: true, isHost: true),
           ),
         ),
       ).then((_) {
         if (mounted) setState(() => _isHosting = false);
-        p2p.stopAdvertising();
+        if (global) p2p.stopAdvertising();
         p2p.disconnectAll();
       });
     } else {
