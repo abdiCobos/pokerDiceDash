@@ -784,7 +784,7 @@ class GameProvider extends ChangeNotifier {
 
     _isBetting = false;
 
-    AppLogger().log('🔄 nextTurn: currentPlayerIndex=${_state.currentPlayerIndex} status=${_state.status}');
+    AppLogger().log('🔄 nextTurn: currentPlayerIndex=${_state.currentPlayerIndex} status=${_state.status} phase=${_state.phase}');
 
 
 

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'p2p_service.dart';
 import 'logger_service.dart';
 
@@ -60,10 +62,9 @@ class FirebaseTransport {
   Future<void> startDiscovery(String deviceName) async {
     _lobbySub?.cancel();
     final Set<String> _seenRooms = {};
-    dev.log('FirebaseTransport: startDiscovery myId=$_myId', name: 'Firebase');
-    AppLogger().error('FB_DISCOVERY_START: myId=$_myId');
+    FirebaseCrashlytics.instance.log('FB_DISCOVERY_START: myId=$_myId');
     _lobbySub = FirebaseFirestore.instance.collection('lobby').snapshots().listen((snapshot) {
-      dev.log('FirebaseTransport: lobby snapshot docs=${snapshot.docs.length} changes=${snapshot.docChanges.length}', name: 'Firebase');
+      FirebaseCrashlytics.instance.log('FB_SNAPSHOT: docs=${snapshot.docs.length} changes=${snapshot.docChanges.length}');
       for (final change in snapshot.docChanges) {
         final data = change.doc.data();
         if (data == null) {
@@ -81,9 +82,9 @@ class FirebaseTransport {
 
         if (change.type == DocumentChangeType.added) {
           if (!_seenRooms.contains(endpointId)) {
-            AppLogger().error('FB_ROOM_FOUND: endpointId=\$endpointId hostId=\$hostId');
+            AppLogger().log('FB_ROOM_FOUND: endpointId=$endpointId hostId=$hostId');
             _seenRooms.add(endpointId);
-            AppLogger().error('FB_ROOM_FOUND: endpointId=$endpointId name=${data['endpointName']}');
+            AppLogger().error('FB_ROOM_DISCOVERED: endpointId=$endpointId name=${data['endpointName']}');
             _devicesController.add(DiscoveredDevice(
               endpointId: endpointId,
               endpointName: data['endpointName'] as String? ?? '',
@@ -104,6 +105,7 @@ class FirebaseTransport {
     _listenToRoomMessages();
     _connectionController.add(endpointId);
 
+    debugPrint('FB_CONNECT: room=$endpointId myId=$_myId');
     // Send initial connect message so host knows our myId
     await _writeMessage({
       'type': 'FIREBASE_CONNECT',

@@ -71,7 +71,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                 final humans = bj.humanPlayers;
                 final isWaiting = bj.phase == BlackjackPhase.waiting;
 
-                return Column(
+                // Local/single player: use simple column layout
+    final useCircle = widget.isMultiplayer && humans.length > 1;
+    return Column(
                   children: [
                     SizedBox(height: 4 * _s),
                     if (bj.state.deck.isNotEmpty)
@@ -83,7 +85,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                         ? _buildWaitingRoom(bj)
                         : bj.message != null
                           ? Center(child: _messageBox(bj))
-                          : _buildPlayerCircle(humans, bj),
+                          : useCircle
+                            ? _buildPlayerCircle(humans, bj)
+                            : _buildPlayerColumn(humans, bj),
                     ),
                     if (bj.phase == BlackjackPhase.roundEnd && bj.isHost)
                       Padding(
@@ -130,6 +134,18 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           ),
         )),
       ],
+    );
+  }
+
+  Widget _buildPlayerColumn(List<BlackjackPlayer> humans, BlackjackProvider bj) {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: humans.map((p) => Padding(
+          padding: EdgeInsets.only(bottom: 6 * _s),
+          child: _buildPlayerArea(p, bj),
+        )).toList(),
+      ),
     );
   }
 
@@ -224,7 +240,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     final isPlayerTurn = bj.phase == BlackjackPhase.playerTurn && isCurrent;
 
     return Container(
-      width: _screenW * 0.44,
+      width: widget.isMultiplayer ? _screenW * 0.44 : _screenW * 0.88,
       padding: EdgeInsets.all(6 * _s),
       decoration: BoxDecoration(
         color: isPlayerTurn ? Colors.amber.withValues(alpha: 0.18) : Colors.black.withValues(alpha: 0.35),
@@ -324,7 +340,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
   Widget _buildBetChips(BlackjackPlayer player, BlackjackProvider bj) {
     return Padding(
       padding: EdgeInsets.only(top: 2 * _s),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [10, 25, 50, 100, 200].map((amt) => Padding(
+      child: Wrap(spacing: 4 * _s, runSpacing: 4 * _s, alignment: WrapAlignment.center, children: [10, 25, 50, 100, 200, 400].map((amt) => Padding(
         padding: EdgeInsets.symmetric(horizontal: 2 * _s),
         child: Material(
           color: player.chipBalance >= amt ? Colors.amber.shade700 : Colors.grey.shade700,
