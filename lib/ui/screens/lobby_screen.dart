@@ -204,16 +204,32 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final metadata = _buildRoomMetadata();
     p2p.startAdvertising(metadata);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => GameTableScreen(isMultiplayer: true, isHost: true),
-      ),
-    ).then((_) {
-      if (mounted) setState(() => _isHosting = false);
-      p2p.stopAdvertising();
-      p2p.disconnectAll();
-    });
+    if (_selectedMode == GameMode.blackjack) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => BlackjackProvider()..initSinglePlayer(botCount: 0),
+            child: const BlackjackTableScreen(),
+          ),
+        ),
+      ).then((_) {
+        if (mounted) setState(() => _isHosting = false);
+        p2p.stopAdvertising();
+        p2p.disconnectAll();
+      });
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => GameTableScreen(isMultiplayer: true, isHost: true),
+        ),
+      ).then((_) {
+        if (mounted) setState(() => _isHosting = false);
+        p2p.stopAdvertising();
+        p2p.disconnectAll();
+      });
+    }
   }
 
   String _buildRoomMetadata() {

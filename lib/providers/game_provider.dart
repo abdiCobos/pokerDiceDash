@@ -1968,6 +1968,22 @@ class GameProvider extends ChangeNotifier {
 
 
 
+
+  void _rushToShowdown() {
+    // Reveal all community cards and go directly to showdown
+    while (_state.phase != PokerPhase.showdown) {
+      advancePhase();
+    }
+    _state = _state.copyWith(
+      status: GameStatus.finished,
+      revealedCommunityCount: 5,
+    );
+    AppLogger().log('ALL_IN_SHOWDOWN: 5 cartas comunitarias reveladas');
+    determineWinner();
+    notifyListeners();
+    broadcastState();
+  }
+
   int get currentBet => _currentBet;
 
 

@@ -286,11 +286,12 @@ class _GameTableScreenState extends State<GameTableScreen>
           right: 0,
           child: Center(child: _buildCommunityCards(game)),
         ),
-        Positioned(
-          bottom: _screenH * 0.28,
-          left: _screenW * 0.25,
-          child: _buildDiceArea(game),
-        ),
+        if (game.gameMode == GameMode.diceDash)
+          Positioned(
+            bottom: _screenH * 0.28,
+            left: _screenW * 0.25,
+            child: _buildDiceArea(game),
+          ),
       ],
     );
   }

@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import '../../services/p2p_service.dart';
 import '../../services/logger_service.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import 'game_table_screen.dart';
+import 'blackjack_table_screen.dart';
 import 'lobby_screen.dart';
 
 class RoomListScreen extends StatefulWidget {
@@ -89,11 +91,25 @@ class _RoomListScreenState extends State<RoomListScreen> {
         return;
       }
       if (type == 'ASSIGN_SEAT') {
+        final modeStr = msg['gameMode'] as String? ?? 'diceDash';
+        final useBlackjack = modeStr == 'blackjack';
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const GameTableScreen(isMultiplayer: true, isHost: false)),
-          );
+          if (useBlackjack) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChangeNotifierProvider(
+                  create: (_) => BlackjackProvider()..initSinglePlayer(botCount: 0),
+                  child: const BlackjackTableScreen(),
+                ),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const GameTableScreen(isMultiplayer: true, isHost: false)),
+            );
+          }
         }
       }
     });

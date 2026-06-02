@@ -48,7 +48,7 @@ class FirebaseTransport {
         'hostId': _myId,
       });
       dev.log('FirebaseTransport: lobby doc created: $_currentRoomId', name: 'Firebase');
-      AppLogger().log('FB_ADVERTISE_OK: room=$_currentRoomId hostId=$_myId');
+      AppLogger().error('FB_ADVERTISE_OK: room=$_currentRoomId hostId=$_myId');
     } catch (e, s) {
       dev.log('FirebaseTransport: FAILED to create lobby doc: $e', name: 'Firebase');
       AppLogger().error('FB_ADVERTISE_FAIL: room=$_currentRoomId err=$e', s);
@@ -61,6 +61,7 @@ class FirebaseTransport {
     _lobbySub?.cancel();
     final Set<String> _seenRooms = {};
     dev.log('FirebaseTransport: startDiscovery myId=$_myId', name: 'Firebase');
+    AppLogger().error('FB_DISCOVERY_START: myId=$_myId');
     _lobbySub = FirebaseFirestore.instance.collection('lobby').snapshots().listen((snapshot) {
       dev.log('FirebaseTransport: lobby snapshot docs=${snapshot.docs.length} changes=${snapshot.docChanges.length}', name: 'Firebase');
       for (final change in snapshot.docChanges) {
@@ -80,6 +81,7 @@ class FirebaseTransport {
 
         if (change.type == DocumentChangeType.added) {
           if (!_seenRooms.contains(endpointId)) {
+            AppLogger().error('FB_ROOM_FOUND: endpointId=\$endpointId hostId=\$hostId');
             _seenRooms.add(endpointId);
             AppLogger().error('FB_ROOM_FOUND: endpointId=$endpointId name=${data['endpointName']}');
             _devicesController.add(DiscoveredDevice(
