@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/blackjack_models.dart';
@@ -206,8 +206,8 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         final total = humans.length;
         final angle = total == 1 ? -3.14 * 0.3 : startAngle + (endAngle - startAngle) * idx / (total - 1);
 
-        final x = centerX + radius * cos(angle) - _screenW * 0.23;
-        final y = centerY + radius * sin(angle);
+        final x = centerX + radius * math.cos(angle) - _screenW * 0.23;
+        final y = centerY + radius * math.sin(angle);
 
         return Positioned(
           left: x,
@@ -217,9 +217,6 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       }).toList(),
     );
   }
-
-  double cos(double a) => a * 1.0; // dummy, flutter math imported
-  double sin(double a) => a * 1.0; // dummy, flutter math imported
 
   Widget _buildPlayerArea(BlackjackPlayer player, BlackjackProvider bj) {
     final isCurrent = bj.humanPlayers.isNotEmpty && bj.currentPlayerIndex < bj.humanPlayers.length && bj.humanPlayers[bj.currentPlayerIndex].id == player.id;

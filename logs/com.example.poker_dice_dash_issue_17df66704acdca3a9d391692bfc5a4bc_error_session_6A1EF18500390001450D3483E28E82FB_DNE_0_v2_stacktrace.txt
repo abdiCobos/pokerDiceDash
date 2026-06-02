@@ -1,3 +1,11 @@
+# Crashlytics - 
+# Aplicación: com.example.poker_dice_dash
+# Plataforma: android
+# Versión: 1.0.0 (1)
+# Problema: 17df66704acdca3a9d391692bfc5a4bc
+# Sesión: 6A1EF18500390001450D3483E28E82FB_DNE_0_v2
+# Fecha: Tue Jun 02 2026 08:09:35 GMT-0700 (hora estándar del Pacífico de México)
+
 Non-fatal Exception: io.flutter.plugins.firebase.crashlytics.FlutterError: FB_DISCOVERY_START: myId=AQUO17JW. Error thrown FB_DISCOVERY_START: myId=AQUO17JW.
        at AppLogger.error(logger_service.dart:40)
        at FirebaseTransport.startDiscovery(firebase_transport.dart:64)

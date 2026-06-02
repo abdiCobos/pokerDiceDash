@@ -1,0 +1,11 @@
+# Crashlytics - 
+# Aplicación: com.example.poker_dice_dash
+# Plataforma: android
+# Versión: 1.0.0 (1)
+# Problema: eccda017447f67b3c11c01b68adf34a1
+# Sesión: 6A1EF18101120001221093B438DF31CD_DNE_1_v2
+# Fecha: Tue Jun 02 2026 08:31:01 GMT-0700 (hora estándar del Pacífico de México)
+
+Non-fatal Exception: io.flutter.plugins.firebase.crashlytics.FlutterError: PlatformDispatcher: [cloud_firestore/permission-denied] The caller does not have permission to execute the specified operation.. Error thrown PlatformDispatcher: [cloud_firestore/permission-denied] The caller does not have.
+       at EventChannelExtension.receiveGuardedBroadcastStream(exception.dart:73)
+       at MethodChannelQuery.snapshots.<fn>(method_channel_query.dart:183)
