@@ -21,6 +21,15 @@
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": []
+        },
+        "analytics_service": {
+          "status": 1
+        },
+        "crashlytics_service": {
+          "status": 2
+        },
+        "google_cloud_firestore": {
+          "status": 1
         }
       }
     }

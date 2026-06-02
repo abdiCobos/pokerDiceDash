@@ -528,7 +528,7 @@ class BlackjackProvider extends ChangeNotifier {
           hands: [BlackjackHand()], totalBet: 0,
         );
       }
-      _state = BlackjackState(players: updated, deck: _freshDeck(), phase: BlackjackPhase.betting);
+      _state = BlackjackState(players: updated, deck: _state.deck, phase: BlackjackPhase.betting);
       _logAndNotify('newRound');
     } catch (e, s) {
       AppLogger().error('BJ:newRound crash: $e', s);

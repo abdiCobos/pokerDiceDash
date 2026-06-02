@@ -31,7 +31,7 @@ class BlackjackHand {
   }
 
   bool get isBlackjack => cards.length == 2 && handValue == 21 && betAmount > 0;
-  bool get canSplit => cards.length == 2 && _cardValue(cards[0].value) == _cardValue(cards[1].value);
+  bool get canSplit => cards.length == 2 && cards[0].value == cards[1].value;
   bool get isFinished => isStanding || isBusted || isBlackjack;
 
   int _cardValue(String v) {
