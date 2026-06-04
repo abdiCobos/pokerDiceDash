@@ -1,7 +1,6 @@
 import 'dart:math';
 import '../models/card_model.dart';
 import '../models/hand_evaluator.dart';
-import '../models/game_state.dart';
 
 class BotAction {
   final String type;

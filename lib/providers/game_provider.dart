@@ -91,7 +91,7 @@ class GameProvider extends ChangeNotifier {
 
     _p2pService.onDisconnected.listen((endpointId) {
 
-      AppLogger().log('🔌 Jugador desconectado: $endpointId');
+      AppLogger().log('ðŸ”Œ Jugador desconectado: $endpointId');
 
     });
 
@@ -101,7 +101,7 @@ class GameProvider extends ChangeNotifier {
 
   void setMultiplayer(bool value) {
 
-    AppLogger().log('🔧 setMultiplayer: $value (isHost=$_isHost)');
+    AppLogger().log('ðŸ”§ setMultiplayer: $value (isHost=$_isHost)');
 
     _isMultiplayer = value;
 
@@ -157,7 +157,7 @@ class GameProvider extends ChangeNotifier {
 
     if (_gameMode == GameMode.texasHoldem) {
 
-      _players.add(PlayerModel(id: '0', name: 'Tú', chipBalance: 1000, isLocal: true));
+      _players.add(PlayerModel(id: '0', name: 'TÃº', chipBalance: 1000, isLocal: true));
 
       _players.add(PlayerModel(id: '1', name: 'Jugador 2', chipBalance: 1000));
 
@@ -184,7 +184,7 @@ class GameProvider extends ChangeNotifier {
 
       id: '0',
 
-      name: 'Tú',
+      name: 'TÃº',
 
       chipBalance: 1000,
 
@@ -428,7 +428,7 @@ class GameProvider extends ChangeNotifier {
 
   void assignSeatToClient(String endpointId, {String playerName = ''}) {
 
-    AppLogger().log('🪑 assignSeatToClient: endpointId=$endpointId');
+    AppLogger().log('ðŸª‘ assignSeatToClient: endpointId=$endpointId');
 
     if (!_isHost) return;
 
@@ -566,7 +566,7 @@ class GameProvider extends ChangeNotifier {
 
         final reason = message['reason'] as String? ?? '';
 
-        AppLogger().log('🚫 JOIN_REJECTED recibido en GameProvider: $reason');
+        AppLogger().log('ðŸš« JOIN_REJECTED recibido en GameProvider: $reason');
 
         return;
 
@@ -580,11 +580,11 @@ class GameProvider extends ChangeNotifier {
 
         final senderEpId = message['_senderEndpointId'] as String? ?? '';
 
-        AppLogger().log('🔔 JOIN_REQUEST recibido: senderEndpointId=$senderEpId');
+        AppLogger().log('ðŸ”” JOIN_REQUEST recibido: senderEndpointId=$senderEpId');
 
         if (_roomPassword.isNotEmpty && pass != _roomPassword) {
 
-          AppLogger().log('🔒 JOIN_REQUEST rechazado: password incorrecta');
+          AppLogger().log('ðŸ”’ JOIN_REQUEST rechazado: password incorrecta');
 
           _p2pService.sendMessage(senderEpId, {'type': 'JOIN_REJECTED', 'reason': 'password'});
 
@@ -594,7 +594,7 @@ class GameProvider extends ChangeNotifier {
 
         }
 
-        AppLogger().log('🔓 JOIN_REQUEST aceptado: $senderEpId');
+        AppLogger().log('ðŸ”“ JOIN_REQUEST aceptado: $senderEpId');
 
         assignSeatToClient(senderEpId, playerName: message['playerName'] as String? ?? 'Jugador');
 
@@ -606,7 +606,7 @@ class GameProvider extends ChangeNotifier {
 
       if (type == 'PLAYER_ACTION' && _isHost) {
 
-        AppLogger().log('🎮 Host recibió PLAYER_ACTION: action=${message['action']} playerId=${message['playerId']}');
+        AppLogger().log('ðŸŽ® Host recibiÃ³ PLAYER_ACTION: action=${message['action']} playerId=${message['playerId']}');
 
         _processRemoteAction(
 
@@ -626,7 +626,7 @@ class GameProvider extends ChangeNotifier {
 
       if (type == 'ASSIGN_SEAT' && !_isHost && _isMultiplayer) {
 
-        AppLogger().log('🎫 Cliente recibió ASSIGN_SEAT: playerId=${message['playerId']}');
+        AppLogger().log('ðŸŽ« Cliente recibiÃ³ ASSIGN_SEAT: playerId=${message['playerId']}');
 
         localPlayerId = message['playerId'] as String? ?? localPlayerId;
 
@@ -784,7 +784,7 @@ class GameProvider extends ChangeNotifier {
 
     _isBetting = false;
 
-    AppLogger().log('🔄 nextTurn: currentPlayerIndex=${_state.currentPlayerIndex} status=${_state.status} phase=${_state.phase}');
+    AppLogger().log('ðŸ”„ nextTurn: currentPlayerIndex=${_state.currentPlayerIndex} status=${_state.status} phase=${_state.phase}');
 
 
 
@@ -796,7 +796,7 @@ class GameProvider extends ChangeNotifier {
 
     for (final p in allInPlayers) { if (!_playersActedThisPhase.contains(p.id)) _playersActedThisPhase.add(p.id); }
 
-    AppLogger().log('🔄 nextTurn stats: active=${activePlayers.length} unF=${unFoldedPlayers.length} allIn=${allInPlayers.length} acted=${_playersActedThisPhase.length}');
+    AppLogger().log('ðŸ”„ nextTurn stats: active=${activePlayers.length} unF=${unFoldedPlayers.length} allIn=${allInPlayers.length} acted=${_playersActedThisPhase.length}');
 
     if (unFoldedPlayers.length == 1) {
 
@@ -808,7 +808,7 @@ class GameProvider extends ChangeNotifier {
 
       _totalContributions.clear();
 
-      setCentralMessage('¡${winner.name} gana por abandono!');
+      setCentralMessage('Â¡${winner.name} gana por abandono!');
 
       scheduleNewRound();
 
@@ -892,7 +892,7 @@ class GameProvider extends ChangeNotifier {
 
     );
 
-    AppLogger().log('🔄 nextTurn result: nextIndex=$nextIndex playersActed=${_playersActedThisPhase.toList()}');
+    AppLogger().log('ðŸ”„ nextTurn result: nextIndex=$nextIndex playersActed=${_playersActedThisPhase.toList()}');
 
     _luckySevenApplied = false;
 
@@ -1180,7 +1180,7 @@ class GameProvider extends ChangeNotifier {
 
       if (winners.length > 1) {
 
-        setCentralMessage('¡Empate! Bote dividido con ${bestHandResult.rankName}');
+        setCentralMessage('Â¡Empate! Bote dividido con ${bestHandResult.rankName}');
 
       } else {
 
@@ -1188,7 +1188,7 @@ class GameProvider extends ChangeNotifier {
 
         _isPotFlying = true;
 
-        setCentralMessage('¡${winners.first.name} gana con ${bestHandResult.rankName}!');
+        setCentralMessage('Â¡${winners.first.name} gana con ${bestHandResult.rankName}!');
 
       }
 
@@ -1196,7 +1196,7 @@ class GameProvider extends ChangeNotifier {
 
     } else {
 
-      setCentralMessage('¡Showdown! No hay ganador');
+      setCentralMessage('Â¡Showdown! No hay ganador');
 
       notifyListeners();
 
@@ -1410,11 +1410,11 @@ class GameProvider extends ChangeNotifier {
 
 
 
-    // TODO: Blackjack 21 — Si dados == 2 y 1, activar evento especial:
+    // TODO: Blackjack 21 â€” Si dados == 2 y 1, activar evento especial:
 
     // Repartir 2 cartas extra al jugador del turno y habilitar
 
-    // una apuesta flash (solo válida durante ese turno).
+    // una apuesta flash (solo vÃ¡lida durante ese turno).
 
 
 
@@ -1487,13 +1487,17 @@ class GameProvider extends ChangeNotifier {
     final activePlayers = _players.where((p) => !p.isBankrupt && p.chipBalance > 0).toList();
 
     if (activePlayers.length < 2) {
-
-      _deck.clear();
-
+      AppLogger().log('NOT_ENOUGH_PLAYERS: resetting all chips to 1000');
+      for (final p in _players) {
+        p.isBankrupt = false;
+        p.isFolded = false;
+        p.chipBalance = 1000;
+        p.hand = [];
+      }
       notifyListeners();
-
+      broadcastState();
+      scheduleNewRound();
       return;
-
     }
 
 
@@ -1572,7 +1576,7 @@ class GameProvider extends ChangeNotifier {
 
 
 
-    AppLogger().log('🎯 BLINDS: SB=${_players[sbIdx].name}(${_players[sbIdx].id})=$actualSB BB=${_players[bbIdx].name}(${_players[bbIdx].id})=$actualBB dealerIndex=$dealerIdx');
+    AppLogger().log('ðŸŽ¯ BLINDS: SB=${_players[sbIdx].name}(${_players[sbIdx].id})=$actualSB BB=${_players[bbIdx].name}(${_players[bbIdx].id})=$actualBB dealerIndex=$dealerIdx');
 
 
 
@@ -1698,7 +1702,7 @@ class GameProvider extends ChangeNotifier {
 
 
 
-    setCentralMessage('¡MODO CAOS! Intercambio de cartas');
+    setCentralMessage('Â¡MODO CAOS! Intercambio de cartas');
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -1764,7 +1768,7 @@ class GameProvider extends ChangeNotifier {
 
   void fold(String playerId) {
 
-    AppLogger().log('🟥 FOLD llamado: playerId=$playerId isHost=$_isHost');
+    AppLogger().log('ðŸŸ¥ FOLD llamado: playerId=$playerId isHost=$_isHost');
 
     if (!_isHost) {
 
@@ -1810,7 +1814,7 @@ class GameProvider extends ChangeNotifier {
 
   void call(String playerId) {
 
-    AppLogger().log('🟦 CALL llamado: playerId=$playerId isHost=$_isHost');
+    AppLogger().log('ðŸŸ¦ CALL llamado: playerId=$playerId isHost=$_isHost');
 
     if (!_isHost) {
 
@@ -1928,7 +1932,7 @@ class GameProvider extends ChangeNotifier {
 
     if (totalDeduction >= player.chipBalance && totalDeduction > 0) {
 
-      AppLogger().log('🟧 ALL-IN RAISE: $playerId se queda sin fichas');
+      AppLogger().log('ðŸŸ§ ALL-IN RAISE: $playerId se queda sin fichas');
 
     }
 
@@ -2036,11 +2040,11 @@ class GameProvider extends ChangeNotifier {
 
     _isBetting = false;
 
-    AppLogger().log('💵 REBUY: ${local.name} recibe 1000 fichas');
+    AppLogger().log('ðŸ’µ REBUY: ${local.name} recibe 1000 fichas');
 
     if (_state.status == GameStatus.finished || _state.phase == PokerPhase.showdown) {
 
-      AppLogger().log('💵 REBUY en partida terminada - iniciando nueva ronda');
+      AppLogger().log('ðŸ’µ REBUY en partida terminada - iniciando nueva ronda');
 
       _matchStarted = true;
 
@@ -2113,7 +2117,7 @@ class GameProvider extends ChangeNotifier {
 
     if (!_isHost) return;
 
-    AppLogger().log('📡 broadcastState: enviando a ${_p2pService.connectedEndpointCount} clientes');
+    AppLogger().log('ðŸ“¡ broadcastState: enviando a ${_p2pService.connectedEndpointCount} clientes');
 
     _p2pService.broadcastMessage({
 
@@ -2129,7 +2133,7 @@ class GameProvider extends ChangeNotifier {
 
   void _syncStateFromMap(Map<String, dynamic> state) {
 
-    AppLogger().log('📥 Cliente _syncStateFromMap: currentPlayerIndex=${state['currentPlayerIndex']} status=${state['status']} numPlayers=${(state['players'] as List?)?.length}');
+    AppLogger().log('ðŸ“¥ Cliente _syncStateFromMap: currentPlayerIndex=${state['currentPlayerIndex']} status=${state['status']} numPlayers=${(state['players'] as List?)?.length}');
 
     if (state['gameMode'] != null) {
 
@@ -2273,7 +2277,7 @@ class GameProvider extends ChangeNotifier {
 
   void _processRemoteAction(String action, String playerId, int value) {
 
-    AppLogger().log('📨 _processRemoteAction: action=$action playerId=$playerId value=$value');
+    AppLogger().log('ðŸ“¨ _processRemoteAction: action=$action playerId=$playerId value=$value');
 
     switch (action) {
 
