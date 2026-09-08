@@ -30,3 +30,7 @@ Thumbs.db
 *.tmp
 coverage/
 .aider*
+
+# Firebase config
+lib/firebase_options.dart
+firebase.json
