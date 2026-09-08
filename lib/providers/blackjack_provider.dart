@@ -158,6 +158,8 @@ class BlackjackProvider extends ChangeNotifier {
   void _dealCardsSequentially(List<BlackjackPlayer> playerList) {
     var dealStep = 0;
     final maxSteps = playerList.length * 2;
+    // Total dealt card count for animation delay
+    final totalDealt = <String, int>{};
 
     void dealNextCard() {
       if (dealStep >= maxSteps) {
@@ -172,6 +174,7 @@ class BlackjackProvider extends ChangeNotifier {
       _state = _state.copyWith(players: updated, deck: _state.deck);
       _logAndNotify('_dealCardsSequentially-$dealStep');
       dealStep++;
+      // 350ms delay between each card
       Future.delayed(const Duration(milliseconds: 350), dealNextCard);
     }
 
@@ -213,7 +216,12 @@ class BlackjackProvider extends ChangeNotifier {
         final p = humans[pIdx % humans.length];
         for (var hIdx = 0; hIdx < p.hands.length; hIdx++) {
           if (!p.hands[hIdx].isFinished && p.hands[hIdx].cards.length >= 2) {
-            _state = _state.copyWith(currentPlayerIndex: pIdx % humans.length, currentHandIndex: hIdx);
+            final updatedPlayers = <BlackjackPlayer>[..._state.players];
+            final playerMainIdx = updatedPlayers.indexWhere((pl) => pl.id == p.id);
+            if (playerMainIdx >= 0) {
+              updatedPlayers[playerMainIdx] = updatedPlayers[playerMainIdx].copyWith(activeHandIndex: hIdx);
+            }
+            _state = _state.copyWith(players: updatedPlayers, currentPlayerIndex: pIdx % humans.length, currentHandIndex: hIdx);
             _logAndNotify('_advanceToNextActivePlayer-$pIdx-$hIdx');
             if (!p.isLocal) {
               Future.delayed(const Duration(milliseconds: 600), () => _autoPlayBot(p.id));
@@ -263,6 +271,10 @@ class BlackjackProvider extends ChangeNotifier {
       } else if (val == 21) {
         hands[hIdx].isStanding = true;
         AppLogger().log('BJ:21 $playerId=$val hand=$hIdx');
+      } else if (hands[hIdx].cards.length >= 5) {
+        hands[hIdx].isStanding = true;
+        hands[hIdx].isCharlie = true;
+        AppLogger().log('BJ:5-Card Charlie $playerId=$val hand=$hIdx');
       }
       updated[pIdx] = updated[pIdx].copyWith(hands: hands, activeHandIndex: hIdx);
       _state = _state.copyWith(players: updated, deck: _state.deck, currentHandIndex: hIdx);
@@ -294,7 +306,7 @@ class BlackjackProvider extends ChangeNotifier {
       hands[hIdx].isStanding = true;
       AppLogger().log('BJ:stand hand=$hIdx value=${hands[hIdx].handValue}');
       final updated = <BlackjackPlayer>[...players];
-      updated[pIdx] = players[pIdx].copyWith(hands: hands);
+      updated[pIdx] = players[pIdx].copyWith(hands: hands, activeHandIndex: hIdx);
       _state = _state.copyWith(players: updated, currentHandIndex: hIdx);
       _logAndNotify('stand');
       Future.delayed(const Duration(milliseconds: 400), _advanceToNextActivePlayer);
@@ -447,6 +459,8 @@ class BlackjackProvider extends ChangeNotifier {
             winAmount = hand.isBlackjack ? (hand.betAmount * 2.5).round() : hand.betAmount * 2;
           } else if (hand.isBlackjack) {
             winAmount = (hand.betAmount * 2.5).round();
+          } else if (hand.isCharlie) {
+            winAmount = hand.betAmount * 2;
           } else if (hand.handValue > dealerVal) {
             winAmount = hand.betAmount * 2;
           } else if (hand.handValue == dealerVal) {
@@ -463,6 +477,8 @@ class BlackjackProvider extends ChangeNotifier {
           result = 'Dealer bust - Ganas ${netChange > 0 ? "+$netChange" : netChange}';
         } else if (p.isBlackjack) {
           result = 'Blackjack! Ganas +${netChange}';
+        } else if (p.hands.any((h) => h.isCharlie)) {
+          result = '5-Card Charlie! Ganas +${netChange}';
         } else if (p.hands.any((h) => h.handValue > dealerVal)) {
           result = 'Ganas con: ${p.hands.map((h) => h.handValue.toString()).join(" & ")} vs $dealerVal - +${netChange}';
         } else if (p.hands.any((h) => h.handValue == dealerVal)) {

@@ -6,6 +6,7 @@ class BlackjackHand {
   bool isStanding;
   bool isBusted;
   bool isDoubledDown;
+  bool isCharlie;
 
   BlackjackHand({
     List<CardModel>? cards,
@@ -13,6 +14,7 @@ class BlackjackHand {
     this.isStanding = false,
     this.isBusted = false,
     this.isDoubledDown = false,
+    this.isCharlie = false,
   }) : cards = cards ?? [];
 
   int get handValue {
@@ -32,7 +34,7 @@ class BlackjackHand {
 
   bool get isBlackjack => cards.length == 2 && handValue == 21 && betAmount > 0;
   bool get canSplit => cards.length == 2 && cards[0].value == cards[1].value;
-  bool get isFinished => isStanding || isBusted || isBlackjack;
+  bool get isFinished => isStanding || isBusted || isBlackjack || isCharlie;
 
   int _cardValue(String v) {
     switch (v) {
@@ -48,12 +50,14 @@ class BlackjackHand {
     bool? isStanding,
     bool? isBusted,
     bool? isDoubledDown,
+    bool? isCharlie,
   }) => BlackjackHand(
       cards: cards ?? this.cards,
       betAmount: betAmount ?? this.betAmount,
       isStanding: isStanding ?? this.isStanding,
       isBusted: isBusted ?? this.isBusted,
       isDoubledDown: isDoubledDown ?? this.isDoubledDown,
+      isCharlie: isCharlie ?? this.isCharlie,
     );
 
   Map<String, dynamic> toMap() => {
@@ -62,6 +66,7 @@ class BlackjackHand {
     'isStanding': isStanding,
     'isBusted': isBusted,
     'isDoubledDown': isDoubledDown,
+    'isCharlie': isCharlie,
   };
 
   factory BlackjackHand.fromMap(Map<String, dynamic> m) => BlackjackHand(
@@ -70,6 +75,7 @@ class BlackjackHand {
     isStanding: m['isStanding'] ?? false,
     isBusted: m['isBusted'] ?? false,
     isDoubledDown: m['isDoubledDown'] ?? false,
+    isCharlie: m['isCharlie'] ?? false,
   );
 }
 
