@@ -134,12 +134,34 @@ class _GameTableScreenState extends State<GameTableScreen>
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const LobbyScreen()),
-          );
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1A1A2E),
+            title: const Text('¿Abandonar partida?', style: TextStyle(color: Colors.amber)),
+            content: const Text('¿Estás seguro que quieres salir de la partida?', style: TextStyle(color: Colors.white)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Salir', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+        if (shouldPop ?? false) {
+          if (context.mounted) {
+            Provider.of<GameProvider>(context, listen: false).exitGame();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LobbyScreen()),
+            );
+          }
         }
       },
       child: Scaffold(
@@ -497,7 +519,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     final blocked = game.isBetting || game.isChaosSwapping || game.centralMessage != null;
     final isMyTurn = activeIdx >= 0 && activeIdx < game.players.length &&
         game.players[activeIdx].id == game.localPlayerId;
-    final canRoll = game.state.status == GameStatus.diceTurn && (isMyTurn || !widget.isMultiplayer) && !blocked;
+    final canRoll = game.state.status == GameStatus.diceTurn && isMyTurn && !blocked;
 
     final canStart = widget.isMultiplayer && widget.isHost &&
         game.players.length >= 2 && game.state.phase == PokerPhase.preFlop &&

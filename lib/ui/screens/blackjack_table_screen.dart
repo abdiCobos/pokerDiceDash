@@ -49,11 +49,32 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          for (final c in _cardAnims.values) { c.dispose(); }
-          _cardAnims.clear();
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LobbyScreen()));
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1A1A2E),
+            title: const Text('¿Abandonar partida?', style: TextStyle(color: Colors.amber)),
+            content: const Text('¿Estás seguro que quieres salir de la partida?', style: TextStyle(color: Colors.white)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Salir', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+        if (shouldPop ?? false) {
+          if (context.mounted) {
+            for (final c in _cardAnims.values) { c.dispose(); }
+            _cardAnims.clear();
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LobbyScreen()));
+          }
         }
       },
       child: Scaffold(

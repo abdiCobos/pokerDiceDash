@@ -20,6 +20,7 @@ import '../services/sound_service.dart';
 
 
 class GameProvider extends ChangeNotifier {
+  bool _isExiting = false;
 
   final P2PService _p2pService;
 
@@ -918,6 +919,7 @@ class GameProvider extends ChangeNotifier {
 
 
   Future<void> advancePhase() async {
+    if (_isExiting) return;
     _clearBets();
     _playersActedThisPhase.clear();
     final currentPhase = _state.phase;
@@ -934,10 +936,11 @@ class GameProvider extends ChangeNotifier {
         );
         notifyListeners();
         for (int i = 0; i < 3; i++) {
-          SoundService().cardPlace();
+          try { SoundService().cardPlace(); } catch (_) {}
           _state = _state.copyWith(revealedCommunityCount: _state.revealedCommunityCount + 1);
           notifyListeners();
           await Future.delayed(const Duration(milliseconds: 200));
+          if (_isExiting) return;
         }
         break;
       case PokerPhase.flop:
@@ -949,10 +952,11 @@ class GameProvider extends ChangeNotifier {
           turnsCompleted: 0,
         );
         notifyListeners();
-        SoundService().cardPlace();
+        try { SoundService().cardPlace(); } catch (_) {}
         _state = _state.copyWith(revealedCommunityCount: 4);
         notifyListeners();
         await Future.delayed(const Duration(milliseconds: 200));
+          if (_isExiting) return;
         break;
       case PokerPhase.turn:
         _burnCard();
@@ -963,10 +967,11 @@ class GameProvider extends ChangeNotifier {
           turnsCompleted: 0,
         );
         notifyListeners();
-        SoundService().cardPlace();
+        try { SoundService().cardPlace(); } catch (_) {}
         _state = _state.copyWith(revealedCommunityCount: 5);
         notifyListeners();
         await Future.delayed(const Duration(milliseconds: 200));
+          if (_isExiting) return;
         break;
       case PokerPhase.river:
         _state = _state.copyWith(
@@ -1125,6 +1130,7 @@ class GameProvider extends ChangeNotifier {
 
 
       await Future.delayed(const Duration(milliseconds: 2000));
+      if (_isExiting) return;
 
 
 
@@ -1181,6 +1187,7 @@ class GameProvider extends ChangeNotifier {
   void scheduleNewRound() {
 
     Future.delayed(const Duration(seconds: 5), () {
+      if (_isExiting) return;
 
       _centralMessage = null;
 
@@ -1411,9 +1418,8 @@ class GameProvider extends ChangeNotifier {
 
 
     _rollCounter++;
-
     notifyListeners();
-
+    _checkBotTurn();
   }
 
 
@@ -1606,12 +1612,10 @@ class GameProvider extends ChangeNotifier {
 
         : nextActive((bbIdx + 1) % _players.length);
 
+    final nextStatus = _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn;
     _state = _state.copyWith(
-
-      status: GameStatus.diceTurn,
-
+      status: nextStatus,
       currentPlayerIndex: utgIdx,
-
       communityCards: community,
 
       phase: PokerPhase.preFlop,
@@ -2304,21 +2308,38 @@ class GameProvider extends ChangeNotifier {
 
 
   void _checkBotTurn() {
-    if (_state.status == GameStatus.finished || _gameMode != GameMode.texasHoldem) return;
+    if (_isExiting || _state.status == GameStatus.finished) return;
     if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
     
     final activePlayer = _players[_state.currentPlayerIndex];
     if (activePlayer.isLocal) return;
     
-    _playBotTurn(activePlayer);
+    if (_state.status == GameStatus.diceTurn && _gameMode == GameMode.diceDash) {
+      _playBotDice(activePlayer);
+    } else if (_state.status == GameStatus.betting) {
+      _playBotTurn(activePlayer);
+    }
+  }
+
+  Future<void> _playBotDice(PlayerModel bot) async {
+    if (_isExiting) return;
+    await Future.delayed(Duration(milliseconds: 1000 + Random().nextInt(1000)));
+    if (_isExiting) return;
+    if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
+    if (_players[_state.currentPlayerIndex].id != bot.id) return;
+    if (_state.status != GameStatus.diceTurn) return;
+    
+    rollDice();
   }
 
   Future<void> _playBotTurn(PlayerModel bot) async {
+    if (_isExiting) return;
     await Future.delayed(Duration(milliseconds: 1500 + Random().nextInt(1000)));
+    if (_isExiting) return;
     
     if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
     if (_players[_state.currentPlayerIndex].id != bot.id) return;
-    if (_state.status == GameStatus.finished) return;
+    if (_isExiting || _state.status == GameStatus.finished) return;
 
     final amountToCall = _currentBet - (_betsThisPhase[bot.id] ?? 0);
     bool isHighConfidence = false;
@@ -2375,6 +2396,12 @@ class GameProvider extends ChangeNotifier {
         call(bot.id);
       }
     }
+  }
+
+  void exitGame() {
+    _isExiting = true;
+    _state = _state.copyWith(status: GameStatus.finished);
+    notifyListeners();
   }
 
   @override
