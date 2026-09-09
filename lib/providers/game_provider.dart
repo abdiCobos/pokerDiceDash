@@ -157,7 +157,7 @@ class GameProvider extends ChangeNotifier {
 
     if (_gameMode == GameMode.texasHoldem) {
 
-      _players.add(PlayerModel(id: '0', name: 'TÃº', chipBalance: 1000, isLocal: true));
+      _players.add(PlayerModel(id: '0', name: 'Yo', chipBalance: 1000, isLocal: true));
 
       _players.add(PlayerModel(id: '1', name: 'Jugador 2', chipBalance: 1000));
 
@@ -167,11 +167,9 @@ class GameProvider extends ChangeNotifier {
       shuffleAndDeal();
 
       _state = _state.copyWith(status: GameStatus.betting, phase: PokerPhase.preFlop);
-
       notifyListeners();
-
       SoundService().cardMix();
-
+      _checkBotTurn();
       return;
 
     }
@@ -184,7 +182,7 @@ class GameProvider extends ChangeNotifier {
 
       id: '0',
 
-      name: 'TÃº',
+      name: 'Yo',
 
       chipBalance: 1000,
 
@@ -808,7 +806,7 @@ class GameProvider extends ChangeNotifier {
 
       _totalContributions.clear();
 
-      setCentralMessage('Â¡${winner.name} gana por abandono!');
+      setCentralMessage('¡${winner.name} gana por abandono!');
 
       scheduleNewRound();
 
@@ -913,100 +911,71 @@ class GameProvider extends ChangeNotifier {
 
 
     notifyListeners();
-
     broadcastState();
-
+    _checkBotTurn();
   }
 
 
 
-  void advancePhase() {
-
+  Future<void> advancePhase() async {
     _clearBets();
-
     _playersActedThisPhase.clear();
-
     final currentPhase = _state.phase;
 
-
-
     switch (currentPhase) {
-
       case PokerPhase.preFlop:
-
         _burnCard();
-
         _communityCardRenderCounter++;
-
         _state = _state.copyWith(
-
           phase: PokerPhase.flop,
-
-          currentPlayerIndex: 0,
-
+          currentPlayerIndex: -1,
           status: _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn,
-
-          revealedCommunityCount: 3,
-
           turnsCompleted: 0,
-
         );
-
+        notifyListeners();
+        for (int i = 0; i < 3; i++) {
+          SoundService().cardPlace();
+          _state = _state.copyWith(revealedCommunityCount: _state.revealedCommunityCount + 1);
+          notifyListeners();
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
         break;
-
       case PokerPhase.flop:
-
         _burnCard();
-
         _state = _state.copyWith(
-
           phase: PokerPhase.turn,
-
-          currentPlayerIndex: 0,
-
+          currentPlayerIndex: -1,
           status: _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn,
-
-          revealedCommunityCount: 4,
-
           turnsCompleted: 0,
-
         );
-
+        notifyListeners();
+        SoundService().cardPlace();
+        _state = _state.copyWith(revealedCommunityCount: 4);
+        notifyListeners();
+        await Future.delayed(const Duration(milliseconds: 200));
         break;
-
       case PokerPhase.turn:
-
         _burnCard();
-
         _state = _state.copyWith(
-
           phase: PokerPhase.river,
-
-          currentPlayerIndex: 0,
-
+          currentPlayerIndex: -1,
           status: _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn,
-
-          revealedCommunityCount: 5,
-
           turnsCompleted: 0,
-
         );
-
+        notifyListeners();
+        SoundService().cardPlace();
+        _state = _state.copyWith(revealedCommunityCount: 5);
+        notifyListeners();
+        await Future.delayed(const Duration(milliseconds: 200));
         break;
-
       case PokerPhase.river:
-
         _state = _state.copyWith(
-
           phase: PokerPhase.showdown,
-
           status: GameStatus.finished,
-
         );
-
         determineWinner();
-
         return;
+
 
       case PokerPhase.showdown:
 
@@ -1063,9 +1032,8 @@ class GameProvider extends ChangeNotifier {
 
 
     notifyListeners();
-
     broadcastState();
-
+    _checkBotTurn();
   }
 
 
@@ -1180,7 +1148,7 @@ class GameProvider extends ChangeNotifier {
 
       if (winners.length > 1) {
 
-        setCentralMessage('Â¡Empate! Bote dividido con ${bestHandResult.rankName}');
+        setCentralMessage('¡Empate! Bote dividido con ${bestHandResult.rankName}');
 
       } else {
 
@@ -1188,7 +1156,7 @@ class GameProvider extends ChangeNotifier {
 
         _isPotFlying = true;
 
-        setCentralMessage('Â¡${winners.first.name} gana con ${bestHandResult.rankName}!');
+        setCentralMessage('¡${winners.first.name} gana con ${bestHandResult.rankName}!');
 
       }
 
@@ -1196,7 +1164,7 @@ class GameProvider extends ChangeNotifier {
 
     } else {
 
-      setCentralMessage('Â¡Showdown! No hay ganador');
+      setCentralMessage('¡Showdown! No hay ganador');
 
       notifyListeners();
 
@@ -1469,17 +1437,17 @@ class GameProvider extends ChangeNotifier {
 
 
     // Mark bankrupt players
-
     for (final player in _players) {
-
       if (player.chipBalance <= 0) {
-
-        player.isBankrupt = true;
-
-        player.isFolded = true;
-
+        if (!player.isLocal) {
+          player.chipBalance = 1000; // Auto-rebuy for bots
+          player.isBankrupt = false;
+          player.isFolded = false;
+        } else {
+          player.isBankrupt = true;
+          player.isFolded = true;
+        }
       }
-
     }
 
 
@@ -1673,7 +1641,7 @@ class GameProvider extends ChangeNotifier {
 
 
     notifyListeners();
-
+    _checkBotTurn();
   }
 
 
@@ -1702,7 +1670,7 @@ class GameProvider extends ChangeNotifier {
 
 
 
-    setCentralMessage('Â¡MODO CAOS! Intercambio de cartas');
+    setCentralMessage('¡MODO CAOS! Intercambio de cartas');
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -1847,6 +1815,8 @@ class GameProvider extends ChangeNotifier {
       _addContribution(playerId, actualCall);
 
       _betsThisPhase[playerId] = alreadyBet + actualCall;
+
+      SoundService().chipsRaise();
 
     } else {
 
@@ -2333,15 +2303,83 @@ class GameProvider extends ChangeNotifier {
 
 
 
-  @override
-
-  void dispose() {
-
-    _messageSubscription?.cancel();
-
-    super.dispose();
-
+  void _checkBotTurn() {
+    if (_state.status == GameStatus.finished || _gameMode != GameMode.texasHoldem) return;
+    if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
+    
+    final activePlayer = _players[_state.currentPlayerIndex];
+    if (activePlayer.isLocal) return;
+    
+    _playBotTurn(activePlayer);
   }
 
-}
+  Future<void> _playBotTurn(PlayerModel bot) async {
+    await Future.delayed(Duration(milliseconds: 1500 + Random().nextInt(1000)));
+    
+    if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
+    if (_players[_state.currentPlayerIndex].id != bot.id) return;
+    if (_state.status == GameStatus.finished) return;
 
+    final amountToCall = _currentBet - (_betsThisPhase[bot.id] ?? 0);
+    bool isHighConfidence = false;
+    bool isMediumConfidence = false;
+
+    if (_state.phase == PokerPhase.preFlop) {
+      if (bot.hand.length >= 2) {
+        final c1 = bot.hand[0].value;
+        final c2 = bot.hand[1].value;
+        if (c1 == c2) {
+          isHighConfidence = true;
+        } else if (['J', 'Q', 'K', 'A'].contains(c1) || ['J', 'Q', 'K', 'A'].contains(c2)) {
+          isMediumConfidence = true;
+        }
+      }
+    } else {
+      final eval = HandEvaluator.evaluate(bot.hand, _state.communityCards.take(_state.revealedCommunityCount).toList());
+      if (eval.rank == HandRank.highCard) {
+        // low
+      } else if (eval.rank == HandRank.onePair) {
+        isMediumConfidence = true;
+      } else {
+        isHighConfidence = true;
+      }
+    }
+
+    final rand = Random().nextInt(100);
+
+    void safeRaise(int raiseAmount) {
+      final totalDeduction = amountToCall + raiseAmount;
+      if (bot.chipBalance > totalDeduction) {
+        raise(bot.id, raiseAmount);
+      } else {
+        call(bot.id);
+      }
+    }
+
+    if (amountToCall > 0) {
+      if (!isMediumConfidence && !isHighConfidence) {
+        if (rand < 85) fold(bot.id);
+        else call(bot.id);
+      } else if (isMediumConfidence) {
+        if (rand < 80) call(bot.id);
+        else safeRaise(50);
+      } else {
+        if (rand < 30) call(bot.id);
+        else safeRaise(100);
+      }
+    } else {
+      if (isHighConfidence) {
+        if (rand < 50) call(bot.id);
+        else safeRaise(50);
+      } else {
+        call(bot.id);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _messageSubscription?.cancel();
+    super.dispose();
+  }
+}

@@ -41,7 +41,7 @@ class BlackjackProvider extends ChangeNotifier {
       localPlayerId = '0';
       final list = <BlackjackPlayer>[];
       list.add(BlackjackPlayer(id: 'dealer', name: 'Dealer', isDealer: true, chipBalance: 99999));
-      list.add(BlackjackPlayer(id: '0', name: 'Tú', chipBalance: 1000, isLocal: true));
+      list.add(BlackjackPlayer(id: '0', name: 'Yo', chipBalance: 1000, isLocal: true));
       for (var i = 0; i < botCount; i++) {
         list.add(BlackjackPlayer(id: '${i + 1}', name: 'Bot ${i + 1}', chipBalance: 1000));
       }

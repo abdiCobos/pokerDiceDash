@@ -555,7 +555,12 @@ class _GameTableScreenState extends State<GameTableScreen>
     final isMyTurn = activePlayer.id == game.localPlayerId;
     final isAllIn = activePlayer.chipBalance <= 0 && !activePlayer.isFolded;
     final blocked = game.isBetting || game.isChaosSwapping || game.centralMessage != null;
-    if (!isMyTurn && widget.isMultiplayer) return const SizedBox.shrink();
+    if (!isMyTurn) {
+      if (!widget.isMultiplayer) {
+        return const SizedBox.shrink();
+      }
+      return const SizedBox.shrink();
+    }
 
     // In Texas Hold'em, all-in players should still get to see FOLD/CALL/RAISE
     // (they can only call with their remaining chips, which is handled in call())

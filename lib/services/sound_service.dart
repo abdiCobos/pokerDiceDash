@@ -10,6 +10,9 @@ class SoundService {
     try {
       await player.play(AssetSource('sounds/$file'));
       player.onPlayerComplete.listen((_) => player.dispose());
+      Future.delayed(const Duration(seconds: 4), () {
+        try { player.dispose(); } catch (_) {}
+      });
     } catch (_) {
       player.dispose();
     }
@@ -17,6 +20,7 @@ class SoundService {
 
   void cardMix() => _play('cardmix.ogg');
   void cardFold() => _play('cardfold.ogg');
+  void cardPlace() => _play('cardfold.ogg');
   void caosCard() => _play('caosCardSound.ogg');
   void chipsRaise() => _play('chipsRaise.ogg');
   void chipsMultiply() => _play('chipsMultiply.ogg');
