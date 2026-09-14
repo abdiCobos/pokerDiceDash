@@ -22,10 +22,7 @@
 - **Práctica (Solitario):** Juega sin conexión contra el Crupier o contra bots integrados en la aplicación.
 - **Local (LAN):** Crea salas locales y conecta con amigos en la misma red Wi-Fi (usando mDNS y Sockets estándar), 100% privado y de código abierto.
 
-## 🤝 Créditos y Reconocimientos
 
-Este proyecto utiliza y agradece el trabajo de desarrolladores Open Source:
-- **[poker (dart)](https://pub.dev/packages/poker / https://github.com/HenryRLee/PokerHandEvaluator):** El motor de evaluación de manos de póker y simulaciones Montecarlo utilizado en la carpeta `poker_lib/`, adaptado del repositorio original de HenryRLee bajo licencia MIT/BSD.
 
 ## 🚀 Características Técnicas
 
