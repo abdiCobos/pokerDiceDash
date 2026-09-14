@@ -39,7 +39,6 @@ dependencies:
   permission_handler: ^12.0.1
   audioplayers: ^6.6.0
   shared_preferences: ^2.5.5
-  poker: ^0.4.0
   nsd: ^5.0.0
   sentry_flutter: ^8.14.2
 

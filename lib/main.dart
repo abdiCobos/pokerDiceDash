@@ -23,7 +23,6 @@ void main() async {
   final p2pService = P2PService();
 
   final prefs = await SharedPreferences.getInstance();
-  final hasSeenDisclaimer = prefs.getBool('disclaimer_seen') ?? false;
 
   await SentryFlutter.init(
     (options) {
@@ -36,16 +35,15 @@ void main() async {
         providers: [
           ChangeNotifierProvider(create: (_) => GameProvider(p2pService: p2pService)),
         ],
-        child: PokerDiceDashApp(showDisclaimer: !hasSeenDisclaimer, prefs: prefs),
+        child: PokerDiceDashApp(prefs: prefs),
       ),
     ),
   );
 }
 
 class PokerDiceDashApp extends StatelessWidget {
-  final bool showDisclaimer;
   final SharedPreferences prefs;
-  const PokerDiceDashApp({super.key, required this.showDisclaimer, required this.prefs});
+  const PokerDiceDashApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
@@ -58,60 +56,7 @@ class PokerDiceDashApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.robotoTextTheme(),
       ),
-      home: showDisclaimer ? _DisclaimerScreen(prefs: prefs) : const LobbyScreen(),
-    );
-  }
-}
-
-class _DisclaimerScreen extends StatelessWidget {
-  final SharedPreferences prefs;
-  const _DisclaimerScreen({required this.prefs});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = (MediaQuery.of(context).size.width / 400).clamp(0.7, 1.4);
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(center: Alignment.center, radius: 0.9, colors: [Color(0xFF0A4D28), Color(0xFF052915)]),
-        ),
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(24 * s),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.bug_report, size: 60 * s, color: Colors.amber),
-                SizedBox(height: 16 * s),
-                Text('Aviso importante', style: TextStyle(color: Colors.amber, fontSize: 20 * s, fontWeight: FontWeight.bold)),
-                SizedBox(height: 12 * s),
-                Text(
-                  'Esta aplicación se encuentra en fase de desarrollo.\n\n'
-                  'Para ayudarnos a mejorar tu experiencia, se envían reportes anónimos de errores y estadísticas de uso.\n\n'
-                  'No se recopila información personal. Los datos solo se usan para detectar fallos y corregirlos.',
-                  style: TextStyle(color: Colors.white70, fontSize: 13 * s, height: 1.5),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 24 * s),
-                ElevatedButton(
-                  onPressed: () {
-                    prefs.setBool('disclaimer_seen', true);
-                    AppLogger().event('disclaimer_accepted');
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LobbyScreen()));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(horizontal: 32 * s, vertical: 12 * s),
-                    textStyle: TextStyle(fontSize: 16 * s, fontWeight: FontWeight.bold),
-                  ),
-                  child: const Text('Entendido'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      home: const LobbyScreen(),
     );
   }
 }
