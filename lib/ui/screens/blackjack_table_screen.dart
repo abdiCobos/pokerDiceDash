@@ -97,9 +97,16 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     final showBetOrActions = ((bj.phase == BlackjackPhase.betting || bj.phase == BlackjackPhase.playerTurn) && humans.any((p) => p.isLocal));
     return Column(
       children: [
-        SizedBox(height: 4 * _s),
-        if (bj.state.deck.isNotEmpty)
-          Text('Mazo: ${bj.state.deck.length} / 312 cartas', style: TextStyle(color: Colors.white38, fontSize: 10 * _s)),
+        Row(
+          children: [
+            IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white70, size: 28 * _s),
+              onPressed: () => Navigator.maybePop(context),
+            ),
+            if (bj.state.deck.isNotEmpty)
+              Text('Mazo: ${bj.state.deck.length} / 312 cartas', style: TextStyle(color: Colors.white38, fontSize: 10 * _s)),
+          ],
+        ),
         if (dealer != null) _buildDealerArea(dealer, bj),
         Expanded(
           child: isWaiting
@@ -170,13 +177,15 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       children: [
         if (showLegend) _buildTableCenter(context),
         if (showLegend) SizedBox(height: 40 * _s),
-        SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: humans.map((p) => Padding(
-              padding: EdgeInsets.only(bottom: 6 * _s),
-              child: _buildPlayerArea(p, bj),
-            )).toList(),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: humans.map((p) => Padding(
+                padding: EdgeInsets.only(bottom: 6 * _s),
+                child: _buildPlayerArea(p, bj),
+              )).toList(),
+            ),
           ),
         ),
       ],
@@ -335,8 +344,6 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildPlayerHeader(player, isPlayerTurn),
-            SizedBox(height: 6 * _s),
             if (isBetting) _buildBetChips(player, bj),
             if (isPlayerTurn) _buildActionButtons(player, bj),
           ],

@@ -277,7 +277,16 @@ class _GameTableScreenState extends State<GameTableScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _PotText(key: _potTextKey, pot: game.pot, scale: _s),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.white70, size: 28 * _s),
+                onPressed: () => Navigator.maybePop(context),
+              ),
+              SizedBox(width: 8 * _s),
+              _PotText(key: _potTextKey, pot: game.pot, scale: _s),
+            ],
+          ),
           if (game.state.mustSwapHands)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
