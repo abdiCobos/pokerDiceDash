@@ -5,16 +5,19 @@ class SoundService {
   factory SoundService() => _instance;
   SoundService._();
 
+  final Map<String, AudioPlayer> _players = {};
+
   Future<void> _play(String file) async {
-    final player = AudioPlayer();
     try {
-      await player.play(AssetSource('sounds/$file'));
-      player.onPlayerComplete.listen((_) => player.dispose());
-      Future.delayed(const Duration(seconds: 4), () {
-        try { player.dispose(); } catch (_) {}
+      final player = _players.putIfAbsent(file, () {
+        final p = AudioPlayer();
+        p.setReleaseMode(ReleaseMode.stop);
+        return p;
       });
+      await player.stop();
+      await player.play(AssetSource('sounds/$file'));
     } catch (_) {
-      player.dispose();
+      // Ignored: sound is non-critical
     }
   }
 
@@ -26,4 +29,13 @@ class SoundService {
   void chipsMultiply() => _play('chipsMultiply.ogg');
   void chipsWin() => _play('chipsWin.ogg');
   void diceRoll() => _play('dice.ogg');
+
+  void dispose() {
+    for (final p in _players.values) {
+      try {
+        p.dispose();
+      } catch (_) {}
+    }
+    _players.clear();
+  }
 }
