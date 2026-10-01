@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poker_dice_dash/models/card_model.dart';
 import 'package:poker_dice_dash/models/hand_evaluator.dart';
+import 'package:poker_dice_dash/services/bot_service.dart';
+import 'package:poker_dice_dash/providers/blackjack_provider.dart';
 
 void main() {
   group('CardModel', () {
@@ -106,6 +108,41 @@ void main() {
 
       expect(getDealOrder(1), 0); // Non-dealer gets first card
       expect(getDealOrder(0), 1); // Dealer gets second card
+    });
+  });
+
+  group('Famous Bot Names', () {
+    test('returns legendary gambler names', () {
+      expect(kFamousBotNames.contains('Doyle'), isTrue);
+      expect(kFamousBotNames.contains('Stu'), isTrue);
+      expect(kFamousBotNames.contains('Phil'), isTrue);
+      expect(kFamousBotNames.contains('Daniel'), isTrue);
+      expect(kFamousBotNames.contains('Vanessa'), isTrue);
+    });
+
+    test('getBotName wraps around list length cleanly', () {
+      expect(getBotName(0), 'Doyle');
+      expect(getBotName(1), 'Stu');
+      expect(getBotName(kFamousBotNames.length), 'Doyle');
+      expect(getBotName(-1), 'Bot');
+    });
+  });
+
+  group('Blackjack Single Player Customization', () {
+    test('initializes with custom player name and famous bot names', () {
+      final bj = BlackjackProvider();
+      bj.initSinglePlayer(botCount: 3, playerName: 'Carlos');
+      
+      expect(bj.players.length, 5); // Dealer + Carlos + 3 bots
+      expect(bj.players[0].isDealer, isTrue);
+      expect(bj.players[1].name, 'Carlos');
+      expect(bj.players[1].isLocal, isTrue);
+      expect(bj.players[2].name, 'Doyle');
+      expect(bj.players[2].isBot, isTrue);
+      expect(bj.players[3].name, 'Stu');
+      expect(bj.players[3].isBot, isTrue);
+      expect(bj.players[4].name, 'Phil');
+      expect(bj.players[4].isBot, isTrue);
     });
   });
 }

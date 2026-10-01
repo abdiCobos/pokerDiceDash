@@ -237,7 +237,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           IconButton(
                             icon: const Icon(Icons.add, color: Colors.amber),
                             onPressed: () {
-                              if (_bjBotCount < 6) {
+                              if (_bjBotCount < 5) {
                                 setDialogState(() => _bjBotCount++);
                               }
                             },
@@ -256,14 +256,18 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           TextButton(
                             onPressed: () {
                               Navigator.pop(dialogCtx);
-                              if (_playerNameController.text.trim().isNotEmpty) {
-                                context.read<GameProvider>().setPlayerName(_playerNameController.text.trim());
+                              final pName = _playerNameController.text.trim();
+                              if (pName.isNotEmpty) {
+                                context.read<GameProvider>().setPlayerName(pName);
                               }
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => ChangeNotifierProvider(
-                                    create: (_) => BlackjackProvider()..initSinglePlayer(botCount: _bjBotCount),
+                                    create: (_) => BlackjackProvider()..initSinglePlayer(
+                                      botCount: _bjBotCount,
+                                      playerName: pName.isEmpty ? 'Yo' : pName,
+                                    ),
                                     child: const BlackjackTableScreen(),
                                   ),
                                 ),
@@ -327,7 +331,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         ),
                       ),
                       SizedBox(height: 16 * s),
-                      Text('Cantidad de bots (1 - 7)', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      Text('Cantidad de bots (1 - 6)', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
                       SizedBox(height: 8 * s),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -346,7 +350,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           IconButton(
                             icon: const Icon(Icons.add, color: Colors.amber),
                             onPressed: () {
-                              if (_pokerBotCount < 7) {
+                              if (_pokerBotCount < 6) {
                                 setDialogState(() => _pokerBotCount++);
                               }
                             },
@@ -422,7 +426,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => BlackjackProvider()..initMultiplayer(asHost: true),
+            create: (_) => BlackjackProvider()..initMultiplayer(
+              asHost: true,
+              hostName: _playerNameController.text.trim().isEmpty ? 'Host' : _playerNameController.text.trim(),
+            ),
             child: const BlackjackTableScreen(isMultiplayer: true, isHost: true),
           ),
         ),

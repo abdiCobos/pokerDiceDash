@@ -6,6 +6,7 @@ import '../models/blackjack_models.dart';
 import '../models/card_model.dart';
 import '../services/sound_service.dart';
 import '../services/logger_service.dart';
+import '../services/bot_service.dart';
 
 class BlackjackProvider extends ChangeNotifier {
   BlackjackState _state = BlackjackState();
@@ -36,7 +37,7 @@ class BlackjackProvider extends ChangeNotifier {
     }
   }
 
-  void initSinglePlayer({int botCount = 0}) {
+  void initSinglePlayer({int botCount = 0, String playerName = 'Yo'}) {
     try {
       AppLogger().event('blackjack_start', params: {'bot_count': botCount.toString()});
       _isMultiplayer = false;
@@ -44,9 +45,10 @@ class BlackjackProvider extends ChangeNotifier {
       localPlayerId = '0';
       final list = <BlackjackPlayer>[];
       list.add(BlackjackPlayer(id: 'dealer', name: 'Dealer', isDealer: true, chipBalance: 99999));
-      list.add(BlackjackPlayer(id: '0', name: 'Yo', chipBalance: 1000, isLocal: true));
+      final actualName = playerName.trim().isEmpty ? 'Yo' : playerName.trim();
+      list.add(BlackjackPlayer(id: '0', name: actualName, chipBalance: 1000, isLocal: true));
       for (var i = 0; i < botCount; i++) {
-        list.add(BlackjackPlayer(id: '${i + 1}', name: 'Bot ${i + 1}', chipBalance: 1000, isBot: true));
+        list.add(BlackjackPlayer(id: '${i + 1}', name: getBotName(i), chipBalance: 1000, isBot: true));
       }
       _state = BlackjackState(players: list, deck: _freshDeck(), phase: BlackjackPhase.betting);
       AppLogger().log('BJ:Creados 6 mazos (312 cartas) - inicial');
@@ -56,14 +58,15 @@ class BlackjackProvider extends ChangeNotifier {
     }
   }
 
-  void initMultiplayer({required bool asHost}) {
+  void initMultiplayer({required bool asHost, String hostName = 'Host'}) {
     try {
       _isMultiplayer = true;
       _isHost = asHost;
       localPlayerId = asHost ? '0' : '1';
       final list = <BlackjackPlayer>[];
       list.add(BlackjackPlayer(id: 'dealer', name: 'Dealer', isDealer: true, chipBalance: 99999));
-      list.add(BlackjackPlayer(id: '0', name: 'Host', chipBalance: 1000, isLocal: asHost));
+      final actualHost = hostName.trim().isEmpty ? 'Host' : hostName.trim();
+      list.add(BlackjackPlayer(id: '0', name: actualHost, chipBalance: 1000, isLocal: asHost));
       _state = BlackjackState(players: list, deck: _freshDeck(), phase: BlackjackPhase.waiting);
       _logAndNotify('initMultiplayer');
     } catch (e, s) {

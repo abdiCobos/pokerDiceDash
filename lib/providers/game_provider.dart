@@ -15,8 +15,8 @@ import '../models/card_model.dart';
 import '../models/hand_evaluator.dart';
 
 import '../services/p2p_service.dart';
-
 import '../services/sound_service.dart';
+import '../services/bot_service.dart';
 
 
 class GameProvider extends ChangeNotifier {
@@ -160,7 +160,7 @@ class GameProvider extends ChangeNotifier {
     if (_gameMode == GameMode.texasHoldem) {
       _players.add(PlayerModel(id: '0', name: localName, chipBalance: 1000, isLocal: true));
       for (var i = 1; i <= _botCount; i++) {
-        _players.add(PlayerModel(id: '$i', name: 'Bot $i', chipBalance: 1000));
+        _players.add(PlayerModel(id: '$i', name: getBotName(i - 1), chipBalance: 1000));
       }
       shuffleAndDeal();
       _state = _state.copyWith(status: GameStatus.betting, phase: PokerPhase.preFlop);
@@ -170,12 +170,10 @@ class GameProvider extends ChangeNotifier {
       return;
     }
 
-
-
     // Dice Dash: bots, diceTurn
     _players.add(PlayerModel(id: '0', name: localName, chipBalance: 1000, isLocal: true));
     for (var i = 1; i <= _botCount; i++) {
-      _players.add(PlayerModel(id: '$i', name: 'Bot $i', chipBalance: 1000));
+      _players.add(PlayerModel(id: '$i', name: getBotName(i - 1), chipBalance: 1000));
     }
     shuffleAndDeal();
     _state = _state.copyWith(status: GameStatus.diceTurn, phase: PokerPhase.preFlop);
