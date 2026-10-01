@@ -24,6 +24,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
   bool _isGlobalHost = false;
   bool _showMultiplayer = false;
   GameMode _selectedMode = GameMode.diceDash;
+  int _bjBotCount = 2;
+  int _pokerBotCount = 3;
   final TextEditingController _roomNameController = TextEditingController();
   final TextEditingController _roomPasswordController = TextEditingController();
   final TextEditingController _playerNameController = TextEditingController();
@@ -160,6 +162,225 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                 );
                             },
                             child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showBlackjackConfigDialog(double s) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            return Dialog(
+              backgroundColor: const Color(0xFF1A1A2E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14 * s),
+                side: const BorderSide(color: Colors.amber, width: 2),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(20 * s),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Configurar Partida',
+                        style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 16 * s),
+                      TextField(
+                        controller: _playerNameController,
+                        style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          labelText: 'Tu nombre',
+                          labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.amber),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16 * s),
+                      Text('Cantidad de bots', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      SizedBox(height: 8 * s),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove, color: Colors.amber),
+                            onPressed: () {
+                              if (_bjBotCount > 0) {
+                                setDialogState(() => _bjBotCount--);
+                              }
+                            },
+                          ),
+                          SizedBox(width: 16 * s),
+                          Text('$_bjBotCount', style: TextStyle(color: Colors.white, fontSize: 20 * s, fontWeight: FontWeight.bold)),
+                          SizedBox(width: 16 * s),
+                          IconButton(
+                            icon: const Icon(Icons.add, color: Colors.amber),
+                            onPressed: () {
+                              if (_bjBotCount < 6) {
+                                setDialogState(() => _bjBotCount++);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20 * s),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogCtx),
+                            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                          ),
+                          SizedBox(width: 8 * s),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(dialogCtx);
+                              if (_playerNameController.text.trim().isNotEmpty) {
+                                context.read<GameProvider>().setPlayerName(_playerNameController.text.trim());
+                              }
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChangeNotifierProvider(
+                                    create: (_) => BlackjackProvider()..initSinglePlayer(botCount: _bjBotCount),
+                                    child: const BlackjackTableScreen(),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text('Jugar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showPokerConfigDialog(double s, GameMode mode) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            final modeName = mode == GameMode.diceDash ? 'Dice Dash' : "Texas Hold'em";
+            return Dialog(
+              backgroundColor: const Color(0xFF1A1A2E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14 * s),
+                side: const BorderSide(color: Colors.amber, width: 2),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(20 * s),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Configurar $modeName',
+                        style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 16 * s),
+                      TextField(
+                        controller: _playerNameController,
+                        style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          labelText: 'Tu nombre',
+                          labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.amber),
+                            borderRadius: BorderRadius.circular(8 * s),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16 * s),
+                      Text('Cantidad de bots (1 - 7)', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      SizedBox(height: 8 * s),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove, color: Colors.amber),
+                            onPressed: () {
+                              if (_pokerBotCount > 1) {
+                                setDialogState(() => _pokerBotCount--);
+                              }
+                            },
+                          ),
+                          SizedBox(width: 16 * s),
+                          Text('$_pokerBotCount', style: TextStyle(color: Colors.white, fontSize: 20 * s, fontWeight: FontWeight.bold)),
+                          SizedBox(width: 16 * s),
+                          IconButton(
+                            icon: const Icon(Icons.add, color: Colors.amber),
+                            onPressed: () {
+                              if (_pokerBotCount < 7) {
+                                setDialogState(() => _pokerBotCount++);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20 * s),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogCtx),
+                            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                          ),
+                          SizedBox(width: 8 * s),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(dialogCtx);
+                              final game = context.read<GameProvider>();
+                              game.setHost(true);
+                              game.setMultiplayer(false);
+                              game.setGameMode(mode);
+                              game.setBotCount(_pokerBotCount);
+                              if (_playerNameController.text.trim().isNotEmpty) {
+                                game.setPlayerName(_playerNameController.text.trim());
+                              }
+                              AppLogger().event('practice_mode_selected', params: {'mode': mode.name, 'bots': _pokerBotCount.toString()});
+                              game.resetGame();
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (_) => const GameTableScreen()),
+                              );
+                            },
+                            child: Text('Jugar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
                           ),
                         ],
                       ),
@@ -342,18 +563,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     SizedBox(
                       width: screenW * 0.75,
                       child: ElevatedButton(
-                        onPressed: () {
-                          final game = context.read<GameProvider>();
-                          game.setHost(true);
-                          game.setMultiplayer(false);
-                          game.setGameMode(GameMode.diceDash);
-                          AppLogger().event('practice_mode_selected', params: {'mode': 'dice_dash'});
-                          game.resetGame();
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const GameTableScreen()),
-                          );
-                        },
+                        onPressed: () => _showPokerConfigDialog(s, GameMode.diceDash),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.amber,
                           foregroundColor: Colors.black,
@@ -368,15 +578,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       width: screenW * 0.75,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChangeNotifierProvider(
-                                create: (_) => BlackjackProvider()..initSinglePlayer(botCount: 0),
-                                child: const BlackjackTableScreen(),
-                              ),
-                            ),
-                          );
+                          _showBlackjackConfigDialog(s);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.shade800,
@@ -391,18 +593,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     SizedBox(
                       width: screenW * 0.75,
                       child: ElevatedButton(
-                        onPressed: () {
-                          final game = context.read<GameProvider>();
-                          game.setHost(true);
-                          game.setMultiplayer(false);
-                          game.setGameMode(GameMode.texasHoldem);
-                          AppLogger().event('practice_mode_selected', params: {'mode': 'texas_holdem'});
-                          game.resetGame();
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const GameTableScreen()),
-                          );
-                        },
+                        onPressed: () => _showPokerConfigDialog(s, GameMode.texasHoldem),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade800,
                           foregroundColor: Colors.white,

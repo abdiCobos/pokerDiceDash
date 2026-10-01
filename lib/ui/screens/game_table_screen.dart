@@ -327,12 +327,74 @@ class _GameTableScreenState extends State<GameTableScreen>
     );
   }
 
+  Alignment _getOpponentAlignment(int i, int total) {
+    switch (total) {
+      case 1:
+        return const Alignment(0.0, -0.84);
+      case 2:
+        return i == 0
+            ? const Alignment(-0.65, -0.76)
+            : const Alignment(0.65, -0.76);
+      case 3:
+        return i == 0
+            ? const Alignment(-0.90, -0.22)
+            : (i == 1
+                ? const Alignment(0.0, -0.84)
+                : const Alignment(0.90, -0.22));
+      case 4:
+        switch (i) {
+          case 0:
+            return const Alignment(-0.90, -0.05);
+          case 1:
+            return const Alignment(-0.52, -0.80);
+          case 2:
+            return const Alignment(0.52, -0.80);
+          default:
+            return const Alignment(0.90, -0.05);
+        }
+      case 5:
+        switch (i) {
+          case 0:
+            return const Alignment(-0.92, 0.05);
+          case 1:
+            return const Alignment(-0.66, -0.68);
+          case 2:
+            return const Alignment(0.0, -0.85);
+          case 3:
+            return const Alignment(0.66, -0.68);
+          default:
+            return const Alignment(0.92, 0.05);
+        }
+      case 6:
+        switch (i) {
+          case 0:
+            return const Alignment(-0.92, 0.12);
+          case 1:
+            return const Alignment(-0.76, -0.45);
+          case 2:
+            return const Alignment(-0.32, -0.82);
+          case 3:
+            return const Alignment(0.32, -0.82);
+          case 4:
+            return const Alignment(0.76, -0.45);
+          default:
+            return const Alignment(0.92, 0.12);
+        }
+      default:
+        final t = i / (total - 1);
+        final angle = pi * (1.05 - 1.10 * t);
+        final ax = (0.92 * cos(angle)).clamp(-0.95, 0.95);
+        final ay = (-0.84 * sin(angle)).clamp(-0.85, 0.25);
+        return Alignment(ax, ay);
+    }
+  }
+
   List<Widget> _buildPlayerSeats(List<PlayerModel> players, GameProvider game) {
     final widgets = <Widget>[];
     final localId = game.localPlayerId;
     final localIdx = players.indexWhere((p) => p.id == localId);
-    final opponents = players.where((p) => p.id != localId).toList();
 
+    // 1. Local player at bottom center
     if (localIdx >= 0) {
       final seat = Container(
         key: _localSeatKey,
@@ -351,37 +413,39 @@ class _GameTableScreenState extends State<GameTableScreen>
       ));
     }
 
-    for (var i = 0; i < opponents.length && i < 3; i++) {
-      final oppIdx = players.indexWhere((p) => p.id == opponents[i].id);
+    // 2. Opponents ordered clockwise around the table from local player
+    final totalPlayers = players.length;
+    final opponents = <PlayerModel>[];
+    if (localIdx >= 0) {
+      for (var step = 1; step < totalPlayers; step++) {
+        opponents.add(players[(localIdx + step) % totalPlayers]);
+      }
+    } else {
+      opponents.addAll(players.where((p) => p.id != localId));
+    }
+
+    final oppCount = opponents.length;
+    final oppScale = oppCount > 5 ? _s * 0.78 : (oppCount > 3 ? _s * 0.88 : _s);
+
+    for (var i = 0; i < oppCount; i++) {
+      final opp = opponents[i];
+      final oppIdx = players.indexWhere((p) => p.id == opp.id);
+      final alignment = _getOpponentAlignment(i, oppCount);
+
       final seat = _PlayerSeat(
-        playerId: opponents[i].id,
+        playerId: opp.id,
         isLocal: false,
         isCurrentTurn: game.state.currentPlayerIndex == oppIdx,
-        scale: _s,
+        scale: oppScale,
       );
 
-      if (i == 0) {
-        widgets.add(Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: Align(alignment: Alignment.topCenter, child: seat),
-        ));
-      } else if (i == 1) {
-        widgets.add(Positioned(
-          left: _screenW * 0.02,
-          top: 0,
-          bottom: 0,
-          child: Align(alignment: Alignment.centerLeft, child: seat),
-        ));
-      } else if (i == 2) {
-        widgets.add(Positioned(
-          right: _screenW * 0.02,
-          top: 0,
-          bottom: 0,
-          child: Align(alignment: Alignment.centerRight, child: seat),
-        ));
-      }
+      widgets.add(Align(
+        alignment: alignment,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6 * _s, vertical: 2 * _s),
+          child: seat,
+        ),
+      ));
     }
 
     return widgets;
@@ -634,21 +698,21 @@ class _GameTableScreenState extends State<GameTableScreen>
                 : [
               _ActionButton(
                 label: 'FOLD',
-                color: Colors.red,
+                color: Colors.red.shade700,
                 enabled: !blocked,
                 onTap: !blocked ? () => game.fold(activePlayer.id) : null,
               ),
               const SizedBox(width: 8),
               _ActionButton(
                 label: callLabel,
-                color: Colors.blue,
+                color: Colors.blue.shade700,
                 enabled: !blocked,
                 onTap: !blocked ? () => game.call(activePlayer.id) : null,
               ),
               const SizedBox(width: 8),
               _ActionButton(
                 label: 'RAISE',
-                color: Colors.orange,
+                color: Colors.orange.shade800,
                 enabled: !blocked && !isAllInCall,
                 onTap: !blocked && !isAllInCall ? () => _showRaiseDialog(context, game, activePlayer.id) : null,
               ),
@@ -660,7 +724,11 @@ class _GameTableScreenState extends State<GameTableScreen>
   }
 
   Widget _buildPotFlyingAnimation(GameProvider game) {
-    final winnerIdx = game.players.indexWhere((p) => p.id == game.winnerId);
+    final winnerId = game.winnerId;
+    if (winnerId == null) return const SizedBox.shrink();
+
+    final players = game.players;
+    final winnerIdx = players.indexWhere((p) => p.id == winnerId);
     if (winnerIdx < 0) return const SizedBox.shrink();
 
     return TweenAnimationBuilder<double>(
@@ -671,36 +739,44 @@ class _GameTableScreenState extends State<GameTableScreen>
         final width = MediaQuery.of(context).size.width;
         final height = MediaQuery.of(context).size.height;
 
-        final startX = 60 * _s;
-        final startY = 40 * _s;
+        final startX = width / 2;
+        final startY = height * 0.38;
 
-        double endX = startX;
-        double endY = startY;
-        switch (winnerIdx) {
-          case 0:
-            endX = width / 2;
-            endY = height - 120 * _s;
-            break;
-          case 1:
+        double endX;
+        double endY;
+
+        if (winnerId == game.localPlayerId) {
+          endX = width / 2;
+          endY = height - 100 * _s;
+        } else {
+          final localId = game.localPlayerId;
+          final localIdx = players.indexWhere((p) => p.id == localId);
+          final opponents = <PlayerModel>[];
+          if (localIdx >= 0) {
+            for (var step = 1; step < players.length; step++) {
+              opponents.add(players[(localIdx + step) % players.length]);
+            }
+          } else {
+            opponents.addAll(players.where((p) => p.id != localId));
+          }
+
+          final oppIdx = opponents.indexWhere((p) => p.id == winnerId);
+          if (oppIdx >= 0) {
+            final alignment = _getOpponentAlignment(oppIdx, opponents.length);
+            endX = (width / 2) + (alignment.x * (width / 2 - 60 * _s));
+            endY = (height / 2) + (alignment.y * (height / 2 - 50 * _s));
+          } else {
             endX = width / 2;
             endY = 80 * _s;
-            break;
-          case 2:
-            endX = 60 * _s;
-            endY = height / 2;
-            break;
-          case 3:
-            endX = width - 60 * _s;
-            endY = height / 2;
-            break;
+          }
         }
 
         final x = startX + (endX - startX) * t;
         final y = startY + (endY - startY) * t;
 
         return Positioned(
-          left: x,
-          top: y,
+          left: x - 20 * _s,
+          top: y - 25 * _s,
           child: Opacity(
             opacity: (1 - (t > 0.85 ? (t - 0.85) / 0.15 : 0)).clamp(0.0, 1.0).toDouble(),
             child: child,
@@ -992,7 +1068,7 @@ class _ActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(7 * s),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 5 * s),
+          padding: EdgeInsets.symmetric(horizontal: 14 * s, vertical: 8 * s),
           decoration: BoxDecoration(
             color: enabled ? color : Colors.grey.shade700,
             borderRadius: BorderRadius.circular(7 * s),
@@ -1005,8 +1081,9 @@ class _ActionButton extends StatelessWidget {
             label,
             style: TextStyle(
               color: enabled ? Colors.white : Colors.white54,
-              fontSize: 10 * s,
+              fontSize: 12 * s,
               fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
         ),
@@ -1351,7 +1428,8 @@ class _DealtCardAnimationState extends State<_DealtCardAnimation>
       CurvedAnimation(parent: _controller, curve: const Interval(0, 0.6, curve: Curves.easeIn)),
     );
 
-    Future.delayed(Duration(milliseconds: widget.dealIndex * 200 + 300), () {
+    final delayMs = (widget.dealIndex * 150 + 250).clamp(0, 3000);
+    Future.delayed(Duration(milliseconds: delayMs), () {
       if (mounted) _controller.forward();
     });
   }
@@ -1556,7 +1634,8 @@ class _PlayerSeat extends StatelessWidget {
                   final livePlayer = game.players[idx];
                   final faceUp = isLocal ? true : (game.phase == PokerPhase.showdown && !livePlayer.isFolded);
                   final dealerIdx = game.dealerIndex;
-                  final dealOrder = ((idx - dealerIdx - 1) % 4 + 4) % 4;
+                  final numPlayers = game.players.isEmpty ? 1 : game.players.length;
+                  final dealOrder = ((idx - dealerIdx - 1) % numPlayers + numPlayers) % numPlayers;
                   final isPreFlop = game.phase == PokerPhase.preFlop;
                   final winning = game.winningCards;
                   final isShowdown = game.phase == PokerPhase.showdown;
@@ -1564,11 +1643,11 @@ class _PlayerSeat extends StatelessWidget {
                   final row = Row(
                     mainAxisSize: MainAxisSize.min,
                     children: List.generate(livePlayer.hand.length, (cardIdx) {
-                      final dealIndex = dealOrder + cardIdx * 4;
+                      final dealIndex = dealOrder + cardIdx * numPlayers;
                       final card = livePlayer.hand[cardIdx];
                       final isWinner = isShowdown && winning != null &&
                           winning.any((w) => w.value == card.value && w.suit == card.suit);
-                      final cardScale = isLocal ? 0.75 : 0.48;
+                      final cardScale = isLocal ? 0.75 : (game.players.length > 5 ? 0.40 : 0.48);
                       final cardWidget = _winningGlow(
                         isWinner: isWinner,
                         isShowdown: isShowdown,
@@ -1625,6 +1704,19 @@ class _PlayerSeat extends StatelessWidget {
         final idx = game.players.indexWhere((p) => p.id == playerId);
         if (idx < 0) return const SizedBox.shrink();
 
+        if (idx == game.dealerIndex && idx == game.smallBlindIndex) {
+          return Container(
+            width: 28 * s,
+            height: 20 * s,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10 * s),
+            ),
+            child: Center(
+              child: Text('D/SB', style: TextStyle(color: Colors.black, fontSize: 8 * s, fontWeight: FontWeight.bold)),
+            ),
+          );
+        }
         if (idx == game.dealerIndex) {
           return Container(
             width: 20 * s,
