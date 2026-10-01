@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../services/logger_service.dart';
+import '../../services/p2p_service.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -287,6 +288,33 @@ class _GameTableScreenState extends State<GameTableScreen>
               _PotText(key: _potTextKey, pot: game.pot, scale: _s),
             ],
           ),
+          if (widget.isMultiplayer && widget.isHost && game.state.status == GameStatus.waitingPlayers)
+            FutureBuilder<String?>(
+              future: P2PService.getLocalIpAddress(),
+              builder: (context, snapshot) {
+                final ip = snapshot.data ?? '...';
+                final port = game.p2pService.hostPort ?? 0;
+                return Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10 * _s, vertical: 4 * _s),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(12 * _s),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.wifi, color: Colors.amber, size: 14 * _s),
+                      SizedBox(width: 6 * _s),
+                      Text(
+                        'IP: $ip : $port',
+                        style: TextStyle(color: Colors.amber, fontSize: 11 * _s, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           if (game.state.mustSwapHands)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

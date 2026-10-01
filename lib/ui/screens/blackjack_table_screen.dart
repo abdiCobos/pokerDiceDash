@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/blackjack_models.dart';
 import '../../providers/blackjack_provider.dart';
+import '../../services/p2p_service.dart';
 import '../widgets/player_seat_card.dart';
 import 'lobby_screen.dart';
 
@@ -290,6 +291,28 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         SizedBox(height: 8 * _s),
         Text('Esperando jugadores... (${bj.activePlayers.length})',
           style: TextStyle(color: Colors.white54, fontSize: 14 * _s)),
+        if (widget.isHost)
+          FutureBuilder<String?>(
+            future: P2PService.getLocalIpAddress(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null) {
+                return Container(
+                  margin: EdgeInsets.symmetric(vertical: 8 * _s),
+                  padding: EdgeInsets.symmetric(horizontal: 14 * _s, vertical: 6 * _s),
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    borderRadius: BorderRadius.circular(10 * _s),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    'Tu IP para conexión directa: ${snapshot.data}',
+                    style: TextStyle(color: Colors.amber, fontSize: 12 * _s, fontWeight: FontWeight.bold),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         SizedBox(height: 16 * _s),
         if (widget.isHost && bj.activePlayers.isNotEmpty)
           ElevatedButton(
