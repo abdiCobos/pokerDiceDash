@@ -361,59 +361,54 @@ class _GameTableScreenState extends State<GameTableScreen>
         return const Alignment(0.0, -0.84);
       case 2:
         return i == 0
-            ? const Alignment(-0.65, -0.76)
-            : const Alignment(0.65, -0.76);
+            ? const Alignment(-0.62, -0.76)
+            : const Alignment(0.62, -0.76);
       case 3:
         return i == 0
-            ? const Alignment(-0.90, -0.22)
+            ? const Alignment(-0.88, -0.15)
             : (i == 1
                 ? const Alignment(0.0, -0.84)
-                : const Alignment(0.90, -0.22));
+                : const Alignment(0.88, -0.15));
       case 4:
         switch (i) {
           case 0:
-            return const Alignment(-0.90, -0.05);
+            return const Alignment(-0.88, 0.10);
           case 1:
-            return const Alignment(-0.52, -0.80);
+            return const Alignment(-0.48, -0.80);
           case 2:
-            return const Alignment(0.52, -0.80);
+            return const Alignment(0.48, -0.80);
           default:
-            return const Alignment(0.90, -0.05);
+            return const Alignment(0.88, 0.10);
         }
       case 5:
         switch (i) {
           case 0:
-            return const Alignment(-0.92, 0.05);
+            return const Alignment(-0.90, 0.28);
           case 1:
-            return const Alignment(-0.66, -0.68);
+            return const Alignment(-0.60, -0.75);
           case 2:
             return const Alignment(0.0, -0.85);
           case 3:
-            return const Alignment(0.66, -0.68);
+            return const Alignment(0.60, -0.75);
           default:
-            return const Alignment(0.92, 0.05);
+            return const Alignment(0.90, 0.28);
         }
       case 6:
+      default:
         switch (i) {
           case 0:
-            return const Alignment(-0.92, 0.12);
+            return const Alignment(-0.92, 0.38);
           case 1:
-            return const Alignment(-0.76, -0.45);
+            return const Alignment(-0.72, -0.62);
           case 2:
-            return const Alignment(-0.32, -0.82);
+            return const Alignment(-0.25, -0.85);
           case 3:
-            return const Alignment(0.32, -0.82);
+            return const Alignment(0.25, -0.85);
           case 4:
-            return const Alignment(0.76, -0.45);
+            return const Alignment(0.72, -0.62);
           default:
-            return const Alignment(0.92, 0.12);
+            return const Alignment(0.92, 0.38);
         }
-      default:
-        final t = i / (total - 1);
-        final angle = pi * (1.05 - 1.10 * t);
-        final ax = (0.92 * cos(angle)).clamp(-0.95, 0.95);
-        final ay = (-0.84 * sin(angle)).clamp(-0.85, 0.25);
-        return Alignment(ax, ay);
     }
   }
 
@@ -453,7 +448,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     }
 
     final oppCount = opponents.length;
-    final oppScale = oppCount > 5 ? _s * 0.78 : (oppCount > 3 ? _s * 0.88 : _s);
+    final oppScale = oppCount > 5 ? _s * 0.74 : (oppCount > 3 ? _s * 0.84 : _s);
 
     for (var i = 0; i < oppCount; i++) {
       final opp = opponents[i];

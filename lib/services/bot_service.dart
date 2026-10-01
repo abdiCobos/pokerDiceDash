@@ -8,6 +8,27 @@ class BotAction {
   BotAction(this.type, [this.amount]);
 }
 
+const List<String> kFamousBotNames = [
+  'Doyle',     // Doyle Brunson
+  'Stu',       // Stu Ungar
+  'Phil',      // Phil Ivey
+  'Daniel',    // Daniel Negreanu
+  'Johnny',    // Johnny Chan
+  'Vanessa',   // Vanessa Rousso
+  'Amarillo',  // Amarillo Slim
+  'Fedor',     // Fedor Holz
+  'Gus',       // Gus Hansen
+  'Patrik',    // Patrik Antonius
+  'Antonio',   // Antonio Esfandiari
+  'Erik',      // Erik Seidel
+  'Liv',       // Liv Boeree
+];
+
+String getBotName(int index) {
+  if (index < 0) return 'Bot';
+  return kFamousBotNames[index % kFamousBotNames.length];
+}
+
 class BotService {
   static final _random = Random();
 
@@ -19,7 +40,7 @@ class BotService {
     int chipBalance,
   ) {
     final handResult = HandEvaluator.evaluate(hand, communityCards);
-    final rank = handResult?.rank ?? HandRank.highCard;
+    final rank = handResult.rank;
     final amountToCall = currentBet - alreadyBet;
 
     if (communityCards.isEmpty) {
