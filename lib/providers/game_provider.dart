@@ -154,89 +154,33 @@ class GameProvider extends ChangeNotifier {
 
 
 
-    // Texas Holdem: 3 bots, direct into betting (no dice)
+    final localName = _hostName.isNotEmpty ? _hostName : 'Yo';
 
+    // Texas Holdem: bots, direct into betting (no dice)
     if (_gameMode == GameMode.texasHoldem) {
-
-      _players.add(PlayerModel(id: '0', name: 'Yo', chipBalance: 1000, isLocal: true));
-
-      _players.add(PlayerModel(id: '1', name: 'Jugador 2', chipBalance: 1000));
-
-      _players.add(PlayerModel(id: '2', name: 'Jugador 3', chipBalance: 1000));
-      _players.add(PlayerModel(id: '3', name: 'Jugador 4', chipBalance: 1000));
-
+      _players.add(PlayerModel(id: '0', name: localName, chipBalance: 1000, isLocal: true));
+      for (var i = 1; i <= _botCount; i++) {
+        _players.add(PlayerModel(id: '$i', name: 'Bot $i', chipBalance: 1000));
+      }
       shuffleAndDeal();
-
       _state = _state.copyWith(status: GameStatus.betting, phase: PokerPhase.preFlop);
       notifyListeners();
       SoundService().cardMix();
       _checkBotTurn();
       return;
-
     }
 
 
 
-    // Dice Dash: 4 players, diceTurn
-
-    _players.add(PlayerModel(
-
-      id: '0',
-
-      name: 'Yo',
-
-      chipBalance: 1000,
-
-      isLocal: true,
-
-    ));
-
-
-
-    _players.add(PlayerModel(
-
-      id: '1',
-
-      name: 'Jugador 2',
-
-      chipBalance: 1000,
-
-    ));
-
-
-
-    _players.add(PlayerModel(
-
-      id: '2',
-
-      name: 'Jugador 3',
-
-      chipBalance: 1000,
-
-    ));
-
-
-
-    _players.add(PlayerModel(
-
-      id: '3',
-
-      name: 'Jugador 4',
-
-      chipBalance: 1000,
-
-    ));
-
-
-
+    // Dice Dash: bots, diceTurn
+    _players.add(PlayerModel(id: '0', name: localName, chipBalance: 1000, isLocal: true));
+    for (var i = 1; i <= _botCount; i++) {
+      _players.add(PlayerModel(id: '$i', name: 'Bot $i', chipBalance: 1000));
+    }
     shuffleAndDeal();
-
     _state = _state.copyWith(status: GameStatus.diceTurn, phase: PokerPhase.preFlop);
-
     notifyListeners();
-
     SoundService().cardMix();
-
   }
 
 
@@ -295,9 +239,25 @@ class GameProvider extends ChangeNotifier {
 
   int get dealerIndex => _state.dealerIndex;
 
-  int get smallBlindIndex => _players.isEmpty ? 0 : (_state.dealerIndex + 1) % _players.length;
+  int get smallBlindIndex {
+    if (_players.isEmpty) return 0;
+    final active = _players.where((p) => !p.isBankrupt).length;
+    if (active == 2) return _state.dealerIndex;
+    return (_state.dealerIndex + 1) % _players.length;
+  }
 
-  int get bigBlindIndex => _players.isEmpty ? 0 : (_state.dealerIndex + 2) % _players.length;
+  int get bigBlindIndex {
+    if (_players.isEmpty) return 0;
+    final active = _players.where((p) => !p.isBankrupt).length;
+    if (active == 2) {
+      var next = (_state.dealerIndex + 1) % _players.length;
+      while (next != _state.dealerIndex && (_players[next].isBankrupt)) {
+        next = (next + 1) % _players.length;
+      }
+      return next;
+    }
+    return (_state.dealerIndex + 2) % _players.length;
+  }
 
   P2PService get p2pService => _p2pService;
 
@@ -374,8 +334,11 @@ class GameProvider extends ChangeNotifier {
   String _roomPassword = '';
 
   bool _matchStarted = false;
-
-
+  int _botCount = 3;
+  int get botCount => _botCount;
+  void setBotCount(int count) {
+    _botCount = count.clamp(1, 7);
+  }
 
   void setPlayerName(String name) {
 
@@ -1599,9 +1562,7 @@ class GameProvider extends ChangeNotifier {
     _lastBurnedCard = null;
 
     final utgIdx = activePlayers.length == 2
-
-        ? nextActive((dealerIdx + 1) % _players.length)
-
+        ? dealerIdx
         : nextActive((bbIdx + 1) % _players.length);
 
     final nextStatus = _gameMode == GameMode.texasHoldem ? GameStatus.betting : GameStatus.diceTurn;

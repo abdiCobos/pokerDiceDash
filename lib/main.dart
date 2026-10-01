@@ -8,8 +8,6 @@ import 'services/p2p_service.dart';
 import 'services/logger_service.dart';
 import 'ui/screens/lobby_screen.dart';
 
-import 'package:sentry_flutter/sentry_flutter.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -24,19 +22,12 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
 
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = const String.fromEnvironment('SENTRY_DSN', defaultValue: 'https://0bf3a6dc1cee47f993fcd572d2db4c3d@app.glitchtip.com/27827');
-      options.tracesSampleRate = 0.01;
-      options.enableAutoSessionTracking = false;
-    },
-    appRunner: () => runApp(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => GameProvider(p2pService: p2pService)),
-        ],
-        child: PokerDiceDashApp(prefs: prefs),
-      ),
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => GameProvider(p2pService: p2pService)),
+      ],
+      child: PokerDiceDashApp(prefs: prefs),
     ),
   );
 }

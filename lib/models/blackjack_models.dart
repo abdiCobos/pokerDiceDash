@@ -85,6 +85,7 @@ class BlackjackPlayer {
   int chipBalance;
   final bool isLocal;
   final bool isDealer;
+  final bool isBot;
   final List<BlackjackHand> hands;
   int activeHandIndex;
   int totalBet;
@@ -95,6 +96,7 @@ class BlackjackPlayer {
     this.chipBalance = 1000,
     this.isLocal = false,
     this.isDealer = false,
+    this.isBot = false,
     List<BlackjackHand>? hands,
     this.activeHandIndex = 0,
     this.totalBet = 0,
@@ -108,13 +110,14 @@ class BlackjackPlayer {
       hands.length == 1 && hands[0].canSplit && !hands[0].isDoubledDown;
 
   BlackjackPlayer copyWith({
-    String? id, String? name, int? chipBalance, bool? isLocal, bool? isDealer,
+    String? id, String? name, int? chipBalance, bool? isLocal, bool? isDealer, bool? isBot,
     List<BlackjackHand>? hands, int? activeHandIndex, int? totalBet,
   }) => BlackjackPlayer(
       id: id ?? this.id, name: name ?? this.name,
       chipBalance: chipBalance ?? this.chipBalance,
       isLocal: isLocal ?? this.isLocal,
       isDealer: isDealer ?? this.isDealer,
+      isBot: isBot ?? this.isBot,
       hands: hands ?? this.hands,
       activeHandIndex: activeHandIndex ?? this.activeHandIndex,
       totalBet: totalBet ?? this.totalBet,
@@ -122,7 +125,7 @@ class BlackjackPlayer {
 
   Map<String, dynamic> toMap() => {
     'id': id, 'name': name, 'chipBalance': chipBalance,
-    'isLocal': isLocal, 'isDealer': isDealer,
+    'isLocal': isLocal, 'isDealer': isDealer, 'isBot': isBot,
     'hands': hands.map((h) => h.toMap()).toList(),
     'activeHandIndex': activeHandIndex, 'totalBet': totalBet,
   };
@@ -131,6 +134,7 @@ class BlackjackPlayer {
     id: m['id'] ?? '', name: m['name'] ?? '',
     chipBalance: m['chipBalance'] ?? 1000,
     isLocal: m['isLocal'] ?? false, isDealer: m['isDealer'] ?? false,
+    isBot: m['isBot'] ?? false,
     hands: (m['hands'] as List?)?.map((h) => BlackjackHand.fromMap(h)).toList() ?? [BlackjackHand()],
     activeHandIndex: m['activeHandIndex'] ?? 0,
     totalBet: m['totalBet'] ?? 0,

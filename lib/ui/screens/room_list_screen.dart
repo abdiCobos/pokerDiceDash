@@ -228,7 +228,8 @@ class _RoomListScreenState extends State<RoomListScreen> {
       backgroundColor: const Color(0xFF0A4D28),
       appBar: AppBar(
         backgroundColor: Colors.black87,
-        title: Text('Salas disponibles', style: TextStyle(fontSize: 16 * s)),
+        foregroundColor: Colors.white,
+        title: Text('Salas disponibles', style: TextStyle(fontSize: 16 * s, color: Colors.white)),
         centerTitle: true,
       ),
       body: _rooms.isEmpty
