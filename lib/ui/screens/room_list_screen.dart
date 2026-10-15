@@ -75,6 +75,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
         'type': 'JOIN_REQUEST',
         'playerName': _pendingName ?? 'Jugador',
         'password': pass,
+        'token': game.playerToken,
         'endpointId': endpointId,
       });
     });
