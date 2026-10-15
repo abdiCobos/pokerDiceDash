@@ -31,6 +31,11 @@ Thumbs.db
 coverage/
 .aider*
 
-# Firebase config
+# Never commit third-party service configs (F-Droid is FOSS-only)
 lib/firebase_options.dart
 firebase.json
+firestore.rules
+firestore.indexes.json
+.firebaserc
+google-services.json
+.sentry-native/
