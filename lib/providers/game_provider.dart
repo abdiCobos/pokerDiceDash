@@ -25,6 +25,41 @@ class GameProvider extends ChangeNotifier {
   final P2PService _p2pService;
 
   StreamSubscription? _messageSubscription;
+  StreamSubscription<String>? _disconnectSubscription;
+
+  // --- Network robustness state -------------------------------------------
+  bool _isDisposed = false;
+  int _epoch = 0; // bumped on every new game so stale async loops stop
+  final Set<String> _leftSeats = {}; // host: seats whose owner left on purpose
+  Timer? _broadcastTimer;
+  Timer? _newRoundTimer;
+  Timer? _watchdogTimer;
+  Timer? _reconnectTimer;
+  int _stallTicks = 0;
+  int _stateSeq = 0;
+  final String _sessionId = DateTime.now().microsecondsSinceEpoch.toString();
+  String? _stateSession;
+  int _lastStateSeq = -1;
+
+  /// Host side: which seat is bound to which socket, and which token owns which seat.
+  final Map<String, String> _endpointPlayer = {};
+  final Map<String, String> _tokenToPlayer = {};
+
+  /// Client side: secret id that lets us reclaim our seat after a reconnect.
+  String? _playerToken;
+  String get playerToken => _playerToken ??= _randomToken();
+  String _randomToken() {
+    final r = Random.secure();
+    return List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  bool _clientConnectionLost = false;
+  bool get isConnectionLost => _clientConnectionLost;
+  bool _reconnectGaveUp = false;
+  bool get reconnectGaveUp => _reconnectGaveUp;
+  int _reconnectAttempt = 0;
+  bool _reconnectBusy = false;
+  bool _hasSeat = false; // client: the host confirmed our seat at least once
 
 
 
@@ -77,6 +112,7 @@ class GameProvider extends ChangeNotifier {
 
 
   GameProvider({required P2PService p2pService}) : _p2pService = p2pService {
+    _watchdogTimer = Timer.periodic(const Duration(seconds: 2), (_) => _watchdogTick());
 
     _listenToMessages();
 
@@ -89,13 +125,132 @@ class GameProvider extends ChangeNotifier {
 
 
   void _listenToDisconnections() {
+    _disconnectSubscription = _p2pService.onDisconnected.listen(_onPeerDisconnected);
+  }
 
-    _p2pService.onDisconnected.listen((endpointId) {
+  void _onPeerDisconnected(String endpointId) {
+    if (_isExiting || _isDisposed) return;
+    AppLogger().log('Peer desconectado: $endpointId');
+    if (_isHost) {
+      final seatId = _endpointPlayer.remove(endpointId);
+      if (seatId == null) return;
+      if (!_matchStarted) {
+        // Still in the waiting room: just free the seat.
+        _players.removeWhere((x) => x.id == seatId);
+        updateAdvertisedName();
+        notifyListeners();
+        return;
+      }
+      final p = _players.where((x) => x.id == seatId).firstOrNull;
+      if (p != null) {
+        p.isAway = true;
+        notifyListeners();
+      }
+    } else if (_isMultiplayer && _hasSeat) {
+      _startReconnect();
+    }
+  }
 
-      AppLogger().log('ðŸ”Œ Jugador desconectado: $endpointId');
+  /// A client left on purpose (back button): never wait for it again.
+  void _handleLeave(String endpointId) {
+    final seatId = _endpointPlayer[endpointId];
+    if (seatId == null) return;
+    _leftSeats.add(seatId);
+    // Same bookkeeping as a dropped connection (frees the seat before the match,
+    // marks it away afterwards so the watchdog plays its turns).
+    _onPeerDisconnected(endpointId);
+  }
 
+  // --- Client auto-reconnect (exponential backoff) ---------------------------
+  void _startReconnect() {
+    if (_reconnectTimer != null || _reconnectBusy || _isExiting || _isDisposed) return;
+    _clientConnectionLost = true;
+    _reconnectGaveUp = false;
+    _reconnectAttempt = 0;
+    notifyListeners();
+    _scheduleReconnectAttempt();
+  }
+
+  void _scheduleReconnectAttempt() {
+    if (_isExiting || _isDisposed) return;
+    if (_reconnectAttempt >= 10) {
+      _reconnectGaveUp = true;
+      _reconnectTimer = null;
+      notifyListeners();
+      return;
+    }
+    final delay = Duration(seconds: min(1 << _reconnectAttempt, 8));
+    _reconnectTimer = Timer(delay, () async {
+      _reconnectTimer = null;
+      if (_isExiting || _isDisposed) return;
+      _reconnectBusy = true;
+      final ok = await _p2pService.reconnectToLastHost();
+      _reconnectBusy = false;
+      if (_isExiting || _isDisposed) return;
+      if (ok) {
+        final ep = '${_p2pService.lastHost}:${_p2pService.lastPort}';
+        _p2pService.sendMessage(ep, {
+          'type': 'JOIN_REQUEST',
+          'playerName': _hostName,
+          'password': '',
+          'token': playerToken,
+          'endpointId': ep,
+        });
+        // If the host never answers with ASSIGN_SEAT, try again.
+        _reconnectTimer = Timer(const Duration(seconds: 6), () {
+          _reconnectTimer = null;
+          if (_clientConnectionLost) {
+            _reconnectAttempt++;
+            _scheduleReconnectAttempt();
+          }
+        });
+      } else {
+        _reconnectAttempt++;
+        _scheduleReconnectAttempt();
+      }
     });
+  }
 
+  void _onSeatConfirmed() {
+    _hasSeat = true;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempt = 0;
+    _reconnectGaveUp = false;
+    _clientConnectionLost = false;
+  }
+
+  // --- Host watchdog: keeps rounds moving no matter what ----------------------
+  void _watchdogTick() {
+    if (_isDisposed || _isExiting || !_isHost || !_isMultiplayer || !_matchStarted) return;
+    // 1) Showdown finished but no new round is scheduled.
+    if (_state.phase == PokerPhase.showdown &&
+        _state.status == GameStatus.finished &&
+        _newRoundTimer == null) {
+      _stallTicks++;
+      if (_stallTicks >= 6) {
+        _stallTicks = 0;
+        AppLogger().log('Watchdog: ronda detenida, iniciando nueva ronda');
+        scheduleNewRound();
+      }
+      return;
+    }
+    _stallTicks = 0;
+    // 2) It is the turn of a disconnected player: play for them.
+    final ci = _state.currentPlayerIndex;
+    if (ci < 0 || ci >= _players.length) return;
+    final p = _players[ci];
+    if (!p.isAway || p.isFolded) return;
+    if (_state.status == GameStatus.diceTurn && _gameMode == GameMode.diceDash) {
+      rollDice();
+    } else if (_state.status == GameStatus.betting) {
+      final toCall = _currentBet - (_betsThisPhase[p.id] ?? 0);
+      if (toCall > 0) {
+        fold(p.id);
+      } else {
+        call(p.id);
+      }
+    }
   }
 
 
@@ -113,6 +268,19 @@ class GameProvider extends ChangeNotifier {
 
 
   void _initDebugMode() {
+    _isExiting = false;
+    _epoch++;
+    _matchStarted = false;
+    _newRoundTimer?.cancel();
+    _newRoundTimer = null;
+    _leftSeats.clear();
+    _hasSeat = false;
+    _clientConnectionLost = false;
+    _reconnectGaveUp = false;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _endpointPlayer.clear();
+    _tokenToPlayer.clear();
 
     _players.clear();
 
@@ -160,7 +328,7 @@ class GameProvider extends ChangeNotifier {
     if (_gameMode == GameMode.texasHoldem) {
       _players.add(PlayerModel(id: '0', name: localName, chipBalance: 1000, isLocal: true));
       for (var i = 1; i <= _botCount; i++) {
-        _players.add(PlayerModel(id: '$i', name: getBotName(i - 1), chipBalance: 1000));
+        _players.add(PlayerModel(id: '$i', name: getBotName(i - 1), chipBalance: 1000, isBot: true));
       }
       shuffleAndDeal();
       _state = _state.copyWith(status: GameStatus.betting, phase: PokerPhase.preFlop);
@@ -173,7 +341,7 @@ class GameProvider extends ChangeNotifier {
     // Dice Dash: bots, diceTurn
     _players.add(PlayerModel(id: '0', name: localName, chipBalance: 1000, isLocal: true));
     for (var i = 1; i <= _botCount; i++) {
-      _players.add(PlayerModel(id: '$i', name: getBotName(i - 1), chipBalance: 1000));
+      _players.add(PlayerModel(id: '$i', name: getBotName(i - 1), chipBalance: 1000, isBot: true));
     }
     shuffleAndDeal();
     _state = _state.copyWith(status: GameStatus.diceTurn, phase: PokerPhase.preFlop);
@@ -378,62 +546,66 @@ class GameProvider extends ChangeNotifier {
 
     final metadata = '$_roomName|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}|${_gameMode.name}';
 
-    _p2pService.stopAdvertising();
-
-    _p2pService.startAdvertising(metadata);
+    _p2pService.updateServiceName(metadata); // keeps the TCP port stable
 
   }
 
 
 
-  void assignSeatToClient(String endpointId, {String playerName = ''}) {
-
-    AppLogger().log('ðŸª‘ assignSeatToClient: endpointId=$endpointId');
-
+  void assignSeatToClient(String endpointId, {String playerName = '', String token = ''}) {
+    AppLogger().log('assignSeatToClient: endpointId=$endpointId');
     if (!_isHost) return;
 
-    final playerId = _nextSeatId.toString();
+    // Reconnection: a known token reclaims its previous seat.
+    if (token.isNotEmpty && _tokenToPlayer.containsKey(token)) {
+      final seatId = _tokenToPlayer[token]!;
+      final existing = _players.where((p) => p.id == seatId).firstOrNull;
+      if (existing != null) {
+        final oldEndpoints = _endpointPlayer.entries
+            .where((e) => e.value == seatId && e.key != endpointId)
+            .map((e) => e.key)
+            .toList();
+        for (final old in oldEndpoints) {
+          _endpointPlayer.remove(old);
+          _p2pService.disconnectEndpoint(old);
+        }
+        existing.isAway = false;
+        _endpointPlayer[endpointId] = seatId;
+        AppLogger().log('Jugador ${existing.name} recupera su asiento $seatId');
+        _p2pService.sendMessage(endpointId, {
+          'type': 'ASSIGN_SEAT',
+          'endpointId': endpointId,
+          'playerId': seatId,
+        });
+        notifyListeners();
+        _sendStateNow();
+        return;
+      }
+    }
 
+    final playerId = _nextSeatId.toString();
     _nextSeatId++;
 
-
-
     _players.add(PlayerModel(
-
       id: playerId,
-
       name: playerName.isEmpty ? 'Jugador $playerId' : playerName,
-
       chipBalance: 1000,
-
       isLocal: false,
-
     ));
-
-
+    _endpointPlayer[endpointId] = playerId;
+    if (token.isNotEmpty) _tokenToPlayer[token] = playerId;
 
     updateAdvertisedName();
-
     AppLogger().event('player_joined', params: {'player_name': playerName.isEmpty ? 'Jugador' : playerName, 'game_mode': _gameMode.name});
 
-
-
     _p2pService.sendMessage(endpointId, {
-
       'type': 'ASSIGN_SEAT',
-
       'endpointId': endpointId,
-
       'playerId': playerId,
-
     });
 
-
-
     notifyListeners();
-
-    broadcastState();
-
+    _sendStateNow();
   }
 
 
@@ -511,6 +683,16 @@ class GameProvider extends ChangeNotifier {
 
 
       if (type == 'STATE_UPDATE' && !_isHost) {
+        final sess = message['session'] as String?;
+        final sq = message['seq'] as int?;
+        if (sess != null && sq != null) {
+          if (sess != _stateSession) {
+            _stateSession = sess;
+            _lastStateSeq = -1;
+          }
+          if (sq <= _lastStateSeq) return;
+          _lastStateSeq = sq;
+        }
 
         _syncStateFromMap(message['state'] as Map<String, dynamic>);
 
@@ -542,7 +724,7 @@ class GameProvider extends ChangeNotifier {
 
         AppLogger().log('ðŸ”” JOIN_REQUEST recibido: senderEndpointId=$senderEpId');
 
-        if (_roomPassword.isNotEmpty && pass != _roomPassword) {
+        if (_roomPassword.isNotEmpty && pass != _roomPassword && !_tokenToPlayer.containsKey(message['token'] as String? ?? '')) {
 
           AppLogger().log('ðŸ”’ JOIN_REQUEST rechazado: password incorrecta');
 
@@ -556,7 +738,7 @@ class GameProvider extends ChangeNotifier {
 
         AppLogger().log('ðŸ”“ JOIN_REQUEST aceptado: $senderEpId');
 
-        assignSeatToClient(senderEpId, playerName: message['playerName'] as String? ?? 'Jugador');
+        assignSeatToClient(senderEpId, playerName: message['playerName'] as String? ?? 'Jugador', token: message['token'] as String? ?? '');
 
         return;
 
@@ -564,22 +746,25 @@ class GameProvider extends ChangeNotifier {
 
 
 
-      if (type == 'PLAYER_ACTION' && _isHost) {
-
-        AppLogger().log('ðŸŽ® Host recibiÃ³ PLAYER_ACTION: action=${message['action']} playerId=${message['playerId']}');
-
-        _processRemoteAction(
-
-          message['action'] as String? ?? '',
-
-          message['playerId'] as String? ?? '',
-
-          message['value'] as int? ?? 0,
-
-        );
-
+      if (type == 'LEAVE' && _isHost) {
+        _handleLeave(message['_senderEndpointId'] as String? ?? '');
         return;
+      }
 
+      if (type == 'PLAYER_ACTION' && _isHost) {
+        // The seat is taken from the socket, never from what the client claims.
+        final senderEpId = message['_senderEndpointId'] as String? ?? '';
+        final seatId = _endpointPlayer[senderEpId];
+        if (seatId == null) {
+          AppLogger().log('PLAYER_ACTION ignorada: emisor sin asiento ($senderEpId)');
+          return;
+        }
+        _processRemoteAction(
+          message['action'] as String? ?? '',
+          seatId,
+          (message['value'] as num?)?.toInt() ?? 0,
+        );
+        return;
       }
 
 
@@ -589,6 +774,7 @@ class GameProvider extends ChangeNotifier {
         AppLogger().log('ðŸŽ« Cliente recibiÃ³ ASSIGN_SEAT: playerId=${message['playerId']}');
 
         localPlayerId = message['playerId'] as String? ?? localPlayerId;
+        _onSeatConfirmed();
 
         for (final p in _players) {
 
@@ -880,7 +1066,8 @@ class GameProvider extends ChangeNotifier {
 
 
   Future<void> advancePhase() async {
-    if (_isExiting) return;
+    final epoch = _epoch;
+    if (_isExiting || epoch != _epoch) return;
     _clearBets();
     _playersActedThisPhase.clear();
     final currentPhase = _state.phase;
@@ -901,7 +1088,7 @@ class GameProvider extends ChangeNotifier {
           _state = _state.copyWith(revealedCommunityCount: _state.revealedCommunityCount + 1);
           notifyListeners();
           await Future.delayed(const Duration(milliseconds: 200));
-          if (_isExiting) return;
+          if (_isExiting || epoch != _epoch) return;
         }
         break;
       case PokerPhase.flop:
@@ -917,7 +1104,7 @@ class GameProvider extends ChangeNotifier {
         _state = _state.copyWith(revealedCommunityCount: 4);
         notifyListeners();
         await Future.delayed(const Duration(milliseconds: 200));
-          if (_isExiting) return;
+          if (_isExiting || epoch != _epoch) return;
         break;
       case PokerPhase.turn:
         _burnCard();
@@ -932,7 +1119,7 @@ class GameProvider extends ChangeNotifier {
         _state = _state.copyWith(revealedCommunityCount: 5);
         notifyListeners();
         await Future.delayed(const Duration(milliseconds: 200));
-          if (_isExiting) return;
+          if (_isExiting || epoch != _epoch) return;
         break;
       case PokerPhase.river:
         _state = _state.copyWith(
@@ -1017,6 +1204,7 @@ class GameProvider extends ChangeNotifier {
 
 
   Future<void> determineWinner() async {
+    final epoch = _epoch;
 
     _state = _state.copyWith(currentPlayerIndex: -1);
 
@@ -1083,7 +1271,7 @@ class GameProvider extends ChangeNotifier {
 
 
       await Future.delayed(const Duration(milliseconds: 2000));
-      if (_isExiting) return;
+      if (_isExiting || epoch != _epoch) return;
 
 
 
@@ -1138,16 +1326,13 @@ class GameProvider extends ChangeNotifier {
 
 
   void scheduleNewRound() {
-
-    Future.delayed(const Duration(seconds: 5), () {
-      if (_isExiting) return;
-
+    _newRoundTimer?.cancel();
+    _newRoundTimer = Timer(const Duration(seconds: 5), () {
+      _newRoundTimer = null;
+      if (_isExiting || _isDisposed) return;
       _centralMessage = null;
-
       shuffleAndDeal();
-
     });
-
   }
 
 
@@ -1395,11 +1580,13 @@ class GameProvider extends ChangeNotifier {
 
 
 
+    for (final p in _players) {
+      if (_leftSeats.contains(p.id)) p.chipBalance = 0;
+    }
     // Mark bankrupt players
     for (final player in _players) {
       if (player.chipBalance <= 0) {
-        if (!player.isLocal) {
-          player.chipBalance = 1000; // Auto-rebuy for bots
+        if (player.isBot) {\1
           player.isBankrupt = false;
           player.isFolded = false;
         } else {
@@ -1644,7 +1831,7 @@ class GameProvider extends ChangeNotifier {
 
 
     try {
-
+      if (!_isHost) return; // clients only animate; the host sends the real hands
       final pool = <CardModel>[];
 
       for (final p in activePlayers) {
@@ -1922,9 +2109,10 @@ class GameProvider extends ChangeNotifier {
     final idx = _players.indexWhere((p) => p.id == playerId);
     if (idx < 0) { AppLogger().error('REBUY_FAIL: playerId=$playerId not found'); return; }
     final player = _players[idx];
+    final handOver = _state.status == GameStatus.finished || _state.phase == PokerPhase.showdown;
     player.chipBalance = 1000;
     player.isBankrupt = false;
-    player.isFolded = false;
+    if (handOver) player.isFolded = false; // mid-hand: stay folded until the next deal
     _playersActedThisPhase.remove(player.id);
     _isBetting = false;
     AppLogger().log('REBUY: ${player.name} recibe 1000 fichas');
@@ -1996,62 +2184,68 @@ class GameProvider extends ChangeNotifier {
 
 
 
-  Map<String, dynamic> exportGameState() => {
-
-    'players': _players.map((p) => p.toMap()).toList(),
-
-    'communityCards': _state.communityCards.map((c) => c.toMap()).toList(),
-
-    'pot': pot,
-
-    'currentBet': _currentBet,
-
-    'currentPlayerIndex': _state.currentPlayerIndex,
-
-    'dealerIndex': _state.dealerIndex,
-
-    'phase': _state.phase.name,
-
-    'status': _state.status.name,
-
-    'revealedCommunityCount': _state.revealedCommunityCount,
-
-    'turnsCompleted': _state.turnsCompleted,
-
-    'rollCounter': _rollCounter,
-
-    'die1': _die1,
-
-    'die2': _die2,
-
-    'mustSwapHands': _state.mustSwapHands,
-
-    'totalContributions': Map.from(_totalContributions),
-
-    'gameMode': _gameMode.name,
-
-    'betsThisPhase': Map.from(_betsThisPhase),
-
-    'winningCards': _winningCards?.map((c) => c.toMap()).toList(),
-
-  };
+  /// Full game state. With [mask] = true, hidden information is removed:
+  /// other players' hands (until showdown) and community cards not yet revealed.
+  Map<String, dynamic> exportGameState({String? forPlayerId, bool mask = false}) {
+    final hidden = CardModel(value: '2', suit: Suit.spades).toMap();
+    final showdown = _state.phase == PokerPhase.showdown;
+    return {
+      'players': _players.map((p) {
+        final m = p.toMap();
+        final visible = !mask || p.id == forPlayerId || (showdown && !p.isFolded);
+        if (!visible) {
+          m['hand'] = List.generate(p.hand.length, (_) => hidden);
+        }
+        return m;
+      }).toList(),
+      'communityCards': [
+        for (var i = 0; i < _state.communityCards.length; i++)
+          (!mask || i < _state.revealedCommunityCount) ? _state.communityCards[i].toMap() : hidden,
+      ],
+      'pot': pot,
+      'currentBet': _currentBet,
+      'currentPlayerIndex': _state.currentPlayerIndex,
+      'dealerIndex': _state.dealerIndex,
+      'phase': _state.phase.name,
+      'status': _state.status.name,
+      'revealedCommunityCount': _state.revealedCommunityCount,
+      'turnsCompleted': _state.turnsCompleted,
+      'rollCounter': _rollCounter,
+      'die1': _die1,
+      'die2': _die2,
+      'mustSwapHands': _state.mustSwapHands,
+      'totalContributions': Map.from(_totalContributions),
+      'gameMode': _gameMode.name,
+      'betsThisPhase': Map.from(_betsThisPhase),
+      'winningCards': _winningCards?.map((c) => c.toMap()).toList(),
+    };
+  }
 
 
 
+  /// Coalesces bursts of state changes into one send (~11 per second max).
   void broadcastState() {
-
-    if (!_isHost) return;
-
-    AppLogger().log('ðŸ“¡ broadcastState: enviando a ${_p2pService.connectedEndpointCount} clientes');
-
-    _p2pService.broadcastMessage({
-
-      'type': 'STATE_UPDATE',
-
-      'state': exportGameState(),
-
+    if (!_isHost || _isDisposed) return;
+    if (_broadcastTimer != null) return;
+    _broadcastTimer = Timer(const Duration(milliseconds: 90), () {
+      _broadcastTimer = null;
+      _sendStateNow();
     });
+  }
 
+  void _sendStateNow() {
+    if (!_isHost || _isDisposed) return;
+    final endpoints = _p2pService.connectedEndpoints;
+    if (endpoints.isEmpty) return;
+    _stateSeq++;
+    for (final ep in endpoints) {
+      _p2pService.sendMessage(ep, {
+        'type': 'STATE_UPDATE',
+        'session': _sessionId,
+        'seq': _stateSeq,
+        'state': exportGameState(forPlayerId: _endpointPlayer[ep], mask: true),
+      });
+    }
   }
 
 
@@ -2125,6 +2319,8 @@ class GameProvider extends ChangeNotifier {
           isFolded: pData['isFolded'] as bool? ?? false,
 
           isBankrupt: pData['isBankrupt'] as bool? ?? false,
+          isBot: pData['isBot'] as bool? ?? false,
+          isAway: pData['isAway'] as bool? ?? false,
 
           hand: pData['hand'] != null
 
@@ -2201,6 +2397,13 @@ class GameProvider extends ChangeNotifier {
 
 
   void _processRemoteAction(String action, String playerId, int value) {
+    if (action != 'REBUY') {
+      final ci = _state.currentPlayerIndex;
+      if (ci < 0 || ci >= _players.length || _players[ci].id != playerId) {
+        AppLogger().log('Accion ignorada (no es su turno): $action $playerId');
+        return;
+      }
+    }
 
     AppLogger().log('ðŸ“¨ _processRemoteAction: action=$action playerId=$playerId value=$value');
 
@@ -2231,8 +2434,7 @@ class GameProvider extends ChangeNotifier {
         break;
 
       case 'REBUY':
-
-        rebuyLocalPlayer();
+        rebuyPlayer(playerId);
 
         break;
 
@@ -2246,6 +2448,7 @@ class GameProvider extends ChangeNotifier {
 
   void notifyListeners() {
 
+    if (_isDisposed) return;
     super.notifyListeners();
 
     if (_isHost) {
@@ -2263,7 +2466,7 @@ class GameProvider extends ChangeNotifier {
     if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
     
     final activePlayer = _players[_state.currentPlayerIndex];
-    if (activePlayer.isLocal) return;
+    if (!activePlayer.isBot) return;
     
     if (_state.status == GameStatus.diceTurn && _gameMode == GameMode.diceDash) {
       _playBotDice(activePlayer);
@@ -2273,9 +2476,10 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> _playBotDice(PlayerModel bot) async {
-    if (_isExiting) return;
+    final epoch = _epoch;
+    if (_isExiting || epoch != _epoch) return;
     await Future.delayed(Duration(milliseconds: 1000 + Random().nextInt(1000)));
-    if (_isExiting) return;
+    if (_isExiting || epoch != _epoch) return;
     if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
     if (_players[_state.currentPlayerIndex].id != bot.id) return;
     if (_state.status != GameStatus.diceTurn) return;
@@ -2284,13 +2488,14 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> _playBotTurn(PlayerModel bot) async {
-    if (_isExiting) return;
+    final epoch = _epoch;
+    if (_isExiting || epoch != _epoch) return;
     await Future.delayed(Duration(milliseconds: 1500 + Random().nextInt(1000)));
-    if (_isExiting) return;
+    if (_isExiting || epoch != _epoch) return;
     
     if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
     if (_players[_state.currentPlayerIndex].id != bot.id) return;
-    if (_isExiting || _state.status == GameStatus.finished) return;
+    if (_isExiting || epoch != _epoch || _state.status == GameStatus.finished) return;
 
     final amountToCall = _currentBet - (_betsThisPhase[bot.id] ?? 0);
     bool isHighConfidence = false;
@@ -2351,13 +2556,35 @@ class GameProvider extends ChangeNotifier {
 
   void exitGame() {
     _isExiting = true;
+    _newRoundTimer?.cancel();
+    _newRoundTimer = null;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _clientConnectionLost = false;
+    final wasSeated = _hasSeat;
+    _hasSeat = false;
+    if (_isMultiplayer && !_isHost) {
+      if (wasSeated) {
+        for (final ep in _p2pService.connectedEndpoints) {
+          _p2pService.sendMessage(ep, {'type': 'LEAVE'});
+        }
+      }
+      // Give the LEAVE message a moment to leave the socket before closing it.
+      Future.delayed(const Duration(milliseconds: 200), _p2pService.disconnectAll);
+    }
     _state = _state.copyWith(status: GameStatus.finished);
     notifyListeners();
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
     _messageSubscription?.cancel();
+    _disconnectSubscription?.cancel();
+    _broadcastTimer?.cancel();
+    _newRoundTimer?.cancel();
+    _watchdogTimer?.cancel();
+    _reconnectTimer?.cancel();
     super.dispose();
   }
 }

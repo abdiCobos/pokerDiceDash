@@ -20,12 +20,21 @@ class DiscoveredDevice {
 }
 
 class P2PService {
+  /// A peer that sends nothing (not even a heartbeat) for this long is dead.
+  static const Duration heartbeatInterval = Duration(seconds: 4);
+  static const Duration heartbeatTimeout = Duration(seconds: 12);
+
   nsd.Registration? _nsdRegistration;
   nsd.Discovery? _nsdDiscovery;
   ServerSocket? _serverSocket;
   final Map<String, Socket> _connectedSockets = {};
-  final Map<String, StringBuffer> _receiveBuffers = {};
+  final Map<String, BytesBuilder> _receiveBuffers = {};
+  final Map<String, DateTime> _lastSeen = {};
   Timer? _heartbeatTimer;
+
+  /// Last host we connected to as a client (used for auto-reconnect).
+  String? lastHost;
+  int? lastPort;
 
   final _devicesController = StreamController<DiscoveredDevice>.broadcast();
   final _messagesController = StreamController<Map<String, dynamic>>.broadcast();
@@ -39,7 +48,9 @@ class P2PService {
 
   final Set<String> _connectedEndpoints = {};
   int get connectedEndpointCount => _connectedEndpoints.length;
+  List<String> get connectedEndpoints => _connectedEndpoints.toList();
   int? get hostPort => _serverSocket?.port;
+  bool get isServing => _serverSocket != null;
 
   P2PService();
 
@@ -63,42 +74,87 @@ class P2PService {
     return null;
   }
 
+  void _emit<T>(StreamController<T> controller, T value) {
+    if (!controller.isClosed) controller.add(value);
+  }
+
+  /// Registers a freshly opened socket (server side or client side).
+  void _registerSocket(String endpointId, Socket socket) {
+    // Drop a stale socket with the same id, if any.
+    final old = _connectedSockets[endpointId];
+    if (old != null && !identical(old, socket)) {
+      try {
+        old.destroy();
+      } catch (_) {}
+    }
+    try {
+      socket.setOption(SocketOption.tcpNoDelay, true);
+    } catch (_) {}
+    _connectedSockets[endpointId] = socket;
+    _connectedEndpoints.add(endpointId);
+    _receiveBuffers[endpointId] = BytesBuilder(copy: false);
+    _lastSeen[endpointId] = DateTime.now();
+    _ensureHeartbeat();
+    _emit(_connectionController, endpointId);
+
+    socket.listen(
+      (Uint8List data) => _handlePayloadReceived(endpointId, data),
+      onDone: () => _handleDisconnected(endpointId, socket),
+      onError: (_) => _handleDisconnected(endpointId, socket),
+      cancelOnError: true,
+    );
+    // Broken pipes / resets on write are reported through `done`, not as exceptions.
+    socket.done.then<void>((_) {}, onError: (Object _) => _handleDisconnected(endpointId, socket));
+  }
+
   Future<void> startAdvertising(String deviceName) async {
     try {
-      _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
-      AppLogger().log('P2P: Servidor escuchando en puerto ${_serverSocket!.port}');
+      // Keep the same port for the whole room lifetime so clients can reconnect.
+      if (_serverSocket == null) {
+        final server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+        _serverSocket = server;
+        AppLogger().log('P2P: Servidor escuchando en puerto ${server.port}');
 
-      _serverSocket!.listen((Socket clientSocket) {
-        final endpointId = '${clientSocket.remoteAddress.address}:${clientSocket.remotePort}';
-        _connectedSockets[endpointId] = clientSocket;
-        _connectedEndpoints.add(endpointId);
-        _receiveBuffers[endpointId] = StringBuffer();
-        _connectionController.add(endpointId);
-
-        clientSocket.listen(
-          (Uint8List data) => _handlePayloadReceived(endpointId, data),
-          onDone: () => _handleDisconnected(endpointId),
-          onError: (_) => _handleDisconnected(endpointId),
+        server.listen(
+          (Socket clientSocket) {
+            final endpointId =
+                '${clientSocket.remoteAddress.address}:${clientSocket.remotePort}';
+            _registerSocket(endpointId, clientSocket);
+          },
+          onError: (e) => AppLogger().log('P2P: Error en servidor: $e'),
         );
-      });
+      }
 
-      // Start periodic heartbeat to keep connections alive and detect drops
-      _heartbeatTimer?.cancel();
-      _heartbeatTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-        broadcastMessage({'type': 'HEARTBEAT'});
-      });
+      _ensureHeartbeat();
+      await updateServiceName(deviceName);
+    } catch (e, s) {
+      AppLogger().error('P2P: Error al iniciar advertising: $e', s);
+    }
+  }
 
-      // Register mDNS service for local auto-discovery
+  Future<void> _nsdQueue = Future<void>.value();
+
+  /// Re-publishes the mDNS record with a new name WITHOUT touching the TCP
+  /// server socket (its port must stay stable). Calls are serialized.
+  Future<void> updateServiceName(String name) {
+    _nsdQueue = _nsdQueue.then((_) async {
+      final server = _serverSocket;
+      if (server == null) return;
+      if (_nsdRegistration != null) {
+        try {
+          await nsd.unregister(_nsdRegistration!);
+        } catch (_) {}
+        _nsdRegistration = null;
+      }
       try {
-        final service = nsd.Service(name: deviceName, type: '_poker._tcp', port: _serverSocket!.port);
+        final service = nsd.Service(name: name, type: '_poker._tcp', port: server.port);
         _nsdRegistration = await nsd.register(service);
         AppLogger().log('P2P: Servicio mDNS registrado con éxito');
       } catch (e) {
         AppLogger().log('P2P: Aviso - mDNS no disponible en esta plataforma (use conexión por IP)');
       }
-    } catch (e, s) {
-      AppLogger().error('P2P: Error al iniciar advertising: $e', s);
-    }
+    }).catchError((Object _) {});
+    return _nsdQueue;
   }
 
   Future<void> startDiscovery(String deviceName) async {
@@ -109,7 +165,8 @@ class P2PService {
           if (service.name != null && service.host != null && service.port != null) {
             final host = service.host!;
             final endpointId = '$host:${service.port}';
-            _devicesController.add(
+            _emit(
+              _devicesController,
               DiscoveredDevice(
                 endpointId: endpointId,
                 endpointName: service.name!,
@@ -140,85 +197,128 @@ class P2PService {
     AppLogger().log('P2P: Intentando conectar a $endpointId');
     try {
       final socket = await Socket.connect(host, port, timeout: const Duration(seconds: 6));
-      _connectedSockets[endpointId] = socket;
-      _connectedEndpoints.add(endpointId);
-      _receiveBuffers[endpointId] = StringBuffer();
-      _connectionController.add(endpointId);
-
-      socket.listen(
-        (Uint8List data) => _handlePayloadReceived(endpointId, data),
-        onDone: () => _handleDisconnected(endpointId),
-        onError: (_) => _handleDisconnected(endpointId),
-      );
+      lastHost = host;
+      lastPort = port;
+      _registerSocket(endpointId, socket);
       AppLogger().log('P2P: Conectado exitosamente a $endpointId');
       return true;
     } catch (e) {
       AppLogger().log('P2P: Error de conexión a $endpointId: $e');
-      _handleDisconnected(endpointId);
       return false;
     }
   }
 
-  void _handleDisconnected(String endpointId) {
-    AppLogger().log('P2P: Desconectado: $endpointId');
-    _connectedSockets[endpointId]?.destroy();
+  /// Re-opens the last client connection (same host/port). Returns true on success.
+  Future<bool> reconnectToLastHost() async {
+    final h = lastHost;
+    final p = lastPort;
+    if (h == null || p == null) return false;
+    return connectToHost(h, p);
+  }
+
+  void _handleDisconnected(String endpointId, [Socket? source]) {
+    final current = _connectedSockets[endpointId];
+    // Ignore callbacks from a socket that was already replaced.
+    if (source != null && current != null && !identical(current, source)) return;
+    final wasKnown = _connectedEndpoints.contains(endpointId);
+    try {
+      current?.destroy();
+    } catch (_) {}
     _connectedSockets.remove(endpointId);
     _connectedEndpoints.remove(endpointId);
     _receiveBuffers.remove(endpointId);
-    _disconnectionController.add(endpointId);
+    _lastSeen.remove(endpointId);
+    if (_connectedSockets.isEmpty && _serverSocket == null) {
+      _heartbeatTimer?.cancel();
+      _heartbeatTimer = null;
+    }
+    if (wasKnown) {
+      AppLogger().log('P2P: Desconectado: $endpointId');
+      _emit(_disconnectionController, endpointId);
+    }
   }
 
-  /// Buffers incoming stream data per endpoint and parses complete newline-delimited JSON messages.
-  void _handlePayloadReceived(String endpointId, Uint8List payload) {
-    final buffer = _receiveBuffers.putIfAbsent(endpointId, () => StringBuffer());
-    final text = utf8.decode(payload, allowMalformed: true);
-    buffer.write(text);
-
-    final content = buffer.toString();
-    final parts = content.split('\n');
-
-    // Keep the trailing incomplete part in the buffer
-    buffer.clear();
-    buffer.write(parts.last);
-
-    // Process all fully arrived messages
-    for (var i = 0; i < parts.length - 1; i++) {
-      final line = parts[i].trim();
-      if (line.isEmpty) continue;
-      try {
-        final jsonData = jsonDecode(line) as Map<String, dynamic>;
-        if (jsonData['type'] == 'HEARTBEAT') {
-          // Heartbeat received - socket is alive
-          continue;
+  void _ensureHeartbeat() {
+    if (_heartbeatTimer != null) return;
+    _heartbeatTimer = Timer.periodic(heartbeatInterval, (_) {
+      final now = DateTime.now();
+      for (final id in _connectedSockets.keys.toList()) {
+        final seen = _lastSeen[id];
+        if (seen != null && now.difference(seen) > heartbeatTimeout) {
+          AppLogger().log('P2P: Timeout de heartbeat: $id');
+          _handleDisconnected(id);
         }
-        jsonData['_senderEndpointId'] = endpointId;
-        _messagesController.add(jsonData);
-      } catch (e) {
-        AppLogger().error('P2P: Error decodificando mensaje JSON: $e');
       }
+      broadcastMessage({'type': 'HEARTBEAT'});
+    });
+  }
+
+  /// Buffers incoming bytes per endpoint and parses complete newline-delimited JSON messages.
+  /// Works on raw bytes so multi-byte UTF-8 characters split across TCP chunks stay intact.
+  void _handlePayloadReceived(String endpointId, Uint8List payload) {
+    if (!_connectedSockets.containsKey(endpointId)) return; // late data from a dead peer
+    _lastSeen[endpointId] = DateTime.now();
+    final buffer = _receiveBuffers.putIfAbsent(endpointId, () => BytesBuilder(copy: false));
+    buffer.add(payload);
+
+    final all = buffer.takeBytes();
+    var start = 0;
+    for (var i = 0; i < all.length; i++) {
+      if (all[i] != 0x0A) continue;
+      if (i > start) {
+        _processLine(endpointId, all.sublist(start, i));
+      }
+      start = i + 1;
+    }
+    if (start < all.length) {
+      buffer.add(all.sublist(start));
+    }
+  }
+
+  void _processLine(String endpointId, List<int> bytes) {
+    try {
+      final line = utf8.decode(bytes, allowMalformed: true).trim();
+      if (line.isEmpty) return;
+      final jsonData = jsonDecode(line) as Map<String, dynamic>;
+      if (jsonData['type'] == 'HEARTBEAT') return; // socket is alive
+      jsonData['_senderEndpointId'] = endpointId;
+      _emit(_messagesController, jsonData);
+    } catch (e) {
+      AppLogger().error('P2P: Error decodificando mensaje JSON: $e');
+    }
+  }
+
+  bool _safeWrite(String endpointId, Socket socket, List<int> bytes) {
+    try {
+      socket.add(bytes);
+      return true;
+    } catch (e) {
+      AppLogger().log('P2P: Error de escritura en $endpointId: $e');
+      _handleDisconnected(endpointId, socket);
+      return false;
     }
   }
 
   Future<void> sendMessage(String endpointId, Map<String, dynamic> data) async {
     final socket = _connectedSockets[endpointId];
-    if (socket != null) {
-      final jsonString = jsonEncode(data) + '\n';
-      socket.add(utf8.encode(jsonString));
-    }
+    if (socket == null) return;
+    _safeWrite(endpointId, socket, utf8.encode('${jsonEncode(data)}\n'));
   }
 
   Future<void> broadcastMessage(Map<String, dynamic> data) async {
-    final jsonString = jsonEncode(data) + '\n';
-    final bytes = utf8.encode(jsonString);
-
-    for (final socket in _connectedSockets.values) {
-      socket.add(bytes);
+    if (_connectedSockets.isEmpty) return;
+    final bytes = utf8.encode('${jsonEncode(data)}\n');
+    for (final entry in _connectedSockets.entries.toList()) {
+      _safeWrite(entry.key, entry.value, bytes);
     }
   }
 
+  /// Closes one peer connection (e.g. a kicked or replaced client).
+  void disconnectEndpoint(String endpointId) => _handleDisconnected(endpointId);
+
+  bool isEndpointConnected(String endpointId) => _connectedEndpoints.contains(endpointId);
+
   Future<void> stopAdvertising() async {
-    _heartbeatTimer?.cancel();
-    _heartbeatTimer = null;
     if (_nsdRegistration != null) {
       try {
         await nsd.unregister(_nsdRegistration!);
@@ -227,6 +327,10 @@ class P2PService {
     }
     await _serverSocket?.close();
     _serverSocket = null;
+    if (_connectedSockets.isEmpty) {
+      _heartbeatTimer?.cancel();
+      _heartbeatTimer = null;
+    }
   }
 
   Future<void> stopDiscovery() async {
@@ -241,12 +345,17 @@ class P2PService {
   Future<void> disconnectAll() async {
     await stopAdvertising();
     await stopDiscovery();
-    for (final socket in _connectedSockets.values) {
-      socket.destroy();
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+    for (final socket in _connectedSockets.values.toList()) {
+      try {
+        socket.destroy();
+      } catch (_) {}
     }
     _connectedSockets.clear();
     _connectedEndpoints.clear();
     _receiveBuffers.clear();
+    _lastSeen.clear();
   }
 
   Future<void> dispose() async {

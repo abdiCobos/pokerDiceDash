@@ -8,6 +8,8 @@ class PlayerModel {
   bool isLocal;
   bool isFolded;
   bool isBankrupt;
+  bool isBot;
+  bool isAway;
 
   PlayerModel({
     required this.id,
@@ -17,6 +19,8 @@ class PlayerModel {
     this.isLocal = false,
     this.isFolded = false,
     this.isBankrupt = false,
+    this.isBot = false,
+    this.isAway = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -26,6 +30,8 @@ class PlayerModel {
     'isLocal': isLocal,
     'isFolded': isFolded,
     'isBankrupt': isBankrupt,
+    'isBot': isBot,
+    'isAway': isAway,
     'hand': hand.map((c) => c.toJson()).toList(),
   };
 
@@ -36,6 +42,8 @@ class PlayerModel {
     isLocal: json['isLocal'] ?? false,
     isFolded: json['isFolded'] ?? false,
     isBankrupt: json['isBankrupt'] ?? false,
+    isBot: json['isBot'] ?? false,
+    isAway: json['isAway'] ?? false,
     hand: (json['hand'] as List<dynamic>?)
             ?.map((c) => CardModel.fromJson(c))
             .toList() ??
