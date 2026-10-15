@@ -1,0 +1,13 @@
+Poker Dice Dash junta el póker estilo Texas, los dados y el Blackjack 21 en una sola app, para jugar solo contra bots o con tus amigos.
+
+Modos de juego:
+• Texas Hold'em con dados: una variante con eventos aleatorios que cambian la partida.
+• Texas Hold'em clásico, sin dados.
+• Blackjack 21 con Pedir, Plantarse, Doblar, Dividir y la regla 5-Card Charlie.
+
+Multijugador local:
+• Crea una sala y conecta móviles y PC que estén en la misma red Wi-Fi.
+• Sin servidores externos, sin cuentas y sin anuncios.
+• Reconexión automática si se pierde la señal un momento.
+
+Software libre bajo GPL-3.0-or-later.

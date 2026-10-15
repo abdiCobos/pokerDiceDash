@@ -1,0 +1,33 @@
+Categories:
+  - Games
+License: GPL-3.0-or-later
+AuthorName: abdiCobos
+SourceCode: https://github.com/abdiCobos/pokerDiceDash
+IssueTracker: https://github.com/abdiCobos/pokerDiceDash/issues
+
+AutoName: Poker Dice Dash
+RepoType: git
+Repo: https://github.com/abdiCobos/pokerDiceDash.git
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    output: build/app/outputs/flutter-apk/app-release.apk
+    srclibs:
+      # TODO(release): pubspec.yaml requires Dart ^3.10.8, so use the Flutter
+      # tag that ships that Dart version (not 3.24.3) before submitting.
+      - flutter@stable
+    rm:
+      - ios/
+      - macos/
+      - windows/
+      - linux/
+      - web/
+    prebuild:
+      - $$flutter$$/bin/flutter config --no-analytics
+    build:
+      - $$flutter$$/bin/flutter build apk --release
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
