@@ -1586,7 +1586,8 @@ class GameProvider extends ChangeNotifier {
     // Mark bankrupt players
     for (final player in _players) {
       if (player.chipBalance <= 0) {
-        if (player.isBot) {\1
+        if (player.isBot) {
+          player.chipBalance = 1000; // Auto-rebuy for bots
           player.isBankrupt = false;
           player.isFolded = false;
         } else {
