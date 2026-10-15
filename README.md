@@ -21,6 +21,8 @@
 
 - **Práctica (Solitario):** Juega sin conexión contra el Crupier o contra bots integrados en la aplicación.
 - **Local (LAN):** Crea salas locales y conecta con amigos en la misma red Wi-Fi (usando mDNS y Sockets estándar), 100% privado y de código abierto.
+  - Reconexión automática: si un jugador pierde la señal, la app reintenta durante ~1 minuto y recupera su asiento; mientras tanto el anfitrión juega su turno (fold/check) para que la ronda siga.
+  - El anfitrión es la fuente de verdad: cada cliente solo recibe sus propias cartas hasta el showdown.
 
 
 
@@ -49,6 +51,17 @@ Para compilar y ejecutar este proyecto en tu entorno local:
    ```bash
    flutter run
    ```
+
+## 🧰 Skills de desarrollo (`.agents/skills`)
+
+- `flutter-responsive-layout`: reglas para colocar asientos sin solapes en móviles (`lib/ui/layout/seat_layout.dart`).
+- `flutter-lan-networking`: protocolo LAN (heartbeat, reconexión con token, estado enmascarado).
+- `fdroid-release`: checklist de publicación en F-Droid (sin servicios propietarios).
+- `flutter-testing`: guía de pruebas (`flutter analyze` y `flutter test`).
+
+## 📦 Publicación en F-Droid
+
+Receta en `metadata/io.github.abdicobos.pokerdicedash.yml` y textos en `fastlane/metadata/android/`. Licencia: GPL-3.0-or-later (ver `LICENSE`). El proyecto no usa Firebase, analíticas ni anuncios.
 
 ## 📝 Contribuciones
 ¡Toda contribución es bienvenida! Si deseas mejorar la inteligencia de los bots, agregar nuevos modos de juego o refinar el código, siéntete libre de hacer un Fork y enviar un Pull Request.

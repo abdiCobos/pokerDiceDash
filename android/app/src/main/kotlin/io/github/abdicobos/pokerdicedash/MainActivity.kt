@@ -1,4 +1,4 @@
-package com.example.poker_dice_dash
+package io.github.abdicobos.pokerdicedash
 
 import io.flutter.embedding.android.FlutterActivity
 
