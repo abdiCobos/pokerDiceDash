@@ -9,7 +9,9 @@ import '../../models/card_model.dart';
 import '../../models/game_state.dart';
 import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
+import '../layout/seat_layout.dart';
 import '../widgets/card_widget.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../widgets/betting_chip_widget.dart';
 import 'lobby_screen.dart';
 
@@ -45,6 +47,7 @@ class _GameTableScreenState extends State<GameTableScreen>
   double _screenW = 800;
   double _screenH = 450;
   double _s = 1.0;
+  final Map<String, Rect> _seatRects = {};
 
   StreamSubscription<String>? _hostConnectionSub;
 
@@ -54,7 +57,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     final size = MediaQuery.of(context).size;
     _screenW = size.width;
     _screenH = size.height;
-    _s = (_screenW / 800).clamp(0.45, 1.3);
+    _s = SeatLayout.tableScale(size);
   }
 
   @override
@@ -64,6 +67,7 @@ class _GameTableScreenState extends State<GameTableScreen>
       DeviceOrientation.landscapeRight,
       DeviceOrientation.landscapeLeft,
     ]);
+    WakelockPlus.enable();
     _shakeController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -95,6 +99,7 @@ class _GameTableScreenState extends State<GameTableScreen>
   @override
   void dispose() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    WakelockPlus.disable();
     _hostConnectionSub?.cancel();
     _burnController.dispose();
     _shakeController.dispose();
@@ -241,7 +246,7 @@ class _GameTableScreenState extends State<GameTableScreen>
                   final h = constraints.maxHeight;
                   _screenW = w;
                   _screenH = h;
-                  _s = (w / 800).clamp(0.45, 1.3);
+                  _s = SeatLayout.tableScale(Size(w, h));
 
                   return Stack(
                     clipBehavior: Clip.none,
@@ -254,6 +259,8 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _buildActionPanel(game),
                       if (_lastBurned != null)
                         _buildBurnedCardAnimation(),
+                      if (game.isConnectionLost)
+                        _ConnectionBanner(gaveUp: game.reconnectGaveUp, scale: _s),
                       if (game.centralMessage != null)
                         _CenteredStatusAlert(message: game.centralMessage!),
                       if (_showPotFlying && game.winnerId != null)
@@ -355,63 +362,6 @@ class _GameTableScreenState extends State<GameTableScreen>
     );
   }
 
-  Alignment _getOpponentAlignment(int i, int total) {
-    switch (total) {
-      case 1:
-        return const Alignment(0.0, -0.84);
-      case 2:
-        return i == 0
-            ? const Alignment(-0.62, -0.76)
-            : const Alignment(0.62, -0.76);
-      case 3:
-        return i == 0
-            ? const Alignment(-0.88, -0.15)
-            : (i == 1
-                ? const Alignment(0.0, -0.84)
-                : const Alignment(0.88, -0.15));
-      case 4:
-        switch (i) {
-          case 0:
-            return const Alignment(-0.88, 0.10);
-          case 1:
-            return const Alignment(-0.48, -0.80);
-          case 2:
-            return const Alignment(0.48, -0.80);
-          default:
-            return const Alignment(0.88, 0.10);
-        }
-      case 5:
-        switch (i) {
-          case 0:
-            return const Alignment(-0.90, 0.28);
-          case 1:
-            return const Alignment(-0.60, -0.75);
-          case 2:
-            return const Alignment(0.0, -0.85);
-          case 3:
-            return const Alignment(0.60, -0.75);
-          default:
-            return const Alignment(0.90, 0.28);
-        }
-      case 6:
-      default:
-        switch (i) {
-          case 0:
-            return const Alignment(-0.92, 0.38);
-          case 1:
-            return const Alignment(-0.72, -0.62);
-          case 2:
-            return const Alignment(-0.25, -0.85);
-          case 3:
-            return const Alignment(0.25, -0.85);
-          case 4:
-            return const Alignment(0.72, -0.62);
-          default:
-            return const Alignment(0.92, 0.38);
-        }
-    }
-  }
-
   List<Widget> _buildPlayerSeats(List<PlayerModel> players, GameProvider game) {
     final widgets = <Widget>[];
     final localId = game.localPlayerId;
@@ -448,25 +398,30 @@ class _GameTableScreenState extends State<GameTableScreen>
     }
 
     final oppCount = opponents.length;
-    final oppScale = oppCount > 5 ? _s * 0.74 : (oppCount > 3 ? _s * 0.84 : _s);
+    final layout = SeatLayout.placeOpponents(
+      size: Size(_screenW, _screenH),
+      opponents: oppCount,
+      diceMode: game.gameMode == GameMode.diceDash,
+    );
+    _seatRects.clear();
 
-    for (var i = 0; i < oppCount; i++) {
+    for (var i = 0; i < oppCount && i < layout.rects.length; i++) {
       final opp = opponents[i];
       final oppIdx = players.indexWhere((p) => p.id == opp.id);
-      final alignment = _getOpponentAlignment(i, oppCount);
+      final rect = layout.rects[i];
+      _seatRects[opp.id] = rect;
 
-      final seat = _PlayerSeat(
-        playerId: opp.id,
-        isLocal: false,
-        isCurrentTurn: game.state.currentPlayerIndex == oppIdx,
-        scale: oppScale,
-      );
-
-      widgets.add(Align(
-        alignment: alignment,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 6 * _s, vertical: 2 * _s),
-          child: seat,
+      widgets.add(Positioned.fromRect(
+        rect: rect,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: _PlayerSeat(
+            playerId: opp.id,
+            isLocal: false,
+            isCurrentTurn: game.state.currentPlayerIndex == oppIdx,
+            scale: _s * layout.scale,
+            shrink: layout.scale,
+          ),
         ),
       ));
     }
@@ -772,22 +727,10 @@ class _GameTableScreenState extends State<GameTableScreen>
           endX = width / 2;
           endY = height - 100 * _s;
         } else {
-          final localId = game.localPlayerId;
-          final localIdx = players.indexWhere((p) => p.id == localId);
-          final opponents = <PlayerModel>[];
-          if (localIdx >= 0) {
-            for (var step = 1; step < players.length; step++) {
-              opponents.add(players[(localIdx + step) % players.length]);
-            }
-          } else {
-            opponents.addAll(players.where((p) => p.id != localId));
-          }
-
-          final oppIdx = opponents.indexWhere((p) => p.id == winnerId);
-          if (oppIdx >= 0) {
-            final alignment = _getOpponentAlignment(oppIdx, opponents.length);
-            endX = (width / 2) + (alignment.x * (width / 2 - 60 * _s));
-            endY = (height / 2) + (alignment.y * (height / 2 - 50 * _s));
+          final seat = _seatRects[winnerId];
+          if (seat != null) {
+            endX = seat.center.dx;
+            endY = seat.center.dy;
           } else {
             endX = width / 2;
             endY = 80 * _s;
@@ -1548,12 +1491,14 @@ class _PlayerSeat extends StatelessWidget {
   final bool isLocal;
   final bool isCurrentTurn;
   final double scale;
+  final double shrink;
 
   const _PlayerSeat({
     required this.playerId,
     required this.isLocal,
     required this.isCurrentTurn,
     this.scale = 1.0,
+    this.shrink = 1.0,
   });
 
   @override
@@ -1599,6 +1544,10 @@ class _PlayerSeat extends StatelessWidget {
                       fontSize: 10 * s,
                     ),
                   ),
+                  if (player.isAway) ...[
+                    SizedBox(width: 3 * s),
+                    Icon(Icons.wifi_off, color: Colors.redAccent, size: 11 * s),
+                  ],
                 ],
               ),
               SizedBox(height: 3 * s),
@@ -1670,7 +1619,7 @@ class _PlayerSeat extends StatelessWidget {
                       final card = livePlayer.hand[cardIdx];
                       final isWinner = isShowdown && winning != null &&
                           winning.any((w) => w.value == card.value && w.suit == card.suit);
-                      final cardScale = isLocal ? 0.75 : (game.players.length > 5 ? 0.40 : 0.48);
+                      final cardScale = (isLocal ? 0.75 : (game.players.length > 5 ? 0.40 : 0.48)) * (isLocal ? 1.0 : shrink);
                       final cardWidget = _winningGlow(
                         isWinner: isWinner,
                         isShowdown: isShowdown,
@@ -1781,6 +1730,40 @@ class _PlayerSeat extends StatelessWidget {
         }
         return const SizedBox.shrink();
       },
+    );
+  }
+}
+
+
+/// Shown while the client is trying to get back into the room.
+class _ConnectionBanner extends StatelessWidget {
+  final bool gaveUp;
+  final double scale;
+  const _ConnectionBanner({required this.gaveUp, required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 52 * scale,
+      left: 0,
+      right: 0,
+      child: IgnorePointer(
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 6 * scale),
+            decoration: BoxDecoration(
+              color: (gaveUp ? Colors.red.shade900 : Colors.orange.shade800).withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(12 * scale),
+            ),
+            child: Text(
+              gaveUp
+                  ? 'Conexión perdida. Vuelve al menú e inténtalo de nuevo.'
+                  : 'Conexión perdida, reconectando…',
+              style: TextStyle(color: Colors.white, fontSize: 12 * scale, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
