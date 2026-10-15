@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/game_provider.dart';
 import 'services/p2p_service.dart';
@@ -45,7 +44,6 @@ class PokerDiceDashApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         scaffoldBackgroundColor: const Color(0xFF052915),
         useMaterial3: true,
-        textTheme: GoogleFonts.robotoTextTheme(),
       ),
       home: const LobbyScreen(),
     );

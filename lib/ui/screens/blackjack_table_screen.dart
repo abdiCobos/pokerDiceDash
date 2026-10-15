@@ -6,6 +6,7 @@ import '../../models/card_model.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../services/p2p_service.dart';
 import '../widgets/card_widget.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../widgets/player_seat_card.dart';
 import 'lobby_screen.dart';
 
@@ -31,6 +32,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    WakelockPlus.enable();
   }
 
   @override
@@ -39,7 +41,10 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     final size = MediaQuery.of(context).size;
     _screenH = size.height;
     // Base scale using height since landscape height is the constraining dimension
-    _s = (_screenH / 390).clamp(0.72, 1.25);
+    final byHeight = _screenH / 390;
+    final byWidth = size.width / 800;
+    // Use the tighter dimension so seats never outgrow short or narrow phones.
+    _s = (byHeight < byWidth ? byHeight : byWidth).clamp(0.6, 1.25).toDouble();
   }
 
   AnimationController _animFor(String key) {
@@ -53,6 +58,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -192,10 +198,23 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
 
               // Player Seats arranged across the felt (ALL on screen, NO scroll carousel!)
               Positioned(
+                top: 112 * _s, // keep clear of the dealer section
                 bottom: 4 * _s,
                 left: 8 * _s,
                 right: 8 * _s,
-                child: _buildPlayerSeatsRow(activePlayers, bj),
+                child: LayoutBuilder(
+                  builder: (context, c) => Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.bottomCenter,
+                      child: SizedBox(
+                        width: c.maxWidth,
+                        child: _buildPlayerSeatsRow(activePlayers, bj),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
