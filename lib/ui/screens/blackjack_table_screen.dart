@@ -169,31 +169,22 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         Expanded(
           child: Stack(
             children: [
-              // Subtle casino felt watermark text
-              Positioned(
-                top: 48 * _s,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Text(
-                    'BLACKJACK PAGA 3 A 2  •  CRUPIER SE PLANTA EN 17  •  5-CARD CHARLIE',
-                    style: TextStyle(
-                      color: Colors.amber.withValues(alpha: 0.18),
-                      fontSize: 9.5 * _s,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Dealer section at top-center
+              // Dealer section at top-center, table rules on both sides of it
               if (dealer != null)
                 Positioned(
                   top: 2 * _s,
-                  left: 0,
-                  right: 0,
-                  child: Center(child: _buildDealerSection(dealer, bj)),
+                  left: 8 * _s,
+                  right: 8 * _s,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(child: _rulesText('BLACKJACK PAGA 3 A 2', Alignment.centerRight)),
+                      SizedBox(width: 14 * _s),
+                      _buildDealerSection(dealer, bj),
+                      SizedBox(width: 14 * _s),
+                      Expanded(child: _rulesText('CRUPIER SE PLANTA EN 17  •  5-CARD CHARLIE', Alignment.centerLeft)),
+                    ],
+                  ),
                 ),
 
               // Player Seats arranged across the felt (ALL on screen, NO scroll carousel!)
@@ -240,38 +231,63 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10 * _s, vertical: 3 * _s),
       color: Colors.black.withValues(alpha: 0.40),
-      child: Row(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          // Back button
-          GestureDetector(
-            onTap: _confirmExit,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 4 * _s),
-              decoration: BoxDecoration(
-                color: Colors.black38,
-                borderRadius: BorderRadius.circular(6 * _s),
-                border: Border.all(color: Colors.white24),
+          Row(
+            children: [
+              // Back button
+              GestureDetector(
+                onTap: _confirmExit,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 4 * _s),
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: BorderRadius.circular(6 * _s),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.arrow_back, color: Colors.white70, size: 16 * _s),
+                      SizedBox(width: 4 * _s),
+                      Text('Salir', style: TextStyle(color: Colors.white70, fontSize: 11 * _s)),
+                    ],
+                  ),
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.arrow_back, color: Colors.white70, size: 16 * _s),
-                  SizedBox(width: 4 * _s),
-                  Text('Salir', style: TextStyle(color: Colors.white70, fontSize: 11 * _s)),
-                ],
+              SizedBox(width: 12 * _s),
+              // Deck count
+              Icon(Icons.style, color: Colors.amber.withValues(alpha: 0.7), size: 16 * _s),
+              SizedBox(width: 4 * _s),
+              Text(
+                'Mazo: ${bj.state.deck.length}',
+                style: TextStyle(color: Colors.white70, fontSize: 11 * _s, fontWeight: FontWeight.w500),
               ),
-            ),
+              const Spacer(),
+              // Bankroll indicator
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 3 * _s),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade900.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(8 * _s),
+                    border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.monetization_on, color: Colors.greenAccent, size: 14 * _s),
+                      SizedBox(width: 4 * _s),
+                      Text(
+                        '\$${local.chipBalance}',
+                        style: TextStyle(color: Colors.greenAccent, fontSize: 12 * _s, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
-          SizedBox(width: 12 * _s),
-          // Deck count
-          Icon(Icons.style, color: Colors.amber.withValues(alpha: 0.7), size: 16 * _s),
-          SizedBox(width: 4 * _s),
-          Text(
-            'Mazo: ${bj.state.deck.length}',
-            style: TextStyle(color: Colors.white70, fontSize: 11 * _s, fontWeight: FontWeight.w500),
-          ),
-          const Spacer(),
-          // Table Title Badge
+          // Table Title Badge, centered on the screen (not between the side groups)
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12 * _s, vertical: 3 * _s),
             decoration: BoxDecoration(
@@ -296,33 +312,30 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               ],
             ),
           ),
-          const Spacer(),
-          // Bankroll indicator
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 3 * _s),
-              decoration: BoxDecoration(
-                color: Colors.green.shade900.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(8 * _s),
-                border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.5)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.monetization_on, color: Colors.greenAccent, size: 14 * _s),
-                  SizedBox(width: 4 * _s),
-                  Text(
-                    '\$${local.chipBalance}',
-                    style: TextStyle(color: Colors.greenAccent, fontSize: 12 * _s, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
   }
 
   // ─── 2. DEALER SECTION ───────────────────────────────────
+
+  Widget _rulesText(String text, Alignment alignment) {
+    return Align(
+      alignment: alignment,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Colors.amber.withValues(alpha: 0.22),
+            fontSize: 9.5 * _s,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2.0,
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildDealerSection(BlackjackPlayer dealer, BlackjackProvider bj) {
     final showAll = bj.phase == BlackjackPhase.dealerTurn || bj.phase == BlackjackPhase.roundEnd;

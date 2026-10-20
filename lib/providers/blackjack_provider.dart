@@ -270,29 +270,65 @@ class BlackjackProvider extends ChangeNotifier {
     }
   }
 
+  bool _isTurnOf(String playerId) {
+    if (_state.phase != BlackjackPhase.playerTurn) return false;
+    final active = activePlayers;
+    if (active.isEmpty) return false;
+    return active[_state.currentPlayerIndex % active.length].id == playerId;
+  }
+
+  int _dealerUpcardValue() {
+    final d = dealer;
+    if (d == null || d.hands.isEmpty || d.hands[0].cards.isEmpty) return 10;
+    final v = d.hands[0].cards[0].value;
+    if (v == 'A') return 11;
+    return int.tryParse(v) ?? 10;
+  }
+
+  /// Plays one action for a bot and, if its hand is still open, schedules the
+  /// next one. Every bot turn must end in a finished hand or the round freezes.
   void _autoPlayBot(String playerId) {
     try {
+      if (!_isTurnOf(playerId)) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
       if (pIdx < 0) return;
+      final hIdx = _state.currentHandIndex;
       final p = players[pIdx];
-      final h = p.currentHand;
-      if (h.handValue < 17) hit(playerId); else stand(playerId);
+      if (hIdx >= p.hands.length) return;
+      final value = p.hands[hIdx].handValue;
+      final up = _dealerUpcardValue();
+      // Simplified basic strategy: always hit <=11, stand on 17+,
+      // with 12-16 hit only against a strong dealer upcard (7..A).
+      final shouldHit = value <= 11 || (value < 17 && (up >= 7 || (value == 12 && up <= 3)));
+      if (!shouldHit) {
+        stand(playerId);
+        return;
+      }
+      hit(playerId);
+      final after = players.firstWhere((pl) => pl.id == playerId);
+      if (hIdx < after.hands.length && !after.hands[hIdx].isFinished && _isTurnOf(playerId)) {
+        Future.delayed(const Duration(milliseconds: 700), () => _autoPlayBot(playerId));
+      }
     } catch (e, s) {
       AppLogger().error('BJ:_autoPlayBot crash: $e', s);
+      // Never leave the table stuck on a bot.
+      if (_isTurnOf(playerId)) stand(playerId);
     }
   }
 
   void hit(String playerId) {
     try {
       AppLogger().log('BJ:hit $playerId phase=${_state.phase}');
-      if (_state.phase != BlackjackPhase.playerTurn) return;
+      // Ignore taps outside this player's turn or on a finished hand (double taps
+      // would otherwise schedule extra turn advances and replay bots).
+      if (!_isTurnOf(playerId)) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
       if (pIdx < 0) return;
-      final card = _draw();
       final updated = <BlackjackPlayer>[...players];
       final hands = <BlackjackHand>[...updated[pIdx].hands];
       final hIdx = _state.currentHandIndex < hands.length ? _state.currentHandIndex : hands.length - 1;
-      if (hIdx < 0 || hIdx >= hands.length) return;
+      if (hIdx < 0 || hIdx >= hands.length || hands[hIdx].isFinished) return;
+      final card = _draw();
       hands[hIdx].cards.add(card);
       SoundService().cardMix();
       final val = hands[hIdx].handValue;
@@ -329,12 +365,12 @@ class BlackjackProvider extends ChangeNotifier {
   void stand(String playerId) {
     try {
       AppLogger().log('BJ:stand $playerId');
-      if (_state.phase != BlackjackPhase.playerTurn) return;
+      if (!_isTurnOf(playerId)) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
       if (pIdx < 0) return;
       final hands = <BlackjackHand>[...players[pIdx].hands];
       final hIdx = _state.currentHandIndex < hands.length ? _state.currentHandIndex : hands.length - 1;
-      if (hIdx >= hands.length || hIdx < 0) return;
+      if (hIdx >= hands.length || hIdx < 0 || hands[hIdx].isFinished) return;
       hands[hIdx].isStanding = true;
       AppLogger().log('BJ:stand hand=$hIdx value=${hands[hIdx].handValue}');
       final updated = <BlackjackPlayer>[...players];
@@ -350,7 +386,7 @@ class BlackjackProvider extends ChangeNotifier {
   void doubleDown(String playerId) {
     try {
       AppLogger().log('BJ:doubleDown $playerId');
-      if (_state.phase != BlackjackPhase.playerTurn) return;
+      if (!_isTurnOf(playerId)) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
       if (pIdx < 0) return;
       final hands = <BlackjackHand>[...players[pIdx].hands];
@@ -375,7 +411,7 @@ class BlackjackProvider extends ChangeNotifier {
   void splitPair(String playerId) {
     try {
       AppLogger().log('BJ:splitPair $playerId');
-      if (_state.phase != BlackjackPhase.playerTurn) return;
+      if (!_isTurnOf(playerId)) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
       if (pIdx < 0) return;
       final p = players[pIdx];
