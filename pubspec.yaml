@@ -68,13 +68,16 @@ flutter:
     - assets/images/dice/
     - assets/images/board/
     - assets/images/chips/
-    - assets/images/icon/
     - assets/images/menulogo/
     - assets/sounds/
 
 flutter_launcher_icons:
+  # Sources are drawn by tool/render_app_icon_test.dart (flutter test tool/render_app_icon_test.dart).
   android: true
-  image_path: "assets/images/icon/iconlogo.png"
+  image_path: "tool/icon/icon_full.png"
+  adaptive_icon_background: "tool/icon/icon_background.png"
+  adaptive_icon_foreground: "tool/icon/icon_foreground.png"
+  adaptive_icon_foreground_inset: 0 # the artwork already respects the 66dp safe zone
 
   # To add assets to your application, add an assets section, like this:
   # assets:
