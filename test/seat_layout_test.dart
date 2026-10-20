@@ -48,9 +48,12 @@ void main() {
           final obstacles = SeatLayout.fixedObstacles(size, diceMode: dice);
           final pot = SeatLayout.potRect(size);
           final localBet = SeatLayout.localBetRect(size);
-          for (final o in obstacles.skip(2)) {
+          // The pot sits on the card row: never on the local seat, cards, buttons or dice.
+          for (final o in obstacles.where((o) => o != pot).skip(1)) {
             expect(pot.overlaps(o), isFalse, reason: 'pot overlaps $o');
           }
+          final prePot = SeatLayout.potRect(size, beside: false);
+          expect(prePot.overlaps(obstacles[1]), isFalse, reason: 'pre-flop pot overlaps the local seat');
           expect(localBet.overlaps(pot), isFalse);
           for (var n = 1; n <= 7; n++) {
             final rects = SeatLayout.placeOpponents(size: size, opponents: n, diceMode: dice).rects;

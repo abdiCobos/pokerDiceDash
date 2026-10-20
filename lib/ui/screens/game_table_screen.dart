@@ -388,17 +388,24 @@ class _GameTableScreenState extends State<GameTableScreen>
   }
 
   Widget _buildCenterArea(GameProvider game) {
-    final potRect = SeatLayout.potRect(Size(_screenW, _screenH));
+    final beside = game.revealedCommunityCount > 0;
+    final potRect = SeatLayout.potRect(Size(_screenW, _screenH), beside: beside);
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        if (game.pot > 0)
-          Positioned(
-            left: 0,
-            right: 0,
+        // Nothing is at stake while the room is still waiting for players.
+        if (game.pot > 0 && game.state.status != GameStatus.waitingPlayers)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.easeOutCubic,
+            left: potRect.left,
             top: potRect.top,
+            width: potRect.width,
             height: potRect.height,
-            child: Center(child: _PotText(pot: game.pot, scale: _s)),
+            child: Align(
+              alignment: beside ? Alignment.centerRight : Alignment.center,
+              child: FittedBox(fit: BoxFit.scaleDown, child: _PotText(pot: game.pot, scale: _s)),
+            ),
           ),
         Positioned(
           top: _screenH * 0.35,

@@ -74,6 +74,7 @@ class SeatLayout {
       Rect.fromLTRB(0, 0, w, 46 * s), // header
       Rect.fromLTRB(w / 2 - local.width / 2, h - local.height, w / 2 + local.width / 2, h), // local seat
       Rect.fromLTRB(w / 2 - commW / 2, h * 0.35, w / 2 + commW / 2, h * 0.35 + 84 * s), // community cards
+      potRect(size), // pot (beside the cards; the pre-flop spot is inside the card row)
       Rect.fromLTRB(w * 0.05, h - h * 0.06 - 56 * s, w * 0.05 + 270 * s, h - h * 0.06), // action panel
       Rect.fromLTRB(w - w * 0.03 - 150 * s, h - h * 0.04 - 48 * s, w - w * 0.03, h - h * 0.04), // roll button
       Rect.fromLTRB(w - w * 0.03 - 150 * s, h - h * 0.28 - 36 * s, w - w * 0.03, h - h * 0.28), // start button
@@ -82,11 +83,17 @@ class SeatLayout {
     ];
   }
 
-  /// Pot badge: centered, right under the community cards.
-  static Rect potRect(Size size) {
+  /// Pot badge, on the community-card row. Before the flop it sits where the
+  /// cards will appear; once cards are out ([beside]) it moves to their left.
+  /// Phones have no vertical room between the cards and the local seat.
+  static Rect potRect(Size size, {bool beside = true}) {
     final s = tableScale(size);
-    final top = size.height * 0.35 + 84 * s + 2;
-    return Rect.fromLTWH(size.width / 2 - 55 * s, top, 110 * s, 22 * s);
+    final a = cardAutoScale(size.width);
+    final potW = 110 * s;
+    final potH = 22 * s;
+    final rowCenterY = size.height * 0.35 + 112 * 0.65 * a / 2;
+    final cx = beside ? size.width / 2 - communityWidth(a) / 2 - 6 * s - potW / 2 : size.width / 2;
+    return Rect.fromCenter(center: Offset(cx, rowCenterY), width: potW, height: potH);
   }
 
   static Size betSize(double s) => Size(54 * s, 18 * s);
