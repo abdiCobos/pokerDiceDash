@@ -111,6 +111,33 @@ class GameProvider extends ChangeNotifier {
 
 
 
+  // Seat changes for game modes that run their own table on top of this
+  // lobby (Blackjack): the lobby keeps joins, tokens, passwords and reconnects.
+  final StreamController<SeatEvent> _seatEvents = StreamController<SeatEvent>.broadcast();
+  Stream<SeatEvent> get seatEvents => _seatEvents.stream;
+
+  void _emitSeat(SeatEventKind kind, String seatId, String name, String endpointId) {
+    if (!_seatEvents.isClosed) _seatEvents.add(SeatEvent(kind, seatId, name, endpointId));
+  }
+
+  /// Seat bound to a connected socket (host side), or null.
+  String? seatForEndpoint(String endpointId) => _endpointPlayer[endpointId];
+
+  /// Seats currently connected (host side): seatId -> player name.
+  Map<String, String> get connectedSeats => {
+        for (final e in _endpointPlayer.entries)
+          e.value: _players.where((p) => p.id == e.value).firstOrNull?.name ?? 'Jugador',
+      };
+
+  String get playerName => _hostName;
+
+  /// Marks the room as started for modes that do not use [startMatch] (Blackjack):
+  /// drops after this point keep the seat (away) instead of freeing it.
+  void markMatchStarted() {
+    _matchStarted = true;
+    updateAdvertisedName();
+  }
+
   GameProvider({required P2PService p2pService}) : _p2pService = p2pService {
     _watchdogTimer = Timer.periodic(const Duration(seconds: 2), (_) => _watchdogTick());
 
@@ -134,6 +161,8 @@ class GameProvider extends ChangeNotifier {
     if (_isHost) {
       final seatId = _endpointPlayer.remove(endpointId);
       if (seatId == null) return;
+      final seatName = _players.where((x) => x.id == seatId).firstOrNull?.name ?? '';
+      _emitSeat(_matchStarted ? SeatEventKind.away : SeatEventKind.left, seatId, seatName, endpointId);
       if (!_matchStarted) {
         // Still in the waiting room: just free the seat.
         _players.removeWhere((x) => x.id == seatId);
@@ -223,6 +252,7 @@ class GameProvider extends ChangeNotifier {
   // --- Host watchdog: keeps rounds moving no matter what ----------------------
   void _watchdogTick() {
     if (_isDisposed || _isExiting || !_isHost || !_isMultiplayer || !_matchStarted) return;
+    if (_gameMode == GameMode.blackjack) return; // Blackjack runs its own turn timers
     // 1) Showdown finished but no new round is scheduled.
     if (_state.phase == PokerPhase.showdown &&
         _state.status == GameStatus.finished &&
@@ -595,7 +625,9 @@ class GameProvider extends ChangeNotifier {
           'type': 'ASSIGN_SEAT',
           'endpointId': endpointId,
           'playerId': seatId,
+          'gameMode': _gameMode.name,
         });
+        _emitSeat(SeatEventKind.back, seatId, existing.name, endpointId);
         notifyListeners();
         _sendStateNow();
         return;
@@ -621,7 +653,9 @@ class GameProvider extends ChangeNotifier {
       'type': 'ASSIGN_SEAT',
       'endpointId': endpointId,
       'playerId': playerId,
+      'gameMode': _gameMode.name,
     });
+    _emitSeat(SeatEventKind.joined, playerId, _players.last.name, endpointId);
 
     notifyListeners();
     _sendStateNow();
@@ -2249,7 +2283,7 @@ class GameProvider extends ChangeNotifier {
 
   /// Coalesces bursts of state changes into one send (~11 per second max).
   void broadcastState() {
-    if (!_isHost || _isDisposed) return;
+    if (!_isHost || _isDisposed || _gameMode == GameMode.blackjack) return;
     if (_broadcastTimer != null) return;
     _broadcastTimer = Timer(const Duration(milliseconds: 90), () {
       _broadcastTimer = null;
@@ -2258,7 +2292,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _sendStateNow() {
-    if (!_isHost || _isDisposed) return;
+    if (!_isHost || _isDisposed || _gameMode == GameMode.blackjack) return;
     final endpoints = _p2pService.connectedEndpoints;
     if (endpoints.isEmpty) return;
     _stateSeq++;
@@ -2614,6 +2648,17 @@ class GameProvider extends ChangeNotifier {
     _newRoundTimer?.cancel();
     _watchdogTimer?.cancel();
     _reconnectTimer?.cancel();
+    _seatEvents.close();
     super.dispose();
   }
+}
+
+enum SeatEventKind { joined, back, away, left }
+
+class SeatEvent {
+  final SeatEventKind kind;
+  final String seatId;
+  final String name;
+  final String endpointId;
+  const SeatEvent(this.kind, this.seatId, this.name, this.endpointId);
 }

@@ -28,5 +28,11 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Poker Dice Dash usa la red local para encontrar y unirse a partidas con amigos.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_poker._tcp</string>
+	</array>
 </dict>
 </plist>

@@ -54,24 +54,75 @@ class P2PService {
 
   P2PService();
 
-  /// Obtains the current device's local IPv4 address on the Wi-Fi or LAN.
-  static Future<String?> getLocalIpAddress() async {
+  /// Adapters that are never the shared Wi-Fi/LAN (PCs often list these first).
+  static final RegExp _virtualAdapter = RegExp(
+    r'vEthernet|Hyper-V|WSL|VirtualBox|VMware|vmnet|vboxnet|docker|br-|veth|virbr|'
+    r'Tailscale|ZeroTier|Hamachi|WireGuard|wg\d|tun\d|TAP-|^tap\d|utun|VPN|Bluetooth|llw|awdl|Loopback',
+    caseSensitive: false,
+  );
+
+  /// Ranks an IPv4 address/interface: higher is more likely the LAN other players see.
+  static int scoreAddress(String interfaceName, String address) {
+    if (_virtualAdapter.hasMatch(interfaceName)) return 0;
+    final o = address.split('.').map(int.tryParse).toList();
+    if (o.length != 4 || o.contains(null)) return 0;
+    final a = o[0]!, b = o[1]!;
+    var score = 1;
+    if (a == 192 && b == 168) {
+      score = 40;
+      if (o[2] == 56 || o[2] == 99) score = 5; // VirtualBox / Docker defaults
+    } else if (a == 10) {
+      score = 30;
+    } else if (a == 172 && b >= 16 && b <= 31) {
+      score = 10; // also used by Docker/WSL
+    }
+    final n = interfaceName.toLowerCase();
+    if (n.contains('wi-fi') || n.contains('wifi') || n.contains('wlan') || n.startsWith('wl') || n == 'en0') {
+      score += 6;
+    } else if (n.contains('ethernet') || n.startsWith('eth') || n.startsWith('en')) {
+      score += 4;
+    }
+    return score;
+  }
+
+  /// All plausible LAN IPv4 addresses of this device, best first.
+  static Future<List<String>> getLocalIpAddresses() async {
     try {
       final interfaces = await NetworkInterface.list(
         type: InternetAddressType.IPv4,
         includeLinkLocal: false,
       );
+      final scored = <(int, String)>[];
       for (final interface in interfaces) {
         for (final addr in interface.addresses) {
-          if (!addr.isLoopback && !addr.isLinkLocal) {
-            return addr.address;
-          }
+          if (addr.isLoopback || addr.isLinkLocal) continue;
+          final score = scoreAddress(interface.name, addr.address);
+          if (score > 0) scored.add((score, addr.address));
         }
       }
+      scored.sort((x, y) => y.$1.compareTo(x.$1));
+      return [for (final e in scored) e.$2];
     } catch (e, s) {
       AppLogger().error('P2P: Error obteniendo IP local: $e', s);
+      return const [];
     }
-    return null;
+  }
+
+  /// The local IPv4 address other devices on the Wi-Fi/LAN should use.
+  static Future<String?> getLocalIpAddress() async {
+    final all = await getLocalIpAddresses();
+    return all.isEmpty ? null : all.first;
+  }
+
+  /// Splits "host:port", accepting IPv6 hosts ("[fe80::1]:5000" or "fe80::1:5000").
+  static (String, int)? parseEndpoint(String endpointId) {
+    final i = endpointId.lastIndexOf(':');
+    if (i <= 0 || i == endpointId.length - 1) return null;
+    var host = endpointId.substring(0, i);
+    final port = int.tryParse(endpointId.substring(i + 1));
+    if (port == null || port <= 0 || port > 65535) return null;
+    if (host.startsWith('[') && host.endsWith(']')) host = host.substring(1, host.length - 1);
+    return (host, port);
   }
 
   void _emit<T>(StreamController<T> controller, T value) {
@@ -159,11 +210,14 @@ class P2PService {
 
   Future<void> startDiscovery(String deviceName) async {
     try {
-      _nsdDiscovery = await nsd.startDiscovery('_poker._tcp', autoResolve: true);
+      // Ask for IPv4 addresses: a ".local" hostname from a PC often does not
+      // resolve on Android, and IPv6 link-local needs a scope id.
+      _nsdDiscovery = await nsd.startDiscovery('_poker._tcp', autoResolve: true, ipLookupType: nsd.IpLookupType.v4);
       _nsdDiscovery!.addListener(() {
         for (final service in _nsdDiscovery!.services) {
-          if (service.name != null && service.host != null && service.port != null) {
-            final host = service.host!;
+          final v4 = service.addresses?.where((a) => a.type == InternetAddressType.IPv4 && !a.isLoopback);
+          final host = (v4 != null && v4.isNotEmpty) ? v4.first.address : service.host;
+          if (service.name != null && host != null && service.port != null) {
             final endpointId = '$host:${service.port}';
             _emit(
               _devicesController,
@@ -182,13 +236,13 @@ class P2PService {
     }
   }
 
-  Future<void> connectToDevice(String endpointId) async {
-    final parts = endpointId.split(':');
-    if (parts.length != 2) return;
-
-    final host = parts[0];
-    final port = int.tryParse(parts[1]) ?? 0;
-    await connectToHost(host, port);
+  Future<bool> connectToDevice(String endpointId) async {
+    final parsed = parseEndpoint(endpointId);
+    if (parsed == null) {
+      AppLogger().log('P2P: Endpoint inválido: $endpointId');
+      return false;
+    }
+    return connectToHost(parsed.$1, parsed.$2);
   }
 
   /// Connects directly to a host via IPv4 address and port.

@@ -429,6 +429,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
             create: (_) => BlackjackProvider()..initMultiplayer(
               asHost: true,
               hostName: _playerNameController.text.trim().isEmpty ? 'Host' : _playerNameController.text.trim(),
+              p2p: p2p,
+              lobby: game,
             ),
             child: const BlackjackTableScreen(isMultiplayer: true, isHost: true),
           ),

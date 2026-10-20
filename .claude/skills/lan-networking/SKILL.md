@@ -25,6 +25,33 @@ state and broadcasts. A client never mutates shared game state locally.
   by AI; a remote human's turn waits for their ACTION (or the away timeout), never for AI.
 - Keep the screen awake during a match (`wakelock_plus`).
 
+## Messages
+Lobby (GameProvider, every mode): `JOIN_REQUEST` (name, password, token) -> `ASSIGN_SEAT`
+(playerId, **gameMode**) or `JOIN_REJECTED`; `LEAVE`; poker: `STATE_UPDATE`, `PLAYER_ACTION`,
+`DICE_ROLL`, `NEXT_TURN`, `NEW_ROUND`. Blackjack: `BJ_HELLO` (client asks for a snapshot),
+`BJ_STATE` (session, seq, state; dealer hole card masked until dealerTurn), `BJ_ACTION`
+(BET value / HIT / STAND / DOUBLE / SPLIT). The host maps sockets to seats with
+`GameProvider.seatForEndpoint`; never trust a seat id inside a message.
+
+## Blackjack on top of the lobby
+`GameProvider` keeps joins/passwords/tokens/reconnects for every mode and emits
+`seatEvents` (joined/back/away/left). `BlackjackProvider.initMultiplayer(p2p:, lobby:)`
+listens to them; poker `STATE_UPDATE` and the poker watchdog are off in Blackjack rooms.
+Timers: remote turn 40 s, away seat stands after 2 s, betting closes 30 s after the first
+bet, next round auto-deals 12 s after the result. Test: `test/blackjack_lan_test.dart`
+(real sockets on 127.0.0.1; close a side fully to simulate a dead app, because a client
+that only drops its socket auto-reconnects).
+
+## Phones + PCs
+- `getLocalIpAddress` ranks adapters (`scoreAddress`): Wi-Fi/Ethernet private ranges first,
+  Hyper-V/WSL/VirtualBox/VMware/Docker/VPN adapters ignored.
+- Discovery asks nsd for IPv4 (`ipLookupType: v4`); `parseEndpoint` accepts IPv6.
+- nsd has no Linux plugin: Linux hosts/joins by IP only.
+- macOS/iOS need `network.client` + `network.server` entitlements and
+  `NSBonjourServices: _poker._tcp` + `NSLocalNetworkUsageDescription` (already set).
+- Windows: the Wi-Fi profile must be **Private** (or the firewall prompt allowed) or phones
+  cannot reach a PC host. Never change that setting for the user; tell them how.
+
 ## Adding a mode to multiplayer
 Reuse `P2PService` framing and the GameProvider host/client pattern; add the mode's state to
 `STATE_UPDATE` with a `toJson`/`fromJson` pair and test it with the fake-socket tests in

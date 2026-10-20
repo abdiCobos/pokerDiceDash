@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/blackjack_models.dart';
 import '../../models/card_model.dart';
 import '../../providers/blackjack_provider.dart';
+import '../../providers/game_provider.dart';
 import '../../services/p2p_service.dart';
 import '../widgets/card_widget.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -94,6 +95,8 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         c.dispose();
       }
       _cardAnims.clear();
+      // LAN: a client tells the host it left on purpose (seat is not held for it).
+      if (widget.isMultiplayer) context.read<GameProvider>().exitGame();
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LobbyScreen()));
     }
   }
@@ -261,7 +264,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               Icon(Icons.style, color: Colors.amber.withValues(alpha: 0.7), size: 16 * _s),
               SizedBox(width: 4 * _s),
               Text(
-                'Mazo: ${bj.state.deck.length}',
+                'Mazo: ${bj.deckCount}',
                 style: TextStyle(color: Colors.white70, fontSize: 11 * _s, fontWeight: FontWeight.w500),
               ),
               const Spacer(),
@@ -376,7 +379,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               if (hand.cards.isNotEmpty) ...[
                 SizedBox(width: 8 * _s),
                 if (showAll)
-                  _handValueBadge(hand.handValue, hand.isBusted, hand.isBlackjack)
+                  _handValueBadge(hand.handValue, hand.isBusted || hand.handValue > 21, hand.isBlackjack)
                 else
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 6 * _s, vertical: 2 * _s),
@@ -492,6 +495,11 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (bj.awaySeats.contains(player.id))
+                Padding(
+                  padding: EdgeInsets.only(right: 3 * _s),
+                  child: Icon(Icons.wifi_off, color: Colors.redAccent, size: 12 * _s),
+                ),
               if (player.isBot)
                 Text('🤖', style: TextStyle(fontSize: 10 * _s))
               else if (isLocal)
@@ -735,7 +743,11 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       final active = bj.activePlayers;
       if (active.isNotEmpty && bj.currentPlayerIndex < active.length) {
         final current = active[bj.currentPlayerIndex];
-        statusText = '🤖 Turno de ${current.name}... pensando jugada';
+        statusText = current.isBot
+            ? '🤖 Turno de ${current.name}... pensando jugada'
+            : (bj.awaySeats.contains(current.id)
+                ? '${current.name} se desconectó... se planta en breve'
+                : 'Turno de ${current.name}...');
       }
     } else if (bj.phase == BlackjackPhase.betting) {
       statusText = 'Esperando apuestas de los jugadores...';
@@ -999,7 +1011,10 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           ),
         ),
         SizedBox(width: 16 * _s),
-        // Nueva Ronda Button
+        // Nueva Ronda Button (the host deals; clients wait for it)
+        if (bj.isClient)
+          Text('El anfitrión reparte en breve...', style: TextStyle(color: Colors.white70, fontSize: 11 * _s))
+        else
         ElevatedButton.icon(
           onPressed: () => _onNewRound(bj),
           icon: Icon(Icons.replay, size: 18 * _s),
@@ -1028,7 +1043,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
             style: TextStyle(color: Colors.white70, fontSize: 14 * _s)),
         if (widget.isHost)
           FutureBuilder<String?>(
-            future: P2PService.getLocalIpAddress(),
+            future: P2PService.getLocalIpAddress().then(
+              (ip) => ip == null ? null : '$ip : ${context.read<GameProvider>().p2pService.hostPort ?? 0}',
+            ),
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data != null) {
                 return Container(

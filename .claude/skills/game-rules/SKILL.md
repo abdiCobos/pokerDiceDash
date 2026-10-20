@@ -62,9 +62,10 @@ High card < pair < two pair < trips < straight < flush < full house < quads < st
 10. Remote actions are checked for turn but not for status (bet during diceTurn).
 11. Bots can act on their pre-swap hand during the chaos swap delay.
 12. Blackjack: dealer blackjack never detected (`isBlackjack` needs `betAmount > 0`).
-13. Blackjack: split A+10 is paid as blackjack; double is allowed after hitting.
-14. Blackjack: in multiplayer every non-local seat is auto-played and the deal starts on the
-    first bet; players who did not bet are dealt in.
+13. Blackjack: double is allowed after hitting. (Fixed 2026-10-20: a split 21 is no longer paid as
+    blackjack (`BlackjackHand.isSplit`), and the dealer's bust is flagged and shown.)
+14. (fixed 2026-10-20) Blackjack multiplayer: only bots are auto-played, the deal waits for
+    every connected human (or 30 s), and players who did not bet are not dealt in.
 15. Blackjack result text says "Bust" if any split hand busted even when the other won.
 16. `lib/services/bot_service.dart` `decideAction` is dead code; real poker AI is
     `_playBotTurn` in game_provider.dart.

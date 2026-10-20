@@ -72,4 +72,24 @@ void main() {
     await host.updateServiceName('room|3/4|0|1|texasHoldem');
     expect(host.hostPort, port);
   });
+
+  group('LAN address helpers', () {
+    test('prefers the Wi-Fi/LAN address over virtual adapters', () {
+      final wifi = P2PService.scoreAddress('Wi-Fi', '192.168.1.34');
+      expect(wifi, greaterThan(P2PService.scoreAddress('vEthernet (WSL)', '172.24.16.1')));
+      expect(P2PService.scoreAddress('vEthernet (Default Switch)', '192.168.0.5'), 0);
+      expect(P2PService.scoreAddress('VirtualBox Host-Only Network', '192.168.56.1'), 0);
+      expect(P2PService.scoreAddress('Ethernet 3', '192.168.56.1'), lessThan(wifi)); // VirtualBox default range
+      expect(P2PService.scoreAddress('Tailscale', '100.101.102.103'), 0);
+      expect(P2PService.scoreAddress('wlan0', '10.0.0.12'), greaterThan(P2PService.scoreAddress('eth0', '172.17.0.1')));
+    });
+
+    test('parses IPv4 and IPv6 endpoints', () {
+      expect(P2PService.parseEndpoint('192.168.1.10:5000'), ('192.168.1.10', 5000));
+      expect(P2PService.parseEndpoint('[fe80::1]:5000'), ('fe80::1', 5000));
+      expect(P2PService.parseEndpoint('fe80::1:5000'), ('fe80::1', 5000));
+      expect(P2PService.parseEndpoint('nohost'), isNull);
+      expect(P2PService.parseEndpoint('1.2.3.4:99999'), isNull);
+    });
+  });
 }

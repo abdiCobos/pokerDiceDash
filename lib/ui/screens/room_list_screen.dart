@@ -110,7 +110,8 @@ class _RoomListScreenState extends State<RoomListScreen> {
               context,
               MaterialPageRoute(
                 builder: (_) => ChangeNotifierProvider(
-                  create: (_) => BlackjackProvider()..initMultiplayer(asHost: false),
+                  create: (_) => BlackjackProvider()
+                    ..initMultiplayer(asHost: false, p2p: p2p, lobby: context.read<GameProvider>()),
                   child: const BlackjackTableScreen(isMultiplayer: true, isHost: false),
                 ),
               ),

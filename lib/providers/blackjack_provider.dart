@@ -7,6 +7,8 @@ import '../models/card_model.dart';
 import '../services/sound_service.dart';
 import '../services/logger_service.dart';
 import '../services/bot_service.dart';
+import '../services/p2p_service.dart';
+import 'game_provider.dart';
 
 class BlackjackProvider extends ChangeNotifier {
   BlackjackState _state = BlackjackState();
@@ -16,7 +18,11 @@ class BlackjackProvider extends ChangeNotifier {
   List<BlackjackPlayer> get activePlayers => players.where((p) => !p.isDealer).toList();
   List<BlackjackPlayer> get botPlayers => players.where((p) => p.isBot).toList();
   List<BlackjackPlayer> get humanOnlyPlayers => players.where((p) => !p.isDealer && !p.isBot).toList();
-  BlackjackPlayer get localPlayer => players.firstWhere((p) => p.isLocal);
+  BlackjackPlayer get localPlayer => players.firstWhere(
+        (p) => p.isLocal,
+        // A client can render before the host's first state names its seat.
+        orElse: () => BlackjackPlayer(id: localPlayerId, name: 'Tú', chipBalance: 0, isLocal: true),
+      );
   BlackjackPhase get phase => _state.phase;
   int get currentPlayerIndex => _state.currentPlayerIndex;
   String? get message => _state.message;
@@ -35,13 +41,271 @@ class BlackjackProvider extends ChangeNotifier {
 
   static final _random = Random();
 
+  // --- LAN multiplayer -------------------------------------------------------
+  // The host is authoritative: it runs the whole game and sends each client a
+  // BJ_STATE snapshot; clients only send BJ_ACTION intents. Joins, passwords,
+  // tokens and reconnects are handled by the lobby ([GameProvider]).
+  static const Duration remoteTurnTimeout = Duration(seconds: 40);
+  static const Duration awayTurnDelay = Duration(seconds: 2);
+  static const Duration bettingTimeout = Duration(seconds: 30);
+  static const Duration autoNextRound = Duration(seconds: 12);
+
+  P2PService? _p2p;
+  GameProvider? _lobby;
+  StreamSubscription<Map<String, dynamic>>? _messageSub;
+  StreamSubscription<SeatEvent>? _seatSub;
+  Timer? _broadcastTimer;
+  Timer? _turnTimer;
+  Timer? _bettingTimer;
+  Timer? _nextRoundTimer;
+  bool _disposed = false;
+  final String _session = '${DateTime.now().microsecondsSinceEpoch}';
+  int _seq = 0;
+  String? _remoteSession;
+  int _lastRemoteSeq = -1;
+  int _remoteDeckCount = 0;
+  final Set<String> _away = {};
+
+  /// Seats whose player is disconnected (host and clients see the same set).
+  Set<String> get awaySeats => _away;
+  int get deckCount => _isMultiplayer && !_isHost ? _remoteDeckCount : _state.deck.length;
+  bool get isClient => _isMultiplayer && !_isHost;
+
   void _logAndNotify(String method) {
+    if (_disposed) return;
     try {
       AppLogger().log('BJ:$method');
       notifyListeners();
+      if (_isMultiplayer && _isHost) _scheduleBroadcast();
     } catch (e, s) {
       AppLogger().error('BJ:$method failed: $e', s);
     }
+  }
+
+  void _scheduleBroadcast() {
+    if (_broadcastTimer != null) return;
+    _broadcastTimer = Timer(const Duration(milliseconds: 90), () {
+      _broadcastTimer = null;
+      _sendStateNow();
+    });
+  }
+
+  /// Snapshot for clients. The dealer's hole card is hidden until it is revealed.
+  Map<String, dynamic> exportState() {
+    final reveal = _state.phase == BlackjackPhase.dealerTurn || _state.phase == BlackjackPhase.roundEnd;
+    return {
+      'phase': _state.phase.name,
+      'currentPlayerIndex': _state.currentPlayerIndex,
+      'currentHandIndex': _state.currentHandIndex,
+      'message': _state.message,
+      'deckCount': _state.deck.length,
+      'away': _away.toList(),
+      'roundOutcome': _roundOutcome,
+      'roundNet': _roundNet,
+      'players': [
+        for (final p in _state.players)
+          if (p.isDealer && !reveal && p.hands.isNotEmpty && p.hands[0].cards.length > 1)
+            (p.toMap()
+              ..['hands'] = [
+                {
+                  ...p.hands[0].toMap(),
+                  'cards': [
+                    p.hands[0].cards[0].toMap(),
+                    for (var i = 1; i < p.hands[0].cards.length; i++) CardModel(value: '2', suit: Suit.spades).toMap(),
+                  ],
+                },
+              ])
+          else
+            p.toMap()..['isLocal'] = false,
+      ],
+    };
+  }
+
+  void _sendStateNow() {
+    final p2p = _p2p;
+    if (p2p == null || !_isHost || _disposed) return;
+    _seq++;
+    p2p.broadcastMessage({'type': 'BJ_STATE', 'session': _session, 'seq': _seq, 'state': exportState()});
+  }
+
+  /// Applies a host snapshot on a client.
+  void applyRemoteState(Map<String, dynamic> st) {
+    final previousCards = players.fold<int>(0, (n, p) => n + p.hands.fold<int>(0, (m, h) => m + h.cards.length));
+    final list = <BlackjackPlayer>[
+      for (final raw in (st['players'] as List? ?? const []))
+        () {
+          final pl = BlackjackPlayer.fromMap(Map<String, dynamic>.from(raw as Map));
+          return pl.copyWith(isLocal: pl.id == localPlayerId);
+        }(),
+    ];
+    final phase = BlackjackPhase.values.firstWhere(
+      (ph) => ph.name == st['phase'],
+      orElse: () => _state.phase,
+    );
+    _remoteDeckCount = (st['deckCount'] as num?)?.toInt() ?? 0;
+    _away
+      ..clear()
+      ..addAll([for (final a in (st['away'] as List? ?? const [])) a.toString()]);
+    _roundOutcome = Map<String, String>.from((st['roundOutcome'] as Map?) ?? const {});
+    _roundNet = {
+      for (final e in ((st['roundNet'] as Map?) ?? const {}).entries) e.key.toString(): (e.value as num).toInt(),
+    };
+    _state = BlackjackState(
+      players: list,
+      currentPlayerIndex: (st['currentPlayerIndex'] as num?)?.toInt() ?? 0,
+      currentHandIndex: (st['currentHandIndex'] as num?)?.toInt() ?? 0,
+      phase: phase,
+      message: st['message'] as String?,
+    );
+    final nowCards = list.fold<int>(0, (n, p) => n + p.hands.fold<int>(0, (m, h) => m + h.cards.length));
+    if (nowCards > previousCards) SoundService().cardMix();
+    _logAndNotify('applyRemoteState');
+  }
+
+  void _attachNetwork(P2PService p2p, GameProvider lobby) {
+    _p2p = p2p;
+    _lobby = lobby;
+    _messageSub = p2p.onMessageReceived.listen(_onMessage);
+    if (_isHost) {
+      _seatSub = lobby.seatEvents.listen(_onSeatEvent);
+      // Anyone who joined before this table opened.
+      lobby.connectedSeats.forEach((id, name) => addRemotePlayer(id, name));
+    } else {
+      localPlayerId = lobby.localPlayerId;
+      // The host's first snapshot may have arrived before this table existed.
+      p2p.broadcastMessage({'type': 'BJ_HELLO'});
+    }
+  }
+
+  void _onMessage(Map<String, dynamic> msg) {
+    if (_disposed) return;
+    final type = msg['type'];
+    if (_isHost) {
+      final sender = msg['_senderEndpointId'] as String? ?? '';
+      if (type == 'BJ_HELLO') {
+        _sendStateNow();
+        return;
+      }
+      if (type == 'BJ_ACTION') {
+        // The seat comes from the socket, never from the message.
+        final seat = _lobby?.seatForEndpoint(sender);
+        if (seat == null) return;
+        handleRemoteAction(seat, msg['action'] as String? ?? '', (msg['value'] as num?)?.toInt() ?? 0);
+      }
+      return;
+    }
+    if (type == 'BJ_STATE') {
+      final sess = msg['session'] as String?;
+      final sq = (msg['seq'] as num?)?.toInt();
+      if (sess != null && sq != null) {
+        if (sess != _remoteSession) {
+          _remoteSession = sess;
+          _lastRemoteSeq = -1;
+        }
+        if (sq <= _lastRemoteSeq) return;
+        _lastRemoteSeq = sq;
+      }
+      final st = msg['state'];
+      if (st is Map) applyRemoteState(Map<String, dynamic>.from(st));
+    } else if (type == 'ASSIGN_SEAT') {
+      // Reconnected: same seat, ask for a fresh snapshot.
+      localPlayerId = msg['playerId'] as String? ?? localPlayerId;
+      _p2p?.broadcastMessage({'type': 'BJ_HELLO'});
+    }
+  }
+
+  void _onSeatEvent(SeatEvent e) {
+    if (_disposed) return;
+    switch (e.kind) {
+      case SeatEventKind.joined:
+        addRemotePlayer(e.seatId, e.name);
+      case SeatEventKind.back:
+        _away.remove(e.seatId);
+        _logAndNotify('seatBack');
+      case SeatEventKind.away:
+        _away.add(e.seatId);
+        _logAndNotify('seatAway');
+        if (_isTurnOf(e.seatId)) _armTurnTimer(e.seatId);
+        _maybeDealWhenEveryoneBet();
+      case SeatEventKind.left:
+        final idx = players.indexWhere((p) => p.id == e.seatId);
+        if (idx >= 0 && players[idx].totalBet == 0) {
+          _state = _state.copyWith(players: [...players]..removeAt(idx));
+          _logAndNotify('seatLeft');
+        } else {
+          _away.add(e.seatId);
+          _logAndNotify('seatLeftMidRound');
+        }
+        _maybeDealWhenEveryoneBet();
+    }
+  }
+
+  /// Host: applies an intent from a remote seat. The usual turn guards apply.
+  void handleRemoteAction(String seatId, String action, int value) {
+    switch (action) {
+      case 'BET':
+        if (_state.phase == BlackjackPhase.betting) placeBet(seatId, value);
+      case 'HIT':
+        hit(seatId);
+      case 'STAND':
+        stand(seatId);
+      case 'DOUBLE':
+        doubleDown(seatId);
+      case 'SPLIT':
+        splitPair(seatId);
+    }
+  }
+
+  bool _sendIntent(String action, [int value = 0]) {
+    if (!isClient) return false;
+    _p2p?.broadcastMessage({'type': 'BJ_ACTION', 'action': action, 'value': value});
+    return true;
+  }
+
+  /// Human seats that must bet before the deal (bots bet on their own, away seats are skipped).
+  List<BlackjackPlayer> get _expectedBettors =>
+      players.where((p) => !p.isDealer && !p.isBot && !_away.contains(p.id) && p.chipBalance + p.totalBet > 0).toList();
+
+  void _maybeDealWhenEveryoneBet() {
+    if (!_isHost || _state.phase != BlackjackPhase.betting) return;
+    final bettors = players.where((p) => !p.isDealer && p.totalBet > 0).toList();
+    if (bettors.isEmpty) return;
+    if (_expectedBettors.every((p) => p.totalBet > 0)) {
+      _bettingTimer?.cancel();
+      _bettingTimer = null;
+      _startDealingSequence();
+    } else if (_isMultiplayer) {
+      // Do not let one idle player hold the table forever.
+      _bettingTimer ??= Timer(bettingTimeout, () {
+        _bettingTimer = null;
+        if (_state.phase == BlackjackPhase.betting && players.any((p) => !p.isDealer && p.totalBet > 0)) {
+          _startDealingSequence();
+        }
+      });
+    }
+  }
+
+  /// Multiplayer: a human seat that does not act (or is disconnected) stands.
+  void _armTurnTimer(String seatId) {
+    _turnTimer?.cancel();
+    if (!_isMultiplayer || !_isHost) return;
+    final delay = _away.contains(seatId) ? awayTurnDelay : remoteTurnTimeout;
+    _turnTimer = Timer(delay, () {
+      _turnTimer = null;
+      if (_isTurnOf(seatId)) stand(seatId);
+    });
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _messageSub?.cancel();
+    _seatSub?.cancel();
+    _broadcastTimer?.cancel();
+    _turnTimer?.cancel();
+    _bettingTimer?.cancel();
+    _nextRoundTimer?.cancel();
+    super.dispose();
   }
 
   void initSinglePlayer({int botCount = 0, String playerName = 'Yo'}) {
@@ -65,16 +329,22 @@ class BlackjackProvider extends ChangeNotifier {
     }
   }
 
-  void initMultiplayer({required bool asHost, String hostName = 'Host'}) {
+  /// LAN table. [p2p] and [lobby] are optional only so tests can drive a host alone.
+  void initMultiplayer({required bool asHost, String hostName = 'Host', P2PService? p2p, GameProvider? lobby}) {
     try {
       _isMultiplayer = true;
       _isHost = asHost;
-      localPlayerId = asHost ? '0' : '1';
-      final list = <BlackjackPlayer>[];
-      list.add(BlackjackPlayer(id: 'dealer', name: 'Dealer', isDealer: true, chipBalance: 99999));
-      final actualHost = hostName.trim().isEmpty ? 'Host' : hostName.trim();
-      list.add(BlackjackPlayer(id: '0', name: actualHost, chipBalance: 1000, isLocal: asHost));
-      _state = BlackjackState(players: list, deck: _freshDeck(), phase: BlackjackPhase.waiting);
+      localPlayerId = asHost ? '0' : (lobby?.localPlayerId ?? '1');
+      if (asHost) {
+        final list = <BlackjackPlayer>[];
+        list.add(BlackjackPlayer(id: 'dealer', name: 'Dealer', isDealer: true, chipBalance: 99999));
+        final actualHost = hostName.trim().isEmpty ? 'Host' : hostName.trim();
+        list.add(BlackjackPlayer(id: '0', name: actualHost, chipBalance: 1000, isLocal: true));
+        _state = BlackjackState(players: list, deck: _freshDeck(), phase: BlackjackPhase.waiting);
+      } else {
+        _state = BlackjackState(phase: BlackjackPhase.waiting); // filled by the host's snapshot
+      }
+      if (p2p != null && lobby != null) _attachNetwork(p2p, lobby);
       _logAndNotify('initMultiplayer');
     } catch (e, s) {
       AppLogger().error('BJ:initMultiplayer crash: $e', s);
@@ -83,6 +353,11 @@ class BlackjackProvider extends ChangeNotifier {
 
   void addRemotePlayer(String playerId, String name) {
     if (!_isHost) return;
+    if (players.any((p) => p.id == playerId)) {
+      _away.remove(playerId);
+      _logAndNotify('addRemotePlayer-again');
+      return;
+    }
     final list = <BlackjackPlayer>[..._state.players];
     list.add(BlackjackPlayer(id: playerId, name: name, chipBalance: 1000));
     _state = _state.copyWith(players: list);
@@ -91,6 +366,7 @@ class BlackjackProvider extends ChangeNotifier {
 
   void startMatch() {
     if (!_isHost || !_isMultiplayer) return;
+    _lobby?.markMatchStarted();
     _state = _state.copyWith(phase: BlackjackPhase.betting);
     _logAndNotify('startMatch');
   }
@@ -153,10 +429,12 @@ class BlackjackProvider extends ChangeNotifier {
   void placeBet(String playerId, int amount) {
     try {
       AppLogger().log('BJ:placeBet $playerId=$amount');
+      if (_sendIntent('BET', amount)) return;
+      if (_state.phase != BlackjackPhase.betting) return;
       final idx = players.indexWhere((p) => p.id == playerId);
       if (idx < 0) return;
       final p = players[idx];
-      if (amount <= 0 || amount > p.chipBalance) return;
+      if (p.totalBet > 0 || amount <= 0 || amount > p.chipBalance) return;
       
       final updated = <BlackjackPlayer>[...players];
       final hand = BlackjackHand(betAmount: amount);
@@ -169,13 +447,7 @@ class BlackjackProvider extends ChangeNotifier {
       _logAndNotify('placeBet');
 
       _autoBetBots();
-
-      final currentPlayers = [...players];
-      final bettors = currentPlayers.where((pl) => !pl.isDealer && pl.totalBet > 0).toList();
-      AppLogger().log('BJ:bettors=${bettors.length}');
-      if (bettors.length >= 1 && bettors.every((pl) => pl.totalBet > 0)) {
-        _startDealingSequence();
-      }
+      _maybeDealWhenEveryoneBet();
     } catch (e, s) {
       AppLogger().error('BJ:placeBet crash: $e', s);
     }
@@ -200,18 +472,24 @@ class BlackjackProvider extends ChangeNotifier {
 
   void _dealCardsSequentially(List<BlackjackPlayer> playerList) {
     var dealStep = 0;
-    final maxSteps = playerList.length * 2;
+    // Players who did not bet (idle or disconnected) sit this round out.
+    final slots = [
+      for (var i = 0; i < playerList.length; i++)
+        if (playerList[i].isDealer || playerList[i].totalBet > 0) i,
+    ];
+    final maxSteps = slots.length * 2;
 
     void dealNextCard() {
+      if (_disposed) return;
       if (dealStep >= maxSteps) {
         Future.delayed(const Duration(milliseconds: 400), _afterDealComplete);
         return;
       }
-      final slot = dealStep % playerList.length;
+      final slot = slots[dealStep % slots.length];
       final updated = <BlackjackPlayer>[..._state.players];
       final card = _draw();
       updated[slot].hands[0].cards.add(card);
-      if (dealStep % playerList.length == 0) SoundService().cardMix();
+      if (dealStep % slots.length == 0) SoundService().cardMix();
       _state = _state.copyWith(players: updated, deck: _state.deck);
       _logAndNotify('_dealCardsSequentially-$dealStep');
       dealStep++;
@@ -263,8 +541,10 @@ class BlackjackProvider extends ChangeNotifier {
             }
             _state = _state.copyWith(players: updatedPlayers, currentPlayerIndex: pIdx % active.length, currentHandIndex: hIdx);
             _logAndNotify('_advanceToNextActivePlayer-$pIdx-$hIdx');
-            if (!p.isLocal) {
+            if (p.isBot || (!_isMultiplayer && !p.isLocal)) {
               Future.delayed(const Duration(milliseconds: 600), () => _autoPlayBot(p.id));
+            } else {
+              _armTurnTimer(p.id);
             }
             return;
           }
@@ -325,6 +605,7 @@ class BlackjackProvider extends ChangeNotifier {
 
   void hit(String playerId) {
     try {
+      if (_sendIntent('HIT')) return;
       AppLogger().log('BJ:hit $playerId phase=${_state.phase}');
       // Ignore taps outside this player's turn or on a finished hand (double taps
       // would otherwise schedule extra turn advances and replay bots).
@@ -371,6 +652,7 @@ class BlackjackProvider extends ChangeNotifier {
 
   void stand(String playerId) {
     try {
+      if (_sendIntent('STAND')) return;
       AppLogger().log('BJ:stand $playerId');
       if (!_isTurnOf(playerId)) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
@@ -392,6 +674,7 @@ class BlackjackProvider extends ChangeNotifier {
 
   void doubleDown(String playerId) {
     try {
+      if (_sendIntent('DOUBLE')) return;
       AppLogger().log('BJ:doubleDown $playerId');
       if (!_isTurnOf(playerId)) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
@@ -417,6 +700,7 @@ class BlackjackProvider extends ChangeNotifier {
 
   void splitPair(String playerId) {
     try {
+      if (_sendIntent('SPLIT')) return;
       AppLogger().log('BJ:splitPair $playerId');
       if (!_isTurnOf(playerId)) return;
       final pIdx = players.indexWhere((p) => p.id == playerId);
@@ -426,8 +710,8 @@ class BlackjackProvider extends ChangeNotifier {
       final betPerHand = p.hands[0].betAmount;
       if (p.chipBalance < betPerHand) return;
       final cards = p.hands[0].cards;
-      final hand1 = BlackjackHand(cards: [cards[0]], betAmount: betPerHand);
-      final hand2 = BlackjackHand(cards: [cards[1]], betAmount: betPerHand);
+      final hand1 = BlackjackHand(cards: [cards[0]], betAmount: betPerHand, isSplit: true);
+      final hand2 = BlackjackHand(cards: [cards[1]], betAmount: betPerHand, isSplit: true);
       hand1.cards.add(_draw());
       SoundService().cardMix();
       _state = _state.copyWith(deck: _state.deck);
@@ -441,6 +725,8 @@ class BlackjackProvider extends ChangeNotifier {
       );
       _state = _state.copyWith(players: updated, deck: _state.deck, currentHandIndex: 0);
       _logAndNotify('splitPair');
+      // A split 21 is not a natural: it just stands (and pays 1:1).
+      if (hand2.handValue == 21) hand2.isStanding = true;
       if (hand1.handValue == 21) {
         hand1.isStanding = true;
         updated[pIdx] = updated[pIdx].copyWith(hands: [hand1, hand2]);
@@ -454,6 +740,8 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void _startDealerTurn() {
+    _turnTimer?.cancel();
+    _turnTimer = null;
     try {
       AppLogger().log('BJ:_startDealerTurn');
       final dIdx = players.indexWhere((p) => p.isDealer);
@@ -489,6 +777,7 @@ class BlackjackProvider extends ChangeNotifier {
 
   void _dealerDrawCardSequential(int dIdx, BlackjackHand hand) {
     if (hand.handValue >= 17) {
+      if (hand.handValue > 21) hand.isBusted = true; // shown as "BUST" on the dealer badge
       var updated = <BlackjackPlayer>[...players];
       updated[dIdx] = updated[dIdx].copyWith(hands: [hand]);
       _state = _state.copyWith(players: updated);
@@ -578,6 +867,13 @@ class BlackjackProvider extends ChangeNotifier {
       _state = _state.copyWith(players: finalPlayers, phase: BlackjackPhase.roundEnd, message: msgs);
       SoundService().chipsWin();
       _logAndNotify('_resolveRound');
+      if (_isMultiplayer && _isHost) {
+        _nextRoundTimer?.cancel();
+        _nextRoundTimer = Timer(autoNextRound, () {
+          _nextRoundTimer = null;
+          if (_state.phase == BlackjackPhase.roundEnd) newRound();
+        });
+      }
       AppLogger().event('blackjack_round_end');
     } catch (e, s) {
       AppLogger().error('BJ:_resolveRound crash: $e', s);
@@ -585,6 +881,9 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void newRound() {
+    if (isClient) return; // the host deals the next round
+    _nextRoundTimer?.cancel();
+    _nextRoundTimer = null;
     try {
       _roundOutcome = const {};
       _roundNet = const {};
@@ -597,7 +896,7 @@ class BlackjackProvider extends ChangeNotifier {
           totalBet: 0,
         );
       }
-      _state = BlackjackState(players: updated, deck: _state.deck, phase: _isMultiplayer ? BlackjackPhase.waiting : BlackjackPhase.betting);
+      _state = BlackjackState(players: updated, deck: _state.deck, phase: BlackjackPhase.betting);
       _logAndNotify('newRound');
     } catch (e, s) {
       AppLogger().error('BJ:newRound crash: $e', s);
