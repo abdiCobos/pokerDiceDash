@@ -14,17 +14,23 @@ class SeatLayoutResult {
   /// False only when even the minimum scale could not avoid overlaps.
   final bool fits;
 
-  const SeatLayoutResult({required this.rects, required this.scale, required this.fits});
+  /// The felt oval drawn under the seats (decorative, seats may sit on its rail).
+  final Rect table;
+
+  const SeatLayoutResult({required this.rects, required this.scale, required this.fits, this.table = Rect.zero});
 }
 
 /// Pure geometry helpers that place the opponents' seats around the table
 /// without overlapping each other, the local seat, the community cards,
 /// the header or the on-screen controls.
 ///
-/// The free space is split in three regions: a left column, a right column
-/// and a top row (between the columns, above the community cards). Seats are
-/// distributed symmetrically (n ~/ 3 per side, the rest on top) and the whole
-/// set is shrunk until every region has capacity for its seats.
+/// Preferred layout: seats evenly spaced (by arc length) along the upper half
+/// of an ellipse around the table, from the local player's left, over the top,
+/// to their right. The set is shrunk until nothing overlaps.
+///
+/// Fallback when the ellipse cannot fit: the free space is split in a left
+/// column, a right column and a top row (between the columns, above the
+/// community cards), seats distributed symmetrically.
 class SeatLayout {
   static const double gap = 4.0;
   static const double minScale = 0.5;
@@ -44,7 +50,7 @@ class SeatLayout {
     final cardW = 80 * base * autoScale;
     final cardH = 112 * base * autoScale;
     final w = math.max(2 * (cardW + 4 * s) + 10 * s, 96 * s);
-    final h = 53 * s + cardH + 6 * s;
+    final h = 44 * s + cardH;
     return Size(w, h);
   }
 
@@ -93,8 +99,106 @@ class SeatLayout {
     required bool diceMode,
   }) {
     if (opponents <= 0) {
-      return const SeatLayoutResult(rects: [], scale: 1.0, fits: true);
+      return SeatLayoutResult(rects: const [], scale: 1.0, fits: true, table: tableRect(size, diceMode: diceMode));
     }
+    final oval = _placeOnEllipse(size: size, opponents: opponents, diceMode: diceMode);
+    if (oval != null) return oval;
+    final cols = _placeInColumns(size: size, opponents: opponents, diceMode: diceMode);
+    return SeatLayoutResult(rects: cols.rects, scale: cols.scale, fits: cols.fits, table: tableRect(size, diceMode: diceMode));
+  }
+
+  /// Felt oval: spans the table between the side seats and tucks under the local seat.
+  static Rect tableRect(Size size, {required bool diceMode}) {
+    final w = size.width;
+    final h = size.height;
+    final s = tableScale(size);
+    final a = cardAutoScale(w);
+    final local = localSeatSize(s: s, autoScale: a);
+    final top = 46 * s + 34 * s;
+    final bottom = math.max(top + 80 * s, h - local.height * 0.45);
+    final side = math.max(40 * s, w * 0.09);
+    return Rect.fromLTRB(side, top, w - side, bottom);
+  }
+
+  static SeatLayoutResult? _placeOnEllipse({
+    required Size size,
+    required int opponents,
+    required bool diceMode,
+  }) {
+    final w = size.width;
+    final h = size.height;
+    final s = tableScale(size);
+    final a = cardAutoScale(w);
+    final base = opponentSeatSize(s: s, autoScale: a, totalPlayers: opponents + 1);
+    final obstacles = fixedObstacles(size, diceMode: diceMode).skip(1).toList(); // header handled by yTop
+    final header = 46 * s;
+    final actionTop = h - h * 0.06 - 56 * s;
+    final rollTop = h - h * 0.04 - 48 * s;
+    final startTop = h - h * 0.28 - 36 * s;
+    final screen = Offset.zero & size;
+
+    for (var k = 1.0; k >= minScale - 1e-9; k *= 0.94) {
+      final sw = base.width * k;
+      final sh = base.height * k;
+      final yTop = header + gap + sh / 2;
+      final cy = math.min(actionTop, math.min(rollTop, startTop)) - gap - sh / 2;
+      final rx = w / 2 - 6 - sw / 2;
+      final ry = cy - yTop;
+      if (rx <= 0 || ry <= 0) continue;
+
+      final rects = [
+        for (final c in _ellipseArcPoints(Offset(w / 2, cy), rx, ry, opponents))
+          Rect.fromCenter(center: c, width: sw, height: sh),
+      ];
+      var ok = true;
+      for (var i = 0; i < rects.length && ok; i++) {
+        final r = rects[i];
+        if (!(screen.contains(r.topLeft) && screen.contains(r.bottomRight))) ok = false;
+        for (var j = i + 1; j < rects.length && ok; j++) {
+          if (r.inflate(gap / 2).overlaps(rects[j].inflate(gap / 2))) ok = false;
+        }
+        for (final o in obstacles) {
+          if (ok && r.overlaps(o)) ok = false;
+        }
+      }
+      if (ok) {
+        return SeatLayoutResult(rects: rects, scale: k, fits: true, table: tableRect(size, diceMode: diceMode));
+      }
+    }
+    return null;
+  }
+
+  /// [n] points evenly spaced by arc length on the upper half of the ellipse,
+  /// ordered left -> top -> right (clockwise from the local player's left).
+  static List<Offset> _ellipseArcPoints(Offset c, double rx, double ry, int n) {
+    const steps = 360;
+    final pts = <Offset>[];
+    final cum = <double>[0];
+    for (var i = 0; i <= steps; i++) {
+      final t = math.pi + math.pi * i / steps;
+      pts.add(Offset(c.dx + rx * math.cos(t), c.dy + ry * math.sin(t)));
+      if (i > 0) cum.add(cum.last + (pts[i] - pts[i - 1]).distance);
+    }
+    final total = cum.last;
+    final out = <Offset>[];
+    var j = 0;
+    for (var i = 0; i < n; i++) {
+      final target = total * (i + 0.5) / n;
+      while (j < steps && cum[j + 1] < target) {
+        j++;
+      }
+      final seg = cum[j + 1] - cum[j];
+      final f = seg <= 0 ? 0.0 : (target - cum[j]) / seg;
+      out.add(Offset.lerp(pts[j], pts[j + 1], f)!);
+    }
+    return out;
+  }
+
+  static SeatLayoutResult _placeInColumns({
+    required Size size,
+    required int opponents,
+    required bool diceMode,
+  }) {
     final w = size.width;
     final h = size.height;
     final s = tableScale(size);

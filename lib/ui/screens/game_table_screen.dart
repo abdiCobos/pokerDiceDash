@@ -251,6 +251,10 @@ class _GameTableScreenState extends State<GameTableScreen>
                   return Stack(
                     clipBehavior: Clip.none,
                     children: [
+                      _buildTableFelt(SeatLayout.tableRect(
+                        Size(w, h),
+                        diceMode: game.gameMode == GameMode.diceDash,
+                      )),
                       _buildHeader(game),
                       ..._buildPlayerSeats(players, game),
                       _buildCenterArea(game),
@@ -343,6 +347,37 @@ class _GameTableScreenState extends State<GameTableScreen>
     );
   }
 
+  /// Stadium-shaped felt with a wooden rail; purely decorative.
+  Widget _buildTableFelt(Rect table) {
+    return Positioned.fromRect(
+      rect: table,
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(table.height / 2),
+            color: const Color(0xFF3E2410),
+            border: Border.all(color: const Color(0xFF2A1708), width: 1.5),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.55), blurRadius: 22 * _s, spreadRadius: 2 * _s),
+            ],
+          ),
+          padding: EdgeInsets.all(9 * _s),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(table.height / 2),
+              gradient: const RadialGradient(
+                radius: 0.9,
+                colors: [Color(0xFF168A4E), Color(0xFF0E6B3A), Color(0xFF0A5530)],
+                stops: [0.0, 0.6, 1.0],
+              ),
+              border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.45), width: 1.2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCenterArea(GameProvider game) {
     return Stack(
       children: [
@@ -421,6 +456,7 @@ class _GameTableScreenState extends State<GameTableScreen>
             isCurrentTurn: game.state.currentPlayerIndex == oppIdx,
             scale: _s * layout.scale,
             shrink: layout.scale,
+            width: rect.width,
           ),
         ),
       ));
@@ -902,7 +938,7 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 4 * s),
+                SizedBox(height: 3 * s),
                 Text(
                   'Total: ${max(0, amountToCall + raiseAmount)}',
                   style: TextStyle(
@@ -1493,12 +1529,16 @@ class _PlayerSeat extends StatelessWidget {
   final double scale;
   final double shrink;
 
+  /// Fixed seat width for opponents so every seat around the table matches.
+  final double? width;
+
   const _PlayerSeat({
     required this.playerId,
     required this.isLocal,
     required this.isCurrentTurn,
     this.scale = 1.0,
     this.shrink = 1.0,
+    this.width,
   });
 
   @override
@@ -1514,43 +1554,64 @@ class _PlayerSeat extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        return Container(
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          constraints: BoxConstraints(minWidth: width ?? 0),
           padding: EdgeInsets.symmetric(horizontal: 5 * s, vertical: 3 * s),
           decoration: BoxDecoration(
             color: isCurrentTurn
-                ? Colors.amber.withValues(alpha: 0.2)
-                : Colors.black.withValues(alpha: 0.4),
+                ? Colors.amber.withValues(alpha: 0.22)
+                : const Color(0xFF07160D).withValues(alpha: 0.82),
             borderRadius: BorderRadius.circular(10 * s),
             border: Border.all(
-              color: isCurrentTurn ? Colors.amber : Colors.transparent,
-              width: 2,
+              color: isCurrentTurn
+                  ? Colors.amber
+                  : (isLocal ? const Color(0xFFD4AF37).withValues(alpha: 0.6) : Colors.white24),
+              width: isCurrentTurn ? 2 : 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: isCurrentTurn ? Colors.amber.withValues(alpha: 0.35) : Colors.black54,
+                blurRadius: isCurrentTurn ? 10 * s : 6 * s,
+              ),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isLocal)
-                    Icon(Icons.person, color: Colors.amber, size: 11 * s),
-                  _buildRoleBadge(context, playerId, s),
-                  SizedBox(width: 3 * s),
-                  Text(
-                    player.name,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10 * s,
-                    ),
-                  ),
-                  if (player.isAway) ...[
+              // Fixed height so seats with and without a D/SB/BB badge line up.
+              SizedBox(
+                height: 18 * s,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isLocal)
+                      Icon(Icons.person, color: Colors.amber, size: 11 * s)
+                    else if (player.isBot)
+                      Icon(Icons.smart_toy, color: Colors.white54, size: 11 * s),
+                    _buildRoleBadge(context, playerId, s),
                     SizedBox(width: 3 * s),
-                    Icon(Icons.wifi_off, color: Colors.redAccent, size: 11 * s),
+                    Flexible(
+                      child: Text(
+                        player.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10 * s,
+                        ),
+                      ),
+                    ),
+                    if (player.isAway) ...[
+                      SizedBox(width: 3 * s),
+                      Icon(Icons.wifi_off, color: Colors.redAccent, size: 11 * s),
+                    ],
                   ],
-                ],
+                ),
               ),
-              SizedBox(height: 3 * s),
+              SizedBox(height: 2 * s),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1574,7 +1635,7 @@ class _PlayerSeat extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 4 * s),
+              SizedBox(height: 3 * s),
               if (isLocal && player.isBankrupt)
                 Padding(
                   padding: EdgeInsets.only(top: 4 * s, bottom: 4 * s),
@@ -1678,53 +1739,53 @@ class _PlayerSeat extends StatelessWidget {
 
         if (idx == game.dealerIndex && idx == game.smallBlindIndex) {
           return Container(
-            width: 28 * s,
-            height: 20 * s,
+            width: 26 * s,
+            height: 16 * s,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10 * s),
             ),
             child: Center(
-              child: Text('D/SB', style: TextStyle(color: Colors.black, fontSize: 8 * s, fontWeight: FontWeight.bold)),
+              child: Text('D/SB', style: TextStyle(color: Colors.black, fontSize: 7 * s, fontWeight: FontWeight.bold)),
             ),
           );
         }
         if (idx == game.dealerIndex) {
           return Container(
-            width: 20 * s,
-            height: 20 * s,
+            width: 16 * s,
+            height: 16 * s,
             decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text('D', style: TextStyle(color: Colors.black, fontSize: 10 * s, fontWeight: FontWeight.bold)),
+              child: Text('D', style: TextStyle(color: Colors.black, fontSize: 9 * s, fontWeight: FontWeight.bold)),
             ),
           );
         }
         if (idx == game.smallBlindIndex) {
           return Container(
-            width: 20 * s,
-            height: 20 * s,
+            width: 16 * s,
+            height: 16 * s,
             decoration: const BoxDecoration(
               color: Colors.lightBlue,
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text('SB', style: TextStyle(color: Colors.white, fontSize: 8 * s, fontWeight: FontWeight.bold)),
+              child: Text('SB', style: TextStyle(color: Colors.white, fontSize: 7 * s, fontWeight: FontWeight.bold)),
             ),
           );
         }
         if (idx == game.bigBlindIndex) {
           return Container(
-            width: 20 * s,
-            height: 20 * s,
+            width: 16 * s,
+            height: 16 * s,
             decoration: const BoxDecoration(
               color: Colors.blue,
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text('BB', style: TextStyle(color: Colors.white, fontSize: 8 * s, fontWeight: FontWeight.bold)),
+              child: Text('BB', style: TextStyle(color: Colors.white, fontSize: 7 * s, fontWeight: FontWeight.bold)),
             ),
           );
         }
