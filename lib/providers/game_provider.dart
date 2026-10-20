@@ -446,9 +446,28 @@ class GameProvider extends ChangeNotifier {
   bool get isPotFlying => _isPotFlying;
 
   String? _winnerId;
-
   String? get winnerId => _winnerId;
 
+  // Result of the last finished hand, shown by the results banner and the
+  // winner ribbon on the seats. Cleared when the next hand is dealt.
+  List<String> _resultWinnerIds = const [];
+  List<String> get resultWinnerIds => _resultWinnerIds;
+  String? _resultTitle;
+  String? get resultTitle => _resultTitle;
+  int _resultAmount = 0;
+  int get resultAmount => _resultAmount;
+
+  void _setResult(List<String> winnerIds, String title, int amount) {
+    _resultWinnerIds = List.unmodifiable(winnerIds);
+    _resultTitle = title;
+    _resultAmount = amount;
+  }
+
+  void _clearResult() {
+    _resultWinnerIds = const [];
+    _resultTitle = null;
+    _resultAmount = 0;
+  }
   int _flyingPotAmount = 0;
 
   int get flyingPotAmount => _flyingPotAmount;
@@ -954,6 +973,7 @@ class GameProvider extends ChangeNotifier {
 
       _totalContributions.clear();
 
+      _setResult([winner.id], 'por abandono', totalContribs);
       setCentralMessage('¡${winner.name} gana por abandono!');
 
       scheduleNewRound();
@@ -1293,10 +1313,11 @@ class GameProvider extends ChangeNotifier {
 
 
 
+      _setResult([for (final w in winners) w.id], bestHandResult.rankName, splitAmount);
+
       if (winners.length > 1) {
 
         setCentralMessage('¡Empate! Bote dividido con ${bestHandResult.rankName}');
-
       } else {
 
         _winnerId = winners.first.id;
@@ -1436,11 +1457,9 @@ class GameProvider extends ChangeNotifier {
     _playersActedThisPhase.clear();
 
     _winningCards = null;
-
     _winnerId = null;
-
+    _clearResult();
     _isPotFlying = false;
-
     _animatingBetPlayerId = null;
 
     _lastBurnedCard = null;
@@ -1577,6 +1596,7 @@ class GameProvider extends ChangeNotifier {
     _playersActedThisPhase.clear();
 
     _winningCards = null;
+    _clearResult();
 
 
 
@@ -2219,6 +2239,9 @@ class GameProvider extends ChangeNotifier {
       'gameMode': _gameMode.name,
       'betsThisPhase': Map.from(_betsThisPhase),
       'winningCards': _winningCards?.map((c) => c.toMap()).toList(),
+      'result': _resultTitle == null
+          ? null
+          : {'winners': _resultWinnerIds, 'title': _resultTitle, 'amount': _resultAmount},
     };
   }
 
@@ -2364,15 +2387,20 @@ class GameProvider extends ChangeNotifier {
     }
 
     if (state['winningCards'] != null) {
-
       _winningCards = (state['winningCards'] as List<dynamic>)
-
           .map((c) => CardModel.fromJson(c as Map<String, dynamic>))
-
           .toList();
-
     }
-
+    final result = state['result'];
+    if (result is Map) {
+      _setResult(
+        [for (final id in (result['winners'] as List? ?? const [])) id.toString()],
+        result['title']?.toString() ?? '',
+        (result['amount'] as num?)?.toInt() ?? 0,
+      );
+    } else {
+      _clearResult();
+    }
   }
 
 

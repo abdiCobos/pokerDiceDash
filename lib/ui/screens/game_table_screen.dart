@@ -31,7 +31,6 @@ class _GameTableScreenState extends State<GameTableScreen>
   late Animation<double> _shakeAnimation;
 
   final GlobalKey _localSeatKey = GlobalKey();
-  final GlobalKey _potTextKey = GlobalKey();
 
   int _lastRollCounter = 0;
   bool _lastMustSwap = false;
@@ -226,7 +225,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
               if (game.isPotFlying && !_showPotFlying) {
                 _showPotFlying = true;
-                _potFlyingAmount = game.pot;
+                _potFlyingAmount = game.flyingPotAmount;
                 final provider = context.read<GameProvider>();
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   Future.delayed(const Duration(milliseconds: 850), () {
@@ -256,8 +255,8 @@ class _GameTableScreenState extends State<GameTableScreen>
                         diceMode: game.gameMode == GameMode.diceDash,
                       )),
                       _buildHeader(game),
-                      ..._buildPlayerSeats(players, game),
                       _buildCenterArea(game),
+                      ..._buildPlayerSeats(players, game),
                       _buildControls(game),
                       if (game.state.status == GameStatus.betting)
                         _buildActionPanel(game),
@@ -265,7 +264,19 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _buildBurnedCardAnimation(),
                       if (game.isConnectionLost)
                         _ConnectionBanner(gaveUp: game.reconnectGaveUp, scale: _s),
-                      if (game.centralMessage != null)
+                      if (game.resultTitle != null)
+                        _ResultsBanner(
+                          key: ValueKey('result_${game.roundCounter}_${game.resultWinnerIds.join(',')}'),
+                          names: [
+                            for (final id in game.resultWinnerIds)
+                              game.players.firstWhere((p) => p.id == id, orElse: () => PlayerModel(id: id, name: '?')).name,
+                          ],
+                          title: game.resultTitle!,
+                          amount: game.resultAmount,
+                          localWon: game.resultWinnerIds.contains(game.localPlayerId),
+                          scale: _s,
+                        )
+                      else if (game.centralMessage != null)
                         _CenteredStatusAlert(message: game.centralMessage!),
                       if (_showPotFlying && game.winnerId != null)
                         _buildPotFlyingAnimation(game),
@@ -295,8 +306,6 @@ class _GameTableScreenState extends State<GameTableScreen>
                 icon: Icon(Icons.arrow_back, color: Colors.white70, size: 28 * _s),
                 onPressed: () => Navigator.maybePop(context),
               ),
-              SizedBox(width: 8 * _s),
-              _PotText(key: _potTextKey, pot: game.pot, scale: _s),
             ],
           ),
           if (widget.isMultiplayer && widget.isHost && game.state.status == GameStatus.waitingPlayers)
@@ -379,8 +388,18 @@ class _GameTableScreenState extends State<GameTableScreen>
   }
 
   Widget _buildCenterArea(GameProvider game) {
+    final potRect = SeatLayout.potRect(Size(_screenW, _screenH));
     return Stack(
+      clipBehavior: Clip.none,
       children: [
+        if (game.pot > 0)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: potRect.top,
+            height: potRect.height,
+            child: Center(child: _PotText(pot: game.pot, scale: _s)),
+          ),
         Positioned(
           top: _screenH * 0.35,
           left: 0,
@@ -440,6 +459,48 @@ class _GameTableScreenState extends State<GameTableScreen>
     );
     _seatRects.clear();
 
+    final tableSize = Size(_screenW, _screenH);
+    final diceMode = game.gameMode == GameMode.diceDash;
+    final placedBets = <Rect>[];
+    final betWidgets = <Widget>[];
+    final inlineBets = <String>{};
+    void addBet(String playerId, Rect betRect, Offset from) {
+      final amount = game.getPlayerBet(playerId);
+      if (amount <= 0) return;
+      betWidgets.add(Positioned.fromRect(
+        rect: betRect,
+        child: _BetStack(
+          key: ValueKey('bet_${playerId}_${game.roundCounter}_$amount'),
+          amount: amount,
+          from: from - betRect.center,
+          scale: _s,
+        ),
+      ));
+    }
+
+    if (localIdx >= 0) {
+      final localBet = SeatLayout.localBetRect(tableSize);
+      addBet(localId, localBet, Offset(_screenW / 2, _screenH - 40 * _s));
+    }
+
+    for (var i = 0; i < oppCount && i < layout.rects.length; i++) {
+      final rect = layout.rects[i];
+      final others = [for (var j = 0; j < layout.rects.length; j++) if (j != i) layout.rects[j]];
+      final betRect = SeatLayout.betRect(
+        size: tableSize,
+        seat: rect,
+        otherSeats: others,
+        diceMode: diceMode,
+        placedBets: placedBets,
+      );
+      if (betRect == null) {
+        inlineBets.add(opponents[i].id);
+        continue;
+      }
+      placedBets.add(betRect);
+      addBet(opponents[i].id, betRect, rect.center);
+    }
+
     for (var i = 0; i < oppCount && i < layout.rects.length; i++) {
       final opp = opponents[i];
       final oppIdx = players.indexWhere((p) => p.id == opp.id);
@@ -457,11 +518,13 @@ class _GameTableScreenState extends State<GameTableScreen>
             scale: _s * layout.scale,
             shrink: layout.scale,
             width: rect.width,
+            inlineBet: inlineBets.contains(opp.id),
           ),
         ),
       ));
     }
 
+    widgets.addAll(betWidgets);
     return widgets;
   }
 
@@ -753,8 +816,9 @@ class _GameTableScreenState extends State<GameTableScreen>
         final width = MediaQuery.of(context).size.width;
         final height = MediaQuery.of(context).size.height;
 
-        final startX = width / 2;
-        final startY = height * 0.38;
+        final potCenter = SeatLayout.potRect(Size(_screenW, _screenH)).center;
+        final startX = potCenter.dx;
+        final startY = potCenter.dy;
 
         double endX;
         double endY;
@@ -1094,39 +1158,182 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-class _BetChipAnimation extends StatefulWidget {
-  @override
-  State<_BetChipAnimation> createState() => _BetChipAnimationState();
+/// Chip color by amount, like real casino denominations.
+String _chipAssetFor(int amount) {
+  if (amount >= 500) return 'assets/images/chips/chipBlackWhite.png';
+  if (amount >= 100) return 'assets/images/chips/chipGreenWhite.png';
+  if (amount >= 50) return 'assets/images/chips/chipBlueWhite.png';
+  if (amount >= 20) return 'assets/images/chips/chipRedWhite.png';
+  return 'assets/images/chips/chipWhiteBlue.png';
 }
 
-class _BetChipAnimationState extends State<_BetChipAnimation> {
+/// A player's bet for the current street, sitting on the felt. Slides in from
+/// the seat (`from` is the seat center relative to this widget's center).
+class _BetStack extends StatelessWidget {
+  final int amount;
+  final Offset from;
+  final double scale;
+
+  const _BetStack({super.key, required this.amount, required this.from, required this.scale});
+
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context) {
+    final s = scale;
+    final chip = 15 * s;
+    final stack = (amount ~/ 50).clamp(0, 2);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, child) => Transform.translate(
+        offset: from * (1 - t),
+        child: Opacity(opacity: (t * 2).clamp(0.0, 1.0).toDouble(), child: child),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: chip,
+              height: chip + stack * 2.5 * s,
+              child: Stack(
+                children: [
+                  for (var i = 0; i <= stack; i++)
+                    Positioned(
+                      left: 0,
+                      bottom: i * 2.5 * s,
+                      child: Image.asset(
+                        _chipAssetFor(amount),
+                        width: chip,
+                        height: chip,
+                        errorBuilder: (c, e, st) => Icon(Icons.circle, color: Colors.redAccent, size: chip),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            SizedBox(width: 3 * s),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 5 * s, vertical: 1.5 * s),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(8 * s),
+              ),
+              child: Text(
+                '$amount',
+                style: TextStyle(color: Colors.white, fontSize: 9.5 * s, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// End-of-hand banner: who won, with what, and how much. Pops in over the
+/// table for a couple of seconds, then gets out of the way so the showdown
+/// cards (and the winner ribbon on the seat) stay visible.
+class _ResultsBanner extends StatefulWidget {
+  final List<String> names;
+  final String title;
+  final int amount;
+  final bool localWon;
+  final double scale;
+
+  const _ResultsBanner({
+    super.key,
+    required this.names,
+    required this.title,
+    required this.amount,
+    required this.localWon,
+    required this.scale,
+  });
+
+  @override
+  State<_ResultsBanner> createState() => _ResultsBannerState();
+}
+
+class _ResultsBannerState extends State<_ResultsBanner> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2800),
+  )..forward();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final s = (MediaQuery.of(context).size.width / 800).clamp(0.45, 1.3);
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeOutCubic,
-      builder: (context, t, child) {
-        return Positioned(
-          left: 20 * s,
-          bottom: t * 160 * s,
-          child: Opacity(
-            opacity: (1 - (t > 0.7 ? (t - 0.7) / 0.3 : 0)).clamp(0.0, 1.0).toDouble(),
-            child: Image.asset(
-              'assets/images/chips/chipRedWhite.png',
-              width: 30 * s,
-              height: 30 * s,
-              errorBuilder: (context, error, stackTrace) => Icon(Icons.monetization_on, color: Colors.amber, size: 24 * s),
+    final s = widget.scale;
+    final tie = widget.names.length > 1;
+    final headline = tie ? '¡Empate!' : (widget.localWon ? '¡Ganaste!' : '¡${widget.names.first} gana!');
+    final subtitle = tie
+        ? '${widget.names.join(' y ')} · ${widget.title}'
+        : (widget.localWon ? 'Con ${widget.title}' : widget.title == 'por abandono' ? 'Los demás se retiraron' : 'Con ${widget.title}');
+    final amount = tie ? '+${widget.amount} c/u' : '+${widget.amount}';
+    final accent = widget.localWon ? const Color(0xFFFFD54F) : const Color(0xFFD4AF37);
+
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final t = _controller.value * 2800; // ms
+          final appear = Curves.easeOutBack.transform((t / 450).clamp(0.0, 1.0));
+          final fade = t < 2300 ? 1.0 : (1 - (t - 2300) / 500).clamp(0.0, 1.0);
+          return Opacity(
+            opacity: (appear.clamp(0.0, 1.0) * fade).toDouble(),
+            child: Transform.scale(scale: 0.6 + 0.4 * appear, child: child),
+          );
+        },
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 22 * s, vertical: 10 * s),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [const Color(0xFF1B1206).withValues(alpha: 0.95), Colors.black.withValues(alpha: 0.92)],
+              ),
+              borderRadius: BorderRadius.circular(16 * s),
+              border: Border.all(color: accent, width: 2),
+              boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.45), blurRadius: 24 * s, spreadRadius: 2 * s)],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.emoji_events, color: accent, size: 34 * s),
+                SizedBox(width: 12 * s),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(headline,
+                        style: TextStyle(color: accent, fontSize: 18 * s, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                    SizedBox(height: 2 * s),
+                    Text(subtitle, style: TextStyle(color: Colors.white70, fontSize: 11 * s, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                SizedBox(width: 16 * s),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 5 * s),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade800,
+                    borderRadius: BorderRadius.circular(10 * s),
+                    border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.6)),
+                  ),
+                  child: Text(amount,
+                      style: TextStyle(color: Colors.white, fontSize: 15 * s, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -1215,7 +1422,7 @@ class _CenteredStatusAlertState extends State<_CenteredStatusAlert>
 class _PotText extends StatefulWidget {
   final int pot;
   final double scale;
-  const _PotText({super.key, required this.pot, this.scale = 1.0});
+  const _PotText({required this.pot, this.scale = 1.0});
 
   @override
   State<_PotText> createState() => _PotTextState();
@@ -1263,9 +1470,9 @@ class _PotTextState extends State<_PotText>
         );
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14 * widget.scale, vertical: 6 * widget.scale),
+        padding: EdgeInsets.symmetric(horizontal: 10 * widget.scale, vertical: 2 * widget.scale),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.5),
+          color: Colors.black.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(12 * widget.scale),
           border: Border.all(color: Colors.amber.withValues(alpha: 0.6), width: 2),
           boxShadow: [
@@ -1275,13 +1482,23 @@ class _PotTextState extends State<_PotText>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.monetization_on, color: Colors.amber, size: 22 * widget.scale),
-            SizedBox(width: 6 * widget.scale),
+            Image.asset(
+              _chipAssetFor(widget.pot),
+              width: 15 * widget.scale,
+              height: 15 * widget.scale,
+              errorBuilder: (c, e, st) => Icon(Icons.monetization_on, color: Colors.amber, size: 15 * widget.scale),
+            ),
+            SizedBox(width: 5 * widget.scale),
+            Text(
+              'BOTE',
+              style: TextStyle(color: Colors.white70, fontSize: 9 * widget.scale, fontWeight: FontWeight.w600, letterSpacing: 1.5),
+            ),
+            SizedBox(width: 5 * widget.scale),
             Text(
               '${widget.pot}',
               style: TextStyle(
                 color: Colors.amber,
-                fontSize: 22 * widget.scale,
+                fontSize: 13 * widget.scale,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.5,
               ),
@@ -1532,6 +1749,9 @@ class _PlayerSeat extends StatelessWidget {
   /// Fixed seat width for opponents so every seat around the table matches.
   final double? width;
 
+  /// No room on the felt for this seat's bet: show it next to the chip count.
+  final bool inlineBet;
+
   const _PlayerSeat({
     required this.playerId,
     required this.isLocal,
@@ -1539,6 +1759,7 @@ class _PlayerSeat extends StatelessWidget {
     this.scale = 1.0,
     this.shrink = 1.0,
     this.width,
+    this.inlineBet = false,
   });
 
   @override
@@ -1554,25 +1775,29 @@ class _PlayerSeat extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        return AnimatedContainer(
+        final isWinner = context.select<GameProvider, bool>((g) => g.resultWinnerIds.contains(playerId));
+        final winAmount = context.select<GameProvider, int>((g) => g.resultAmount);
+        final highlight = isCurrentTurn || isWinner;
+
+        final seat = AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           constraints: BoxConstraints(minWidth: width ?? 0),
           padding: EdgeInsets.symmetric(horizontal: 5 * s, vertical: 3 * s),
           decoration: BoxDecoration(
-            color: isCurrentTurn
+            color: highlight
                 ? Colors.amber.withValues(alpha: 0.22)
                 : const Color(0xFF07160D).withValues(alpha: 0.82),
             borderRadius: BorderRadius.circular(10 * s),
             border: Border.all(
-              color: isCurrentTurn
-                  ? Colors.amber
+              color: highlight
+                  ? (isWinner ? const Color(0xFFFFD54F) : Colors.amber)
                   : (isLocal ? const Color(0xFFD4AF37).withValues(alpha: 0.6) : Colors.white24),
-              width: isCurrentTurn ? 2 : 1,
+              width: highlight ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: isCurrentTurn ? Colors.amber.withValues(alpha: 0.35) : Colors.black54,
-                blurRadius: isCurrentTurn ? 10 * s : 6 * s,
+                color: highlight ? Colors.amber.withValues(alpha: 0.35) : Colors.black54,
+                blurRadius: highlight ? 10 * s : 6 * s,
               ),
             ],
           ),
@@ -1630,9 +1855,28 @@ class _PlayerSeat extends StatelessWidget {
                     '${player.chipBalance}',
                     style: TextStyle(
                       color: Colors.amber,
-                      fontSize: 9 * s,
+                      fontSize: 9.5 * s,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (inlineBet)
+                    Selector<GameProvider, int>(
+                      selector: (_, g) => g.getPlayerBet(playerId),
+                      builder: (context, bet, _) => bet <= 0
+                          ? const SizedBox.shrink()
+                          : Container(
+                              margin: EdgeInsets.only(left: 4 * s),
+                              padding: EdgeInsets.symmetric(horizontal: 4 * s, vertical: 0.5 * s),
+                              decoration: BoxDecoration(
+                                color: Colors.deepOrange.shade700,
+                                borderRadius: BorderRadius.circular(5 * s),
+                              ),
+                              child: Text(
+                                '$bet',
+                                style: TextStyle(color: Colors.white, fontSize: 8.5 * s, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                    ),
                 ],
               ),
               SizedBox(height: 3 * s),
@@ -1716,8 +1960,6 @@ class _PlayerSeat extends StatelessWidget {
                         Opacity(opacity: 0.4, child: wrappedRow)
                       else
                         wrappedRow,
-                      if (game.animatingBetPlayerId == playerId)
-                        _BetChipAnimation(),
                     ],
                   );
 
@@ -1726,6 +1968,40 @@ class _PlayerSeat extends StatelessWidget {
               ),
             ],
           ),
+        );
+
+        if (!isWinner) return seat;
+        // Winner ribbon over the top edge until the next hand is dealt.
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            seat,
+            Positioned(
+              top: -9 * s,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOutBack,
+                  builder: (context, t, child) => Transform.scale(scale: t, child: child),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 7 * s, vertical: 1.5 * s),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFFFFE082), Color(0xFFD4AF37)]),
+                      borderRadius: BorderRadius.circular(8 * s),
+                      boxShadow: [BoxShadow(color: Colors.amber.withValues(alpha: 0.6), blurRadius: 8 * s)],
+                    ),
+                    child: Text(
+                      'GANADOR +$winAmount',
+                      style: TextStyle(color: Colors.black, fontSize: 8 * s, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

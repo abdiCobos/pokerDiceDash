@@ -471,7 +471,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       bgColor = Colors.black.withValues(alpha: 0.35);
     }
 
-    return AnimatedContainer(
+    final seat = AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       padding: EdgeInsets.all(isCompact ? 4.0 * _s : 6.0 * _s),
       decoration: BoxDecoration(
@@ -605,6 +605,61 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
             ),
           ],
         ],
+      ),
+    );
+
+    final outcome = bj.phase == BlackjackPhase.roundEnd ? bj.roundOutcome[player.id] : null;
+    if (outcome == null) return seat;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        seat,
+        Positioned(
+          top: -10 * _s,
+          left: 0,
+          right: 0,
+          child: Center(child: _outcomeBadge(outcome, bj.roundNet[player.id] ?? 0)),
+        ),
+      ],
+    );
+  }
+
+  /// Result pill over a seat at round end: "BLACKJACK +150", "PIERDE -100"...
+  Widget _outcomeBadge(String outcome, int net) {
+    final Color bg;
+    final Color fg;
+    switch (outcome) {
+      case 'BLACKJACK':
+      case 'CHARLIE':
+        bg = const Color(0xFFD4AF37);
+        fg = Colors.black;
+      case 'GANA':
+        bg = Colors.green.shade600;
+        fg = Colors.white;
+      case 'EMPATE':
+        bg = Colors.blueGrey.shade600;
+        fg = Colors.white;
+      default:
+        bg = Colors.red.shade700;
+        fg = Colors.white;
+    }
+    final amount = net > 0 ? ' +$net' : (net < 0 ? ' $net' : '');
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutBack,
+      builder: (context, t, child) => Transform.scale(scale: t, child: child),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 2 * _s),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(9 * _s),
+          boxShadow: [BoxShadow(color: bg.withValues(alpha: 0.6), blurRadius: 8 * _s)],
+        ),
+        child: Text(
+          '$outcome$amount',
+          style: TextStyle(color: fg, fontSize: 10 * _s, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+        ),
       ),
     );
   }
@@ -897,6 +952,27 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
 
   // ─── 8. ROUND END CONTROLS ───────────────────────────────
 
+  String _localResultText(BlackjackProvider bj) {
+    final id = bj.localPlayer.id;
+    final net = bj.roundNet[id];
+    switch (bj.roundOutcome[id]) {
+      case 'BLACKJACK':
+        return '¡Blackjack! Ganas +$net';
+      case 'CHARLIE':
+        return '¡5-Card Charlie! Ganas +$net';
+      case 'GANA':
+        return '¡Ganaste +$net!';
+      case 'EMPATE':
+        return 'Empate: recuperas tu apuesta';
+      case 'BUST':
+        return 'Te pasaste de 21 ($net)';
+      case 'PIERDE':
+        return 'Gana el crupier ($net)';
+      default:
+        return 'Ronda finalizada';
+    }
+  }
+
   Widget _buildRoundEndControls(BlackjackProvider bj) {
     return Row(
       children: [
@@ -910,13 +986,14 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               border: Border.all(color: Colors.amber, width: 1.5),
             ),
             child: Text(
-              bj.message ?? 'Ronda finalizada.',
+              _localResultText(bj),
               style: TextStyle(
                 color: Colors.amber,
                 fontSize: 12 * _s,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),

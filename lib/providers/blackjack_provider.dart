@@ -26,6 +26,13 @@ class BlackjackProvider extends ChangeNotifier {
   bool get isHost => _isHost;
   String localPlayerId = '0';
 
+  /// Per-player outcome of the last resolved round (short label + net chips),
+  /// shown on each seat. Empty outside [BlackjackPhase.roundEnd].
+  Map<String, String> _roundOutcome = const {};
+  Map<String, String> get roundOutcome => _roundOutcome;
+  Map<String, int> _roundNet = const {};
+  Map<String, int> get roundNet => _roundNet;
+
   static final _random = Random();
 
   void _logAndNotify(String method) {
@@ -506,6 +513,8 @@ class BlackjackProvider extends ChangeNotifier {
       if (dIdx < 0) return;
       final dealerVal = players[dIdx].hands[0].handValue;
       final results = <String, String>{};
+      final outcome = <String, String>{};
+      final net = <String, int>{};
       var finalPlayers = <BlackjackPlayer>[...players];
       for (var i = 0; i < finalPlayers.length; i++) {
         if (finalPlayers[i].isDealer) continue;
@@ -550,9 +559,22 @@ class BlackjackProvider extends ChangeNotifier {
         }
         AppLogger().log('BJ:result $i: $result');
         results[p.id] = result;
+        final played = p.hands.where((h) => h.cards.isNotEmpty).toList();
+        if (played.isNotEmpty) {
+          net[p.id] = netChange;
+          if (netChange > 0) {
+            outcome[p.id] = p.isBlackjack ? 'BLACKJACK' : (p.hands.any((h) => h.isCharlie) ? 'CHARLIE' : 'GANA');
+          } else if (netChange == 0) {
+            outcome[p.id] = 'EMPATE';
+          } else {
+            outcome[p.id] = played.every((h) => h.isBusted) ? 'BUST' : 'PIERDE';
+          }
+        }
         finalPlayers[i] = p;
       }
       final msgs = results.values.join('\n');
+      _roundOutcome = outcome;
+      _roundNet = net;
       _state = _state.copyWith(players: finalPlayers, phase: BlackjackPhase.roundEnd, message: msgs);
       SoundService().chipsWin();
       _logAndNotify('_resolveRound');
@@ -564,6 +586,8 @@ class BlackjackProvider extends ChangeNotifier {
 
   void newRound() {
     try {
+      _roundOutcome = const {};
+      _roundNet = const {};
       var updated = <BlackjackPlayer>[..._state.players];
       for (var i = 0; i < updated.length; i++) {
         final balance = updated[i].chipBalance <= 0 && !updated[i].isDealer ? 1000 : updated[i].chipBalance;

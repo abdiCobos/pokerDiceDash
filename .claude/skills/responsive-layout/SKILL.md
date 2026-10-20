@@ -20,6 +20,10 @@ description: Placing player seats, cards, the table oval and controls on the Tex
 - `fixedObstacles` must mirror the real widgets (header, local seat, community cards, action
   panel, roll button, start button, dice). If you move one of those widgets, update its rect
   here in the same change, or the layout and its tests lie.
+- `potRect`, `localBetRect` and `betRect` place the pot and bets. `betRect` tries below,
+  beside (toward center), beside (outward) and returns null if all hit something; pass the
+  already `placedBets` so bets never stack. Tests require every bet on the felt up to 5
+  opponents (4 below 700 dp wide).
 - `SeatLayout.tableRect` is the felt oval; seats may sit on its rail, never on the community cards.
 - `opponentSeatSize` must match `_PlayerSeat` (name row 18*s fixed + chips row + cards).
   Seats get `width: rect.width` as a MIN width so the ring looks uniform; `FittedBox(scaleDown)`

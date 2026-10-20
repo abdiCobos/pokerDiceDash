@@ -82,6 +82,66 @@ class SeatLayout {
     ];
   }
 
+  /// Pot badge: centered, right under the community cards.
+  static Rect potRect(Size size) {
+    final s = tableScale(size);
+    final top = size.height * 0.35 + 84 * s + 2;
+    return Rect.fromLTWH(size.width / 2 - 55 * s, top, 110 * s, 22 * s);
+  }
+
+  static Size betSize(double s) => Size(54 * s, 18 * s);
+
+  /// Local player's bet: on the felt just right of the local seat's top.
+  static Rect localBetRect(Size size) {
+    final s = tableScale(size);
+    final local = localSeatSize(s: s, autoScale: cardAutoScale(size.width));
+    final b = betSize(s);
+    final top = size.height - local.height;
+    return Rect.fromLTWH(size.width / 2 + local.width / 2 + 4 * s, top + 6 * s, b.width, b.height);
+  }
+
+  /// Where an opponent's current bet sits on the felt: below the seat, or
+  /// beside / above it when below would hit something. Null when there is no
+  /// free spot (crowded top row on phones): the seat then shows the bet itself.
+  static Rect? betRect({
+    required Size size,
+    required Rect seat,
+    required List<Rect> otherSeats,
+    required bool diceMode,
+    List<Rect> placedBets = const [],
+  }) {
+    final s = tableScale(size);
+    final b = betSize(s);
+    final screen = Offset.zero & size;
+    final avoid = [
+      ...fixedObstacles(size, diceMode: diceMode),
+      potRect(size),
+      localBetRect(size),
+      ...otherSeats,
+      ...placedBets,
+    ];
+    final towardCenterRight = seat.center.dx <= size.width / 2;
+    final sideY = seat.bottom - b.height / 2 - 4 * s;
+    final candidates = [
+      Rect.fromCenter(center: Offset(seat.center.dx, seat.bottom + 3 * s + b.height / 2), width: b.width, height: b.height),
+      Rect.fromCenter(
+        center: Offset(towardCenterRight ? seat.right + 3 * s + b.width / 2 : seat.left - 3 * s - b.width / 2, sideY),
+        width: b.width,
+        height: b.height,
+      ),
+      Rect.fromCenter(
+        center: Offset(towardCenterRight ? seat.left - 3 * s - b.width / 2 : seat.right + 3 * s + b.width / 2, sideY),
+        width: b.width,
+        height: b.height,
+      ),
+    ];
+    for (final c in candidates) {
+      final inside = screen.contains(c.topLeft) && screen.contains(c.bottomRight);
+      if (inside && !avoid.any((o) => o.overlaps(c))) return c;
+    }
+    return null;
+  }
+
   static int _capacity(double length, double item) {
     if (item <= 0 || length <= 0) return 0;
     return math.max(0, ((length + gap) / (item + gap)).floor());

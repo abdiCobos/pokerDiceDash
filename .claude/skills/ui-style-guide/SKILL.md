@@ -29,6 +29,18 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
 - **Opponent seat**: uniform size inside its layout rect. Name row has a FIXED height (18*s)
   so seats with a D/SB/BB badge are the same height as seats without one. Name: bold white 10*s,
   one line, ellipsis. Bots show `Icons.smart_toy` (white54), local shows `Icons.person` (amber).
+- **Pot**: `_PotText` badge ("BOTE 70" + chip) centered under the community cards at
+  `SeatLayout.potRect`; pulses when it grows; the pot flies from there to the winner.
+- **Bets**: `_BetStack` (chip by denomination + amount pill) on the felt at
+  `SeatLayout.betRect` / `localBetRect`, sliding in from the seat (450 ms). When there is no
+  free spot (crowded phone top row) the seat shows an orange inline pill next to its chips.
+  Chip colors: white <20, red 20+, blue 50+, green 100+, black 500+ (`_chipAssetFor`).
+- **Results**: poker `_ResultsBanner` (trophy, "¡Ganaste!" / "¡X gana!" / "¡Empate!", hand,
+  green +amount pill) for ~2.8 s from `GameProvider.resultTitle/resultWinnerIds/resultAmount`
+  (synced to clients), then a gold "GANADOR +N" ribbon stays on the winner seat until the
+  next deal. Blackjack: per-seat pill at round end (BLACKJACK/CHARLIE gold, GANA green,
+  EMPATE blue-grey, PIERDE/BUST red, with net chips) from `roundOutcome/roundNet`.
+- **Screen transitions**: global fade + 0.94->1 zoom (`_TableFadeTransitionsBuilder` in main.dart).
 - **Role badges**: 16*s circles. D = white/black, SB = lightBlue, BB = blue, D/SB pill 26x16.
 - **Current turn**: amber 2px border + glow. Never signal turn with color alone in new
   widgets: also use a dot, icon or status text ("Turno de X...").
