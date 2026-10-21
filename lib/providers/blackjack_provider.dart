@@ -329,6 +329,12 @@ class BlackjackProvider extends ChangeNotifier {
   /// How the Blackjack bots play (see [BlackjackBotBrain]).
   BotDifficulty botDifficulty = BotDifficulty.normal;
 
+  /// Puts [cards] on top of the shoe, first card first (tests).
+  @visibleForTesting
+  void debugStackDeck(List<CardModel> cards) {
+    _state = _state.copyWith(deck: [..._state.deck, ...cards.reversed]);
+  }
+
   void initSinglePlayer({int botCount = 0, String playerName = 'Yo', BotDifficulty difficulty = BotDifficulty.normal}) {
     botDifficulty = difficulty;
     try {
@@ -528,11 +534,14 @@ class BlackjackProvider extends ChangeNotifier {
       var updated = <BlackjackPlayer>[..._state.players];
       final dealerIdx = updated.indexWhere((p) => p.isDealer);
       if (dealerIdx < 0) return;
-      final dealerBj = updated[dealerIdx].hands[0].isBlackjack;
+      // The dealer's hand carries no bet, so isBlackjack (bet > 0) never matched it.
+      final dealerBj = updated[dealerIdx].hands[0].isNatural;
       AppLogger().log('BJ:dealerBJ=$dealerBj dealerVal=${updated[dealerIdx].hands[0].handValue}');
       for (var i = 0; i < updated.length; i++) {
         if (updated[i].isDealer) continue;
-        if (updated[i].hands[0].isBlackjack) updated[i].hands[0].isStanding = true;
+        final hand = updated[i].hands[0];
+        // A dealer blackjack ends the round before anyone plays: every hand is closed.
+        if (hand.isBlackjack || (dealerBj && hand.cards.isNotEmpty)) hand.isStanding = true;
       }
       _state = _state.copyWith(players: updated);
       _logAndNotify('_afterDealComplete');
@@ -716,7 +725,8 @@ class BlackjackProvider extends ChangeNotifier {
       if (pIdx < 0) return;
       final hands = <BlackjackHand>[...players[pIdx].hands];
       final hIdx = players[pIdx].activeHandIndex;
-      if (hIdx >= hands.length) return;
+      // Doubling is only allowed on the first two cards of a hand.
+      if (hIdx >= hands.length || hands[hIdx].cards.length != 2) return;
       final extraBet = hands[hIdx].betAmount;
       if (players[pIdx].chipBalance < extraBet) return;
       hands[hIdx] = hands[hIdx].copyWith(betAmount: hands[hIdx].betAmount * 2, isDoubledDown: true);
@@ -817,7 +827,7 @@ class BlackjackProvider extends ChangeNotifier {
       updated[dIdx] = updated[dIdx].copyWith(hands: [hand]);
       _state = _state.copyWith(players: updated);
       _logAndNotify('_dealerDrawCard-done');
-      AppLogger().log('BJ:dealerFinal=${hand.handValue} bj=${hand.isBlackjack}');
+      AppLogger().log('BJ:dealerFinal=${hand.handValue} bj=${hand.isNatural}');
       Future.delayed(const Duration(milliseconds: 500), _resolveRound);
       return;
     }
@@ -836,6 +846,7 @@ class BlackjackProvider extends ChangeNotifier {
       final dIdx = players.indexWhere((p) => p.isDealer);
       if (dIdx < 0) return;
       final dealerVal = players[dIdx].hands[0].handValue;
+      final dealerNatural = players[dIdx].hands[0].isNatural;
       final results = <String, String>{};
       final outcome = <String, String>{};
       final net = <String, int>{};
@@ -850,6 +861,9 @@ class BlackjackProvider extends ChangeNotifier {
           int winAmount = 0;
           if (hand.isBusted) {
             winAmount = 0;
+          } else if (dealerNatural) {
+            // Dealer blackjack beats everything except another blackjack (push).
+            winAmount = hand.isBlackjack ? hand.betAmount : 0;
           } else if (dealerVal > 21) {
             winAmount = hand.isBlackjack ? (hand.betAmount * 2.5).round() : hand.betAmount * 2;
           } else if (hand.isBlackjack) {
@@ -866,7 +880,9 @@ class BlackjackProvider extends ChangeNotifier {
         final netChange = totalWinnings - p.totalBet;
         p = p.copyWith(chipBalance: p.chipBalance + totalWinnings);
         String result;
-        if (p.hands.any((h) => h.isBusted)) {
+        if (dealerNatural) {
+          result = p.isBlackjack ? 'Blackjack contra blackjack: empate' : 'Blackjack del crupier - Pierdes ${p.totalBet}';
+        } else if (p.hands.any((h) => h.isBusted)) {
           result = 'Bust - Pierdes ${p.totalBet}';
         } else if (dealerVal > 21) {
           result = 'Dealer bust - Ganas ${netChange > 0 ? "+$netChange" : netChange}';

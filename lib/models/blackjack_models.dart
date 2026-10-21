@@ -37,6 +37,9 @@ class BlackjackHand {
   }
 
   bool get isBlackjack => cards.length == 2 && handValue == 21 && betAmount > 0 && !isSplit;
+
+  /// Two-card 21 regardless of the bet (the dealer's hand has no bet).
+  bool get isNatural => cards.length == 2 && handValue == 21 && !isSplit;
   bool get canSplit => cards.length == 2 && cards[0].value == cards[1].value;
   bool get isFinished => isStanding || isBusted || isBlackjack || isCharlie;
 

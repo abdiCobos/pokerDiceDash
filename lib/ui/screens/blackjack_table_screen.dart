@@ -382,7 +382,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               if (hand.cards.isNotEmpty) ...[
                 SizedBox(width: 8 * _s),
                 if (showAll)
-                  _handValueBadge(hand.handValue, hand.isBusted || hand.handValue > 21, hand.isBlackjack)
+                  _handValueBadge(hand.handValue, hand.isBusted || hand.handValue > 21, hand.isNatural)
                 else
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 6 * _s, vertical: 2 * _s),
