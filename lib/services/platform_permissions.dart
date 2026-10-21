@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'platform_info.dart';
 
 Future<void> requestHardwarePermissions() async {

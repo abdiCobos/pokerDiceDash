@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/game_provider.dart';
 import '../../services/logger_service.dart';
-import '../../services/p2p_service.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import '../../services/poker_bot_ai.dart';
@@ -29,7 +27,6 @@ class LobbyScreen extends StatefulWidget {
 
 class _LobbyScreenState extends State<LobbyScreen> {
   bool _isHosting = false;
-  bool _isGlobalHost = false;
   late bool _showMultiplayer = widget.startInMultiplayer;
   GameMode _selectedMode = GameMode.diceDash;
   int _bjBotCount = 2;

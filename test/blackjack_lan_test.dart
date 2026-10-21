@@ -30,7 +30,7 @@ class _Side {
 }
 
 /// Host + one client over real TCP sockets on 127.0.0.1, wired like the app does.
-Future<(_Side, _Side)> _connect({int bots = 0}) async {
+Future<(_Side, _Side)> _connect() async {
   final host = _Side();
   final client = _Side();
   host.lobby
