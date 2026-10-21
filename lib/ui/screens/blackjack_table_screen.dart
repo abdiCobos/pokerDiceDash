@@ -685,8 +685,11 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
   }) {
     if (cards.isEmpty) return const SizedBox.shrink();
 
-    final cardW = CardWidget.cardWidth * cardScale;
-    final cardH = CardWidget.cardHeight * cardScale;
+    // Reserve the size the card really draws at (it includes the screen auto-scale).
+    final auto = CardWidget.autoScaleOf(context);
+    final cardW = CardWidget.cardWidth * cardScale * auto;
+    final cardH = CardWidget.cardHeight * cardScale * auto;
+    overlapStep *= auto;
     final totalW = cardW + (cards.length - 1) * overlapStep;
 
     return SizedBox(
