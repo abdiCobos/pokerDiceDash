@@ -15,6 +15,7 @@ import '../layout/seat_layout.dart';
 import '../widgets/card_widget.dart';
 import '../../services/game_settings.dart';
 import '../../services/poker_bot_ai.dart';
+import '../widgets/dice_blackjack_panel.dart';
 import '../widgets/table_options.dart';
 import '../widgets/betting_chip_widget.dart';
 import 'lobby_screen.dart';
@@ -236,6 +237,21 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _buildActionPanel(game),
                       if (_lastBurned != null)
                         _buildBurnedCardAnimation(),
+                      // Dice Dash "21" event: everyone sees it, only its player acts.
+                      if (game.diceBlackjack != null)
+                        Positioned.fill(
+                          child: DiceBlackjackPanel(
+                            key: ValueKey('dicebj_${game.diceBlackjack!.playerId}_${game.rollCounter}'),
+                            event: game.diceBlackjack!,
+                            isMine: game.diceBlackjack!.playerId == game.localPlayerId,
+                            freeChips: game.players.where((p) => p.id == game.localPlayerId).firstOrNull?.chipBalance ?? 0,
+                            scale: _s,
+                            onBet: (v) => game.diceBjBet(game.localPlayerId, v),
+                            onSkip: () => game.diceBjSkip(game.localPlayerId),
+                            onHit: () => game.diceBjHit(game.localPlayerId),
+                            onStand: () => game.diceBjStand(game.localPlayerId),
+                          ),
+                        ),
                       if (game.isConnectionLost)
                         _ConnectionBanner(gaveUp: game.reconnectGaveUp, scale: _s),
                       if (game.resultTitle != null)

@@ -9,7 +9,9 @@ import 'package:flutter/foundation.dart';
 import '../models/game_state.dart';
 
 import '../models/player_model.dart';
+import '../models/dice_blackjack.dart';
 import '../models/pot_calculator.dart';
+import '../services/blackjack_bot_ai.dart';
 import '../services/game_settings.dart';
 import '../services/poker_bot_ai.dart';
 
@@ -256,6 +258,7 @@ class GameProvider extends ChangeNotifier {
   void _watchdogTick() {
     if (_isDisposed || _isExiting || !_isHost || !_isMultiplayer || !_matchStarted) return;
     if (_gameMode == GameMode.blackjack) return; // Blackjack runs its own turn timers
+    if (_diceEventBusy) return; // dice events (21, all-in, extra card) have their own timers
     // 1) Showdown finished but no new round is scheduled.
     if (_state.phase == PokerPhase.showdown &&
         _state.status == GameStatus.finished &&
@@ -533,6 +536,181 @@ class GameProvider extends ChangeNotifier {
       broadcastState();
       _checkBotTurn();
     });
+  }
+
+  // --- "21" event (2+1) --------------------------------------------------------
+
+  static const Duration diceBjDecisionTime = Duration(seconds: 25);
+  DiceBlackjack? _diceBj;
+  DiceBlackjack? get diceBlackjack => _diceBj;
+  Timer? _diceBjTimer;
+
+  /// Tests put known cards on top of the event shoe (player, player, dealer, dealer, ...).
+  @visibleForTesting
+  List<CardModel>? debugDiceBjCards;
+
+  PlayerModel? get _diceBjPlayer => _diceBj == null ? null : _players.where((p) => p.id == _diceBj!.playerId).firstOrNull;
+
+  void _startDiceBlackjack(PlayerModel roller) {
+    if (!DiceBlackjack.canPlay(roller.chipBalance)) {
+      setCentralMessage('¡21! ${roller.name} no tiene fichas libres para apostar');
+      return;
+    }
+    final cards = debugDiceBjCards;
+    debugDiceBjCards = null;
+    _diceBj = DiceBlackjack(playerId: roller.id, playerName: roller.name, stackedCards: cards);
+    _diceEventBusy = true;
+    AppLogger().event('dice_blackjack', params: {'player': roller.name});
+    _armDiceBjTimer();
+    if (roller.isBot) _botDiceBjTurn();
+  }
+
+  /// Nobody may hold the table: bets nothing / stands when time runs out.
+  void _armDiceBjTimer() {
+    _diceBjTimer?.cancel();
+    final e = _diceBj;
+    if (e == null) return;
+    final away = _diceBjPlayer?.isAway ?? false;
+    _diceBjTimer = Timer(away ? const Duration(seconds: 2) : diceBjDecisionTime, () {
+      final cur = _diceBj;
+      if (cur == null || cur != e) return;
+      if (cur.stage == DiceBlackjackStage.betting) {
+        diceBjSkip(cur.playerId);
+      } else if (cur.stage == DiceBlackjackStage.playing) {
+        diceBjStand(cur.playerId);
+      }
+    });
+  }
+
+  bool _ownsDiceBj(String playerId) => _diceBj != null && _diceBj!.playerId == playerId;
+
+  void diceBjBet(String playerId, int amount) {
+    if (!_isHost) {
+      _sendPlayerAction('BJ_BET', value: amount);
+      return;
+    }
+    final e = _diceBj;
+    final p = _diceBjPlayer;
+    if (e == null || p == null || !_ownsDiceBj(playerId)) return;
+    if (!e.placeBet(amount, p.chipBalance)) return;
+    p.chipBalance -= amount;
+    SoundService().chipsRaise();
+    SoundService().cardMix();
+    _afterDiceBjAction();
+  }
+
+  void diceBjSkip(String playerId) {
+    if (!_isHost) {
+      _sendPlayerAction('BJ_SKIP');
+      return;
+    }
+    if (!_ownsDiceBj(playerId)) return;
+    _diceBj!.skip();
+    _afterDiceBjAction();
+  }
+
+  void diceBjHit(String playerId) {
+    if (!_isHost) {
+      _sendPlayerAction('BJ_HIT');
+      return;
+    }
+    if (!_ownsDiceBj(playerId) || _diceBj!.stage != DiceBlackjackStage.playing) return;
+    _diceBj!.hit();
+    SoundService().cardMix();
+    _afterDiceBjAction();
+  }
+
+  void diceBjStand(String playerId) {
+    if (!_isHost) {
+      _sendPlayerAction('BJ_STAND');
+      return;
+    }
+    if (!_ownsDiceBj(playerId) || _diceBj!.stage != DiceBlackjackStage.playing) return;
+    _diceBj!.stand();
+    _afterDiceBjAction();
+  }
+
+  void _afterDiceBjAction() {
+    final e = _diceBj;
+    if (e == null) return;
+    notifyListeners();
+    broadcastState();
+    switch (e.stage) {
+      case DiceBlackjackStage.betting:
+      case DiceBlackjackStage.playing:
+        _armDiceBjTimer();
+        if (_diceBjPlayer?.isBot ?? false) _botDiceBjTurn();
+      case DiceBlackjackStage.dealer:
+        _diceBjTimer?.cancel();
+        _runDiceBjDealer(e);
+      case DiceBlackjackStage.done:
+        _diceBjTimer?.cancel();
+        _finishDiceBlackjack(e);
+    }
+  }
+
+  Future<void> _runDiceBjDealer(DiceBlackjack e) async {
+    final epoch = _epoch;
+    await Future.delayed(const Duration(milliseconds: 700)); // reveal the hole card
+    while (true) {
+      if (_isExiting || epoch != _epoch || _diceBj != e) return;
+      final drew = e.dealerStep();
+      if (drew) SoundService().cardMix();
+      notifyListeners();
+      broadcastState();
+      if (!drew) break;
+      await Future.delayed(const Duration(milliseconds: 650));
+    }
+    _finishDiceBlackjack(e);
+  }
+
+  Future<void> _finishDiceBlackjack(DiceBlackjack e) async {
+    final epoch = _epoch;
+    final p = _diceBjPlayer;
+    if (p != null && !e.skipped && e.payout > 0) p.chipBalance += e.payout;
+    if (!e.skipped) {
+      e.net >= 0 ? SoundService().chipsWin() : SoundService().cardFold();
+    }
+    notifyListeners();
+    broadcastState();
+    // Leave the result on screen for a moment, then poker goes on.
+    await Future.delayed(const Duration(milliseconds: 2800));
+    if (_isExiting || epoch != _epoch || _diceBj != e) return;
+    _diceBj = null;
+    _diceEventBusy = false;
+    notifyListeners();
+    broadcastState();
+    _checkBotTurn();
+  }
+
+  /// A new hand / exit while the event is open: give back an unsettled bet.
+  void _abortDiceBlackjack() {
+    _diceBjTimer?.cancel();
+    final e = _diceBj;
+    if (e != null && e.bet > 0 && e.stage != DiceBlackjackStage.done) {
+      _diceBjPlayer?.chipBalance += e.bet;
+    }
+    _diceBj = null;
+  }
+
+  Future<void> _botDiceBjTurn() async {
+    final e = _diceBj;
+    final bot = _diceBjPlayer;
+    if (e == null || bot == null) return;
+    final epoch = _epoch;
+    final stage = e.stage;
+    await Future.delayed(const Duration(milliseconds: 1300));
+    if (_isExiting || epoch != _epoch || _diceBj != e || e.stage != stage) return;
+    if (stage == DiceBlackjackStage.betting) {
+      final p = personalityOf(bot);
+      final want = 20 + (Random().nextDouble() * 120 * (0.3 + p.aggression)).round();
+      final amount = (want ~/ 10 * 10).clamp(DiceBlackjack.minBet, DiceBlackjack.maxBetFor(bot.chipBalance));
+      diceBjBet(bot.id, amount);
+    } else if (stage == DiceBlackjackStage.playing) {
+      final up = e.dealer.cards.isEmpty ? 10 : BlackjackBotBrain.cardValue(e.dealer.cards.first.value);
+      final move = BlackjackBotBrain(difficulty: _botDifficulty).decide(e.player, up, canDouble: false, canSplit: false);
+      move == BlackjackMove.hit ? diceBjHit(bot.id) : diceBjStand(bot.id);
+    }
   }
 
   /// The two cards of [three] that make the strongest hand with [board]
@@ -1706,6 +1884,8 @@ class GameProvider extends ChangeNotifier {
           _applySpy(roller);
         case DiceEvent.extraCard:
           _applyExtraCard(roller);
+        case DiceEvent.blackjack:
+          _startDiceBlackjack(roller);
         default:
           break;
       }
@@ -1871,6 +2051,7 @@ class GameProvider extends ChangeNotifier {
     _bbIndex = bbIdx;
     _spied.clear();
     _lastDiceEvent = DiceEvent.none;
+    _abortDiceBlackjack();
     _diceEventBusy = false;
     _houseBonus = 0;
     _luckySevenApplied = false;
@@ -2425,6 +2606,7 @@ class GameProvider extends ChangeNotifier {
       'houseBonus': _houseBonus,
       'diceEvent': _lastDiceEvent.name,
       'diceEventBusy': _diceEventBusy,
+      'diceBj': _diceBj?.toMap(),
       'spied': forPlayerId == null ? const <String>[] : (_spied[forPlayerId]?.toList() ?? const <String>[]),
       'payouts': _resultPayouts,
       'phase': _state.phase.name,
@@ -2597,6 +2779,8 @@ class GameProvider extends ChangeNotifier {
     _houseBonus = state['houseBonus'] as int? ?? _houseBonus;
     _lastDiceEvent = DiceEvent.values.where((e) => e.name == state['diceEvent']).firstOrNull ?? _lastDiceEvent;
     _diceEventBusy = state['diceEventBusy'] as bool? ?? _diceEventBusy;
+    final bj = state['diceBj'];
+    _diceBj = bj is Map ? DiceBlackjack.fromMap(Map<String, dynamic>.from(bj)) : null;
     final spied = state['spied'];
     if (spied is List) {
       _spied
@@ -2641,6 +2825,21 @@ class GameProvider extends ChangeNotifier {
 
 
   void _processRemoteAction(String action, String playerId, int value) {
+    if (action.startsWith('BJ_')) {
+      // "21" event: only the player in the event (checked again in each method).
+      if (!_ownsDiceBj(playerId)) return;
+      switch (action) {
+        case 'BJ_BET':
+          diceBjBet(playerId, value);
+        case 'BJ_SKIP':
+          diceBjSkip(playerId);
+        case 'BJ_HIT':
+          diceBjHit(playerId);
+        case 'BJ_STAND':
+          diceBjStand(playerId);
+      }
+      return;
+    }
     if (action != 'REBUY') {
       final ci = _state.currentPlayerIndex;
       if (ci < 0 || ci >= _players.length || _players[ci].id != playerId) {
@@ -2795,6 +2994,7 @@ class GameProvider extends ChangeNotifier {
 
   void exitGame() {
     _isExiting = true;
+    _abortDiceBlackjack();
     _newRoundTimer?.cancel();
     _newRoundTimer = null;
     _reconnectTimer?.cancel();
@@ -2818,6 +3018,7 @@ class GameProvider extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    _diceBjTimer?.cancel();
     _messageSubscription?.cancel();
     _disconnectSubscription?.cancel();
     _broadcastTimer?.cancel();

@@ -31,7 +31,19 @@ ask the user which one is intended before "fixing" either.
   `ROLL_DICE`; bots roll after 1-2 s) -> `GameStatus.betting` (same player acts) -> next player.
 - 1+1 "INTERCAMBIO" (chaos): all live hole cards are pooled, shuffled and redealt 2 each (~2.4 s animation).
 - Total 7 "Dados de la suerte": the pot grows by 30% of house money, once per hand.
-- 6+6 forced all-in and 2+1 "Blackjack event": TODO, not implemented.
+- Events come from `GameProvider.diceEventFor(a, b)` (`enum DiceEvent`); while one runs,
+  `diceEventBusy` blocks bots, the UI and the turn watchdog:
+  - 6+6 "¡ALL-IN!": after 1.6 s the roller raises their whole stack (or calls if they cannot raise).
+  - 3+3 "¡ESPÍA!": the roller sees one random hole card of one live opponent (`isCardSpied`;
+    unmasked only in that viewer's snapshot; cleared on each deal and on 1+1).
+  - 1+6 "¡CARTA EXTRA!": the roller gets a third hole card, then keeps the best two (`bestTwoOf`) after 1.8 s.
+  - 2+1 "¡21!": the roller plays one Blackjack hand vs a dealer (`lib/models/dice_blackjack.dart`,
+    own 52-card shoe, poker deck untouched). Bet 10-200 from their free chips (or "No apostar");
+    blackjack 3:2, win 1:1, push returns, dealer stands on 17. Everyone sees the panel; only the
+    owner acts (`BJ_BET/BJ_SKIP/BJ_HIT/BJ_STAND`). 25 s timeout per decision (skip / stand).
+    The dealer hole card is masked in `toMap` until the player stands. New deal or exit refunds an
+    unsettled bet (`_abortDiceBlackjack`). Event chips go to/from the house, not the pot.
+  - Sum 7 (other than 1+6) = lucky 7 below.
 
 ## Hand ranking - `lib/models/hand_evaluator.dart`
 High card < pair < two pair < trips < straight < flush < full house < quads < straight flush
@@ -64,10 +76,10 @@ High card < pair < two pair < trips < straight < flush < full house < quads < st
 - Blackjack: dealer natural (`isNatural`) ends the round at once; player blackjack vs dealer
   blackjack is a push; double only on the first two cards.
 - Tests: `test/pot_calculator_test.dart`, `test/poker_rules_test.dart`,
-  `test/blackjack_rules_flow_test.dart` (each one was checked to FAIL on the old code).
+  `test/blackjack_rules_flow_test.dart`, `test/dice_events_test.dart`,
+  `test/dice_blackjack_test.dart`, `test/dice_blackjack_flow_test.dart` (each one was checked to FAIL on the old code).
 
 ## Still open
-- 6+6 forced all-in and 2+1 "Blackjack event" in Dice Dash are TODOs (not implemented).
 - `lib/services/bot_service.dart` `decideAction` is dead code (only `getBotName` is used).
 
 ## Bots (2026-10-21)
