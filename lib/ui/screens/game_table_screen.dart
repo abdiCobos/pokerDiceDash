@@ -705,7 +705,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
   Widget _buildControls(GameProvider game) {
     final activeIdx = game.state.currentPlayerIndex;
-    final blocked = game.isBetting || game.isChaosSwapping || game.centralMessage != null;
+    final blocked = game.isBetting || game.isChaosSwapping || game.diceEventBusy || game.centralMessage != null;
     final isMyTurn = activeIdx >= 0 && activeIdx < game.players.length &&
         game.players[activeIdx].id == game.localPlayerId;
     final canRoll = game.state.status == GameStatus.diceTurn && isMyTurn && !blocked;
@@ -765,7 +765,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
     final isMyTurn = activePlayer.id == game.localPlayerId;
     final isAllIn = activePlayer.chipBalance <= 0 && !activePlayer.isFolded;
-    final blocked = game.isBetting || game.isChaosSwapping || game.centralMessage != null;
+    final blocked = game.isBetting || game.isChaosSwapping || game.diceEventBusy || game.centralMessage != null;
     if (!isMyTurn) {
       if (!widget.isMultiplayer) {
         return const SizedBox.shrink();
@@ -1604,6 +1604,32 @@ class _FlyingChipState extends State<_FlyingChip> {
   }
 }
 
+/// Marks a card revealed by "Espía" (only the spy sees it): purple glow + eye.
+Widget _spiedCard({required bool spied, required double scale, required Widget child}) {
+  if (!spied) return child;
+  return Stack(
+    clipBehavior: Clip.none,
+    children: [
+      Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8 * scale),
+          boxShadow: [BoxShadow(color: Colors.purpleAccent.withValues(alpha: 0.8), blurRadius: 10 * scale, spreadRadius: 1)],
+        ),
+        child: child,
+      ),
+      Positioned(
+        top: -6 * scale,
+        right: -4 * scale,
+        child: Container(
+          padding: EdgeInsets.all(2 * scale),
+          decoration: const BoxDecoration(color: Colors.purple, shape: BoxShape.circle),
+          child: Icon(Icons.visibility, size: 10 * scale, color: Colors.white),
+        ),
+      ),
+    ],
+  );
+}
+
 Widget _winningGlow({required bool isWinner, required bool isShowdown, required Widget child}) {
     if (!isShowdown) return child;
     if (isWinner) {
@@ -2122,7 +2148,16 @@ class _PlayerSeat extends StatelessWidget {
                         isShowdown: isShowdown,
                         child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 2 * s),
-                          child: CardWidget(card: card, isFaceUp: faceUp, scale: cardScale),
+                          child: _spiedCard(
+                            spied: !faceUp && game.isCardSpied(game.localPlayerId, playerId, cardIdx),
+                            scale: s,
+                            child: CardWidget(
+                              card: card,
+                              // Espía: the local player sees this one card of an opponent.
+                              isFaceUp: faceUp || game.isCardSpied(game.localPlayerId, playerId, cardIdx),
+                              scale: cardScale,
+                            ),
+                          ),
                         ),
                       );
                       return isPreFlop

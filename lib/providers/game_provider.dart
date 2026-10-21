@@ -450,6 +450,109 @@ class GameProvider extends ChangeNotifier {
 
   int get bigBlindIndex => _players.isEmpty ? 0 : _bbIndex.clamp(0, _players.length - 1);
 
+  // --- Dice Dash events -------------------------------------------------------
+
+  DiceEvent _lastDiceEvent = DiceEvent.none;
+  DiceEvent get lastDiceEvent => _lastDiceEvent;
+
+  /// Tests force the next roll (e.g. `[6, 6]`).
+  @visibleForTesting
+  List<int>? debugNextDice;
+
+  /// A dice event is resolving (forced all-in, extra card): bots and the action
+  /// panel wait for it instead of acting on the old situation.
+  bool _diceEventBusy = false;
+  bool get diceEventBusy => _diceEventBusy;
+
+  /// Cards each viewer was shown by "Espía": viewerId -> {'playerId:cardIndex'}.
+  final Map<String, Set<String>> _spied = {};
+
+  /// True when [viewerId] may see card [cardIndex] of [playerId] (Espía).
+  bool isCardSpied(String viewerId, String playerId, int cardIndex) =>
+      _spied[viewerId]?.contains('$playerId:$cardIndex') ?? false;
+
+  /// Which event a roll triggers. Specific pairs win over the lucky 7
+  /// (6+1 is "Carta extra", not "dados de la suerte").
+  static DiceEvent diceEventFor(int a, int b, {bool luckySevenAvailable = true}) {
+    final lo = min(a, b);
+    final hi = max(a, b);
+    if (lo == 1 && hi == 1) return DiceEvent.swap;
+    if (lo == 6 && hi == 6) return DiceEvent.allIn;
+    if (lo == 3 && hi == 3) return DiceEvent.spy;
+    if (lo == 1 && hi == 6) return DiceEvent.extraCard;
+    if (lo == 1 && hi == 2) return DiceEvent.blackjack;
+    if (a + b == 7 && luckySevenAvailable) return DiceEvent.luckySeven;
+    return DiceEvent.none;
+  }
+
+  /// Doble 6: the roller goes all-in (after the dice animation).
+  void _scheduleForcedAllIn(PlayerModel roller) {
+    final epoch = _epoch;
+    _diceEventBusy = true;
+    setCentralMessage('¡Doble 6! ${roller.name} va ALL-IN');
+    Future.delayed(const Duration(milliseconds: 1600), () {
+      _diceEventBusy = false;
+      if (_isExiting || epoch != _epoch) return;
+      final ci = _state.currentPlayerIndex;
+      if (ci < 0 || ci >= _players.length || _players[ci].id != roller.id) return;
+      if (_state.status != GameStatus.betting || roller.isFolded) return;
+      final toCall = max(0, _currentBet - (_betsThisPhase[roller.id] ?? 0));
+      if (roller.chipBalance > toCall) {
+        raise(roller.id, roller.chipBalance - toCall);
+      } else {
+        call(roller.id); // all-in for less (or exactly the call)
+      }
+    });
+  }
+
+  /// Doble 3: the roller sees one random card of a random opponent until the hand ends.
+  void _applySpy(PlayerModel roller) {
+    final targets = _players.where((p) => p.id != roller.id && !p.isFolded && p.hand.isNotEmpty).toList();
+    if (targets.isEmpty) return;
+    final rnd = Random();
+    final target = targets[rnd.nextInt(targets.length)];
+    final idx = rnd.nextInt(target.hand.length);
+    _spied.putIfAbsent(roller.id, () => {}).add('${target.id}:$idx');
+    setCentralMessage('¡Espía! ${roller.name} ve una carta de ${target.name}');
+  }
+
+  /// 6+1: the roller gets a third private card and keeps the best two.
+  void _applyExtraCard(PlayerModel roller) {
+    if (_deck.isEmpty || roller.hand.length != 2) return;
+    final epoch = _epoch;
+    final extra = _deck.removeLast();
+    roller.hand = [...roller.hand, extra];
+    _diceEventBusy = true;
+    setCentralMessage('¡Carta extra! ${roller.name} se queda con sus dos mejores cartas');
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      _diceEventBusy = false;
+      if (_isExiting || epoch != _epoch || roller.hand.length != 3) return;
+      roller.hand = bestTwoOf(roller.hand, _state.communityCards.take(_state.revealedCommunityCount).toList());
+      _spied.forEach((_, set) => set.removeWhere((k) => k.startsWith('${roller.id}:')));
+      notifyListeners();
+      broadcastState();
+      _checkBotTurn();
+    });
+  }
+
+  /// The two cards of [three] that make the strongest hand with [board]
+  /// (on an empty board: pairs first, then high cards).
+  static List<CardModel> bestTwoOf(List<CardModel> three, List<CardModel> board) {
+    List<CardModel>? best;
+    var bestPower = -1;
+    for (var i = 0; i < three.length; i++) {
+      for (var j = i + 1; j < three.length; j++) {
+        final pair = [three[i], three[j]];
+        final power = HandEvaluator.evaluate(pair, board).power;
+        if (power > bestPower) {
+          bestPower = power;
+          best = pair;
+        }
+      }
+    }
+    return best ?? three.take(2).toList();
+  }
+
   /// Chips added to the pot by the house (Dice Dash "dados de la suerte").
   /// Dead money: it belongs to whoever wins the main pot.
   int _houseBonus = 0;
@@ -1581,36 +1684,33 @@ class GameProvider extends ChangeNotifier {
     }
 
     final random = Random();
-
-    _die1 = random.nextInt(6) + 1;
-
-    _die2 = random.nextInt(6) + 1;
-
+    final forced = debugNextDice;
+    debugNextDice = null;
+    _die1 = forced?[0] ?? random.nextInt(6) + 1;
+    _die2 = forced?[1] ?? random.nextInt(6) + 1;
     SoundService().diceRoll();
-
-
-
+    final roller = (_state.currentPlayerIndex >= 0 && _state.currentPlayerIndex < _players.length)
+        ? _players[_state.currentPlayerIndex]
+        : null;
+    final event = diceEventFor(_die1, _die2, luckySevenAvailable: !_luckySevenApplied);
+    _lastDiceEvent = event;
     bool swapFlag = _state.mustSwapHands;
-
-
-
-    if (_die1 == 1 && _die2 == 1) {
-
+    if (event == DiceEvent.swap) {
       swapFlag = true;
-
     }
-
-
-
-    if (_die1 == 6 && _die2 == 6) {
-
-      // TODO: Implementar ALL-IN forzado
-
+    if (roller != null) {
+      switch (event) {
+        case DiceEvent.allIn:
+          _scheduleForcedAllIn(roller);
+        case DiceEvent.spy:
+          _applySpy(roller);
+        case DiceEvent.extraCard:
+          _applyExtraCard(roller);
+        default:
+          break;
+      }
     }
-
-
-
-    if (diceTotal == 7 && !_luckySevenApplied) {
+    if (event == DiceEvent.luckySeven) {
 
       _luckySevenApplied = true;
 
@@ -1629,11 +1729,7 @@ class GameProvider extends ChangeNotifier {
 
 
 
-    // TODO: Blackjack 21 â€” Si dados == 2 y 1, activar evento especial:
 
-    // Repartir 2 cartas extra al jugador del turno y habilitar
-
-    // una apuesta flash (solo vÃ¡lida durante ese turno).
 
 
 
@@ -1773,6 +1869,9 @@ class GameProvider extends ChangeNotifier {
     _state = _state.copyWith(dealerIndex: dealerIdx);
     _sbIndex = sbIdx;
     _bbIndex = bbIdx;
+    _spied.clear();
+    _lastDiceEvent = DiceEvent.none;
+    _diceEventBusy = false;
     _houseBonus = 0;
     _luckySevenApplied = false;
 
@@ -1979,6 +2078,7 @@ class GameProvider extends ChangeNotifier {
         p.hand = [pool.removeLast(), pool.removeLast()];
 
       }
+      _spied.clear(); // the spied cards are in other hands now
 
 
 
@@ -2305,7 +2405,10 @@ class GameProvider extends ChangeNotifier {
         final m = p.toMap();
         final visible = !mask || p.id == forPlayerId || (showdown && !p.isFolded);
         if (!visible) {
-          m['hand'] = List.generate(p.hand.length, (_) => hidden);
+          m['hand'] = [
+            for (var i = 0; i < p.hand.length; i++)
+              (forPlayerId != null && isCardSpied(forPlayerId, p.id, i)) ? p.hand[i].toMap() : hidden,
+          ];
         }
         return m;
       }).toList(),
@@ -2320,6 +2423,9 @@ class GameProvider extends ChangeNotifier {
       'sbIndex': _sbIndex,
       'bbIndex': _bbIndex,
       'houseBonus': _houseBonus,
+      'diceEvent': _lastDiceEvent.name,
+      'diceEventBusy': _diceEventBusy,
+      'spied': forPlayerId == null ? const <String>[] : (_spied[forPlayerId]?.toList() ?? const <String>[]),
       'payouts': _resultPayouts,
       'phase': _state.phase.name,
       'status': _state.status.name,
@@ -2489,6 +2595,14 @@ class GameProvider extends ChangeNotifier {
     _sbIndex = state['sbIndex'] as int? ?? _sbIndex;
     _bbIndex = state['bbIndex'] as int? ?? _bbIndex;
     _houseBonus = state['houseBonus'] as int? ?? _houseBonus;
+    _lastDiceEvent = DiceEvent.values.where((e) => e.name == state['diceEvent']).firstOrNull ?? _lastDiceEvent;
+    _diceEventBusy = state['diceEventBusy'] as bool? ?? _diceEventBusy;
+    final spied = state['spied'];
+    if (spied is List) {
+      _spied
+        ..clear()
+        ..[localPlayerId] = {for (final k in spied) k.toString()};
+    }
     final result = state['result'];
     if (result is Map) {
       _setResult(
@@ -2633,8 +2747,8 @@ class GameProvider extends ChangeNotifier {
     if (_players[_state.currentPlayerIndex].id != bot.id) return;
     if (_isExiting || epoch != _epoch || _state.status == GameStatus.finished) return;
 
-    // INTERCAMBIO in progress: decide with the new cards, not the old ones.
-    if (_isChaosSwapping) {
+    // INTERCAMBIO or a dice event in progress: decide with the final situation.
+    if (_isChaosSwapping || _diceEventBusy) {
       Future.delayed(const Duration(milliseconds: 700), () {
         if (!_isExiting && epoch == _epoch) _checkBotTurn();
       });
@@ -2766,3 +2880,6 @@ class _SoundSnapshot {
     }
   }
 }
+
+/// What a Dice Dash roll triggers (see `GameProvider.diceEventFor`).
+enum DiceEvent { none, luckySeven, swap, allIn, spy, extraCard, blackjack }
