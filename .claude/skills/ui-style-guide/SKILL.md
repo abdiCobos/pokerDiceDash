@@ -40,6 +40,12 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
   (synced to clients), then a gold "GANADOR +N" ribbon stays on the winner seat until the
   next deal. Blackjack: per-seat pill at round end (BLACKJACK/CHARLIE gold, GANA green,
   EMPATE blue-grey, PIERDE/BUST red, with net chips) from `roundOutcome/roundNet`.
+- **Main menu** (`lobby_screen.dart`): `AppLogo` (round felt emblem drawn by `AppIconPainter`, the
+  same painter as the launcher icon, + title in the bundled `AlfaSlabOne` font with a gold gradient).
+  Landscape = logo left / options right, never scrolls; portrait = logo on top. Modes are
+  `_ModeTile`s (accent chip + name + tagline, hover/focus glow); bottom row = gold "Jugar en red"
+  pill + "Cómo jugar" and "Ajustes" icon pills. Never use emoji/suit glyphs in UI text that must
+  render everywhere: draw suits with `SpadePainter` (system fonts may lack '♠').
 - **Screen transitions**: global fade + 0.94->1 zoom (`_TableFadeTransitionsBuilder` in main.dart).
 - **Role badges**: 16*s circles. D = white/black, SB = lightBlue, BB = blue, D/SB pill 26x16.
 - **Current turn**: amber 2px border + glow. Never signal turn with color alone in new

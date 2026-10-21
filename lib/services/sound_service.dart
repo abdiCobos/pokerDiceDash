@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SoundService {
   static final SoundService _instance = SoundService._();
@@ -7,7 +8,26 @@ class SoundService {
 
   final Map<String, AudioPlayer> _players = {};
 
+  static const _prefKey = 'sound_enabled';
+
+  /// Player setting (Ajustes). Persisted; every sound checks it.
+  bool enabled = true;
+
+  Future<void> load() async {
+    try {
+      enabled = (await SharedPreferences.getInstance()).getBool(_prefKey) ?? true;
+    } catch (_) {}
+  }
+
+  Future<void> setEnabled(bool value) async {
+    enabled = value;
+    try {
+      await (await SharedPreferences.getInstance()).setBool(_prefKey, value);
+    } catch (_) {}
+  }
+
   Future<void> _play(String file) async {
+    if (!enabled) return;
     try {
       final player = _players.putIfAbsent(file, () {
         final p = AudioPlayer();
@@ -27,6 +47,7 @@ class SoundService {
   int _flipNext = 0;
 
   Future<void> cardFlip() async {
+    if (!enabled) return;
     try {
       if (_flipPool.isEmpty) {
         for (var i = 0; i < 3; i++) {

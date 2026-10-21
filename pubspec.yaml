@@ -68,8 +68,13 @@ flutter:
     - assets/images/dice/
     - assets/images/board/
     - assets/images/chips/
-    - assets/images/menulogo/
     - assets/sounds/
+
+  fonts:
+    # Alfa Slab One, SIL Open Font License 1.1 (assets/fonts/AlfaSlabOne-OFL.txt)
+    - family: AlfaSlabOne
+      fonts:
+        - asset: assets/fonts/AlfaSlabOne-Regular.ttf
 
 flutter_launcher_icons:
   # Sources are drawn by tool/render_app_icon_test.dart (flutter test tool/render_app_icon_test.dart).
