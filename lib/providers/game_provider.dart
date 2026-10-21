@@ -431,6 +431,9 @@ class GameProvider extends ChangeNotifier {
 
   int get revealedCommunityCount => _state.revealedCommunityCount;
 
+  /// Gap between community cards; the table's flip animation fits inside it.
+  static const Duration communityCardInterval = Duration(milliseconds: 520);
+
   PokerPhase get phase => _state.phase;
 
   int get dealerIndex => _state.dealerIndex;
@@ -1137,11 +1140,12 @@ class GameProvider extends ChangeNotifier {
           turnsCompleted: 0,
         );
         notifyListeners();
+        // One card at a time at a dealer's pace; the table plays each card's
+        // flip animation and sound (on every device, not only on the host).
         for (int i = 0; i < 3; i++) {
-          try { SoundService().cardPlace(); } catch (_) {}
           _state = _state.copyWith(revealedCommunityCount: _state.revealedCommunityCount + 1);
           notifyListeners();
-          await Future.delayed(const Duration(milliseconds: 200));
+          await Future.delayed(communityCardInterval);
           if (_isExiting || epoch != _epoch) return;
         }
         break;
@@ -1154,10 +1158,9 @@ class GameProvider extends ChangeNotifier {
           turnsCompleted: 0,
         );
         notifyListeners();
-        try { SoundService().cardPlace(); } catch (_) {}
         _state = _state.copyWith(revealedCommunityCount: 4);
         notifyListeners();
-        await Future.delayed(const Duration(milliseconds: 200));
+        await Future.delayed(communityCardInterval);
           if (_isExiting || epoch != _epoch) return;
         break;
       case PokerPhase.turn:
@@ -1169,10 +1172,9 @@ class GameProvider extends ChangeNotifier {
           turnsCompleted: 0,
         );
         notifyListeners();
-        try { SoundService().cardPlace(); } catch (_) {}
         _state = _state.copyWith(revealedCommunityCount: 5);
         notifyListeners();
-        await Future.delayed(const Duration(milliseconds: 200));
+        await Future.delayed(communityCardInterval);
           if (_isExiting || epoch != _epoch) return;
         break;
       case PokerPhase.river:

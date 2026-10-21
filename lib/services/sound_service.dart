@@ -21,6 +21,26 @@ class SoundService {
     }
   }
 
+  // Community cards come out ~half a second apart and must not cut each other off,
+  // so they rotate through a small pool instead of the single per-file player.
+  final List<AudioPlayer> _flipPool = [];
+  int _flipNext = 0;
+
+  Future<void> cardFlip() async {
+    try {
+      if (_flipPool.isEmpty) {
+        for (var i = 0; i < 3; i++) {
+          _flipPool.add(AudioPlayer()..setReleaseMode(ReleaseMode.stop));
+        }
+      }
+      final player = _flipPool[_flipNext++ % _flipPool.length];
+      await player.stop();
+      await player.play(AssetSource('sounds/cardfold.ogg'));
+    } catch (_) {
+      // Ignored: sound is non-critical
+    }
+  }
+
   void cardMix() => _play('cardmix.ogg');
   void cardFold() => _play('cardfold.ogg');
   void cardPlace() => _play('cardfold.ogg');
@@ -37,5 +57,11 @@ class SoundService {
       } catch (_) {}
     }
     _players.clear();
+    for (final p in _flipPool) {
+      try {
+        p.dispose();
+      } catch (_) {}
+    }
+    _flipPool.clear();
   }
 }

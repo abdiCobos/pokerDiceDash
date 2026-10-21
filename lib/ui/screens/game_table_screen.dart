@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'dart:async';
 import '../../services/logger_service.dart';
+import '../../services/sound_service.dart';
 import '../../services/p2p_service.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -553,13 +555,22 @@ class _GameTableScreenState extends State<GameTableScreen>
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
-          children: List.generate(revealed, (i) {
-            final card = i < cards.length
-                ? cards[i]
-                : CardModel(value: 'A', suit: Suit.spades);
+          // All five slots exist from the flop on, so cards already on the felt
+          // never shift sideways when the next one lands.
+          children: List.generate(5, (i) {
+            if (i >= revealed || i >= cards.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Opacity(
+                  opacity: 0,
+                  child: CardWidget(card: CardModel(value: 'A', suit: Suit.spades), isFaceUp: false, scale: 0.65),
+                ),
+              );
+            }
+            final card = cards[i];
+            // Cards that appear together (e.g. a client catching up) still go one by one.
             final isNew = i >= newCardsStart;
-            final flopPosition = i >= newCardsStart ? i - newCardsStart : 0;
-            final delayMs = isNew ? flopPosition * 400 : 0;
+            final delayMs = isNew ? (i - newCardsStart) * GameProvider.communityCardInterval.inMilliseconds : 0;
 
             final isWinner = isShowdown && winning != null &&
                 winning.any((w) => w.value == card.value && w.suit == card.suit);
@@ -577,14 +588,17 @@ class _GameTableScreenState extends State<GameTableScreen>
               ),
             );
 
-            if (isNew) {
-              return _AnimatedPokerCard(
-                key: ValueKey('slot_${i}_round_${game.roundCounter}'),
-                delayMs: delayMs,
-                child: cardWidget,
-              );
-            }
-            return cardWidget;
+            // Always the same keyed widget, so a table rebuild mid-flip never cuts it.
+            return _AnimatedPokerCard(
+              key: ValueKey('slot_${i}_round_${game.roundCounter}'),
+              delayMs: delayMs,
+              scale: _s,
+              back: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: CardWidget(card: card, isFaceUp: false, scale: 0.65),
+              ),
+              child: cardWidget,
+            );
           }),
         ),
         SizedBox(height: 3 * _s),
@@ -950,11 +964,21 @@ class _GameTableScreenState extends State<GameTableScreen>
   }
 }
 
+/// A community card: slides in face down from the deck, then flips face up
+/// with its own sound. Runs once per card (state is kept by its key).
 class _AnimatedPokerCard extends StatefulWidget {
   final Widget child;
+  final Widget back;
   final int delayMs;
+  final double scale;
 
-  const _AnimatedPokerCard({super.key, required this.child, this.delayMs = 0});
+  const _AnimatedPokerCard({
+    super.key,
+    required this.child,
+    required this.back,
+    this.delayMs = 0,
+    this.scale = 1.0,
+  });
 
   @override
   State<_AnimatedPokerCard> createState() => _AnimatedPokerCardState();
@@ -1580,26 +1604,22 @@ Widget _winningGlow({required bool isWinner, required bool isShowdown, required 
 
 class _AnimatedPokerCardState extends State<_AnimatedPokerCard>
     with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
+  static const _slideEnd = 0.42; // first part: travel face down; then flip
+  late final AnimationController _ctrl =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 480));
+  bool _started = false;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-    _triggerAnimation();
-  }
-
-  @override
-  void didUpdateWidget(covariant _AnimatedPokerCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.key != widget.key) {
-      _triggerAnimation();
-    }
-  }
-
-  void _triggerAnimation() {
     Future.delayed(Duration(milliseconds: widget.delayMs), () {
-      if (mounted) _ctrl.forward(from: 0.0);
+      if (!mounted) return;
+      setState(() => _started = true);
+      _ctrl.forward(from: 0);
+      // The flip is the moment the card "hits" the felt.
+      Future.delayed(Duration(milliseconds: (_ctrl.duration!.inMilliseconds * _slideEnd).round()), () {
+        if (mounted) SoundService().cardFlip();
+      });
     });
   }
 
@@ -1611,12 +1631,35 @@ class _AnimatedPokerCardState extends State<_AnimatedPokerCard>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _ctrl,
-      child: ScaleTransition(
-        scale: Tween<double>(begin: 0.8, end: 1.0).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut)),
-        child: widget.child,
-      ),
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        // Waiting for its turn: keep the slot's size but draw nothing.
+        if (!_started) return Opacity(opacity: 0, child: widget.back);
+        final t = _ctrl.value;
+        if (t < _slideEnd) {
+          final k = Curves.easeOutCubic.transform(t / _slideEnd);
+          return Opacity(
+            opacity: (k * 2).clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: Offset(0, -70 * widget.scale * (1 - k)),
+              child: Transform.rotate(angle: -0.25 * (1 - k), child: widget.back),
+            ),
+          );
+        }
+        final f = Curves.easeInOut.transform((t - _slideEnd) / (1 - _slideEnd));
+        final angle = f * math.pi;
+        final showFace = angle > math.pi / 2;
+        final pop = 1 + 0.08 * math.sin(angle);
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.0015)
+            ..rotateY(showFace ? angle - math.pi : angle)
+            ..scaleByDouble(pop, pop, 1, 1),
+          child: showFace ? widget.child : widget.back,
+        );
+      },
     );
   }
 }
