@@ -13,6 +13,9 @@ class SoundService {
   /// Player setting (Ajustes). Persisted; every sound checks it.
   bool enabled = true;
 
+  /// Tests set this to a list to record which sounds the game asked for.
+  static List<String>? debugLog;
+
   Future<void> load() async {
     try {
       enabled = (await SharedPreferences.getInstance()).getBool(_prefKey) ?? true;
@@ -28,6 +31,7 @@ class SoundService {
 
   Future<void> _play(String file) async {
     if (!enabled) return;
+    debugLog?.add(file);
     try {
       final player = _players.putIfAbsent(file, () {
         final p = AudioPlayer();
@@ -48,6 +52,7 @@ class SoundService {
 
   Future<void> cardFlip() async {
     if (!enabled) return;
+    debugLog?.add('cardflip');
     try {
       if (_flipPool.isEmpty) {
         for (var i = 0; i < 3; i++) {
@@ -56,20 +61,20 @@ class SoundService {
       }
       final player = _flipPool[_flipNext++ % _flipPool.length];
       await player.stop();
-      await player.play(AssetSource('sounds/cardfold.ogg'));
+      await player.play(AssetSource('sounds/cardfold.mp3'));
     } catch (_) {
       // Ignored: sound is non-critical
     }
   }
 
-  void cardMix() => _play('cardmix.ogg');
-  void cardFold() => _play('cardfold.ogg');
-  void cardPlace() => _play('cardfold.ogg');
-  void caosCard() => _play('caosCardSound.ogg');
-  void chipsRaise() => _play('chipsRaise.ogg');
-  void chipsMultiply() => _play('chipsMultiply.ogg');
-  void chipsWin() => _play('chipsWin.ogg');
-  void diceRoll() => _play('dice.ogg');
+  void cardMix() => _play('cardmix.mp3');
+  void cardFold() => _play('cardfold.mp3');
+  void cardPlace() => _play('cardfold.mp3');
+  void caosCard() => _play('caosCardSound.mp3');
+  void chipsRaise() => _play('chipsRaise.mp3');
+  void chipsMultiply() => _play('chipsMultiply.mp3');
+  void chipsWin() => _play('chipsWin.mp3');
+  void diceRoll() => _play('dice.mp3');
 
   void dispose() {
     for (final p in _players.values) {

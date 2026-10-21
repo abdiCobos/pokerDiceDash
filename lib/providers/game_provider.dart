@@ -1027,6 +1027,7 @@ class GameProvider extends ChangeNotifier {
       _totalContributions.clear();
 
       _setResult([winner.id], 'por abandono', totalContribs);
+      SoundService().chipsWin();
       setCentralMessage('¡${winner.name} gana por abandono!');
 
       scheduleNewRound();
@@ -1635,6 +1636,7 @@ class GameProvider extends ChangeNotifier {
 
 
   void shuffleAndDeal() {
+    SoundService().cardMix();
 
     _roundCounter++;
 
@@ -2330,6 +2332,7 @@ class GameProvider extends ChangeNotifier {
 
 
   void _syncStateFromMap(Map<String, dynamic> state) {
+    final before = _SoundSnapshot.of(this);
 
     AppLogger().log('ðŸ“¥ Cliente _syncStateFromMap: currentPlayerIndex=${state['currentPlayerIndex']} status=${state['status']} numPlayers=${(state['players'] as List?)?.length}');
 
@@ -2456,9 +2459,8 @@ class GameProvider extends ChangeNotifier {
     } else {
       _clearResult();
     }
+    before.playChanges(this);
   }
-
-
 
   PokerPhase _parsePhase(String? name) {
 
@@ -2664,4 +2666,46 @@ class SeatEvent {
   final String name;
   final String endpointId;
   const SeatEvent(this.kind, this.seatId, this.name, this.endpointId);
+}
+
+/// What a LAN client compares before/after a host snapshot to play the same
+/// sounds the host plays when the actions happen there.
+class _SoundSnapshot {
+  final int pot;
+  final int roll;
+  final int localCards;
+  final Set<String> folded;
+  final bool hadResult;
+
+  _SoundSnapshot(this.pot, this.roll, this.localCards, this.folded, this.hadResult);
+
+  factory _SoundSnapshot.of(GameProvider g) {
+    final local = g.players.where((p) => p.id == g.localPlayerId).firstOrNull;
+    return _SoundSnapshot(
+      g.pot,
+      g.rollCounter,
+      local?.hand.length ?? 0,
+      {for (final p in g.players) if (p.isFolded) p.id},
+      g.resultTitle != null,
+    );
+  }
+
+  void playChanges(GameProvider g) {
+    final now = _SoundSnapshot.of(g);
+    final sound = SoundService();
+    if (localCards == 0 && now.localCards > 0) {
+      sound.cardMix(); // new hand dealt
+      return;
+    }
+    if (!hadResult && now.hadResult) {
+      sound.chipsWin();
+      return;
+    }
+    if (now.roll != roll) sound.diceRoll();
+    if (now.folded.difference(folded).isNotEmpty) {
+      sound.cardFold();
+    } else if (now.pot > pot) {
+      sound.chipsRaise();
+    }
+  }
 }

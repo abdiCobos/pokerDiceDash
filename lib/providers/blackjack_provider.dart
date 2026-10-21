@@ -133,6 +133,8 @@ class BlackjackProvider extends ChangeNotifier {
   /// Applies a host snapshot on a client.
   void applyRemoteState(Map<String, dynamic> st) {
     final previousCards = players.fold<int>(0, (n, p) => n + p.hands.fold<int>(0, (m, h) => m + h.cards.length));
+    final previousBets = players.fold<int>(0, (n, p) => n + p.totalBet);
+    final previousPhase = _state.phase;
     final list = <BlackjackPlayer>[
       for (final raw in (st['players'] as List? ?? const []))
         () {
@@ -161,7 +163,20 @@ class BlackjackProvider extends ChangeNotifier {
     );
     final nowCards = list.fold<int>(0, (n, p) => n + p.hands.fold<int>(0, (m, h) => m + h.cards.length));
     if (nowCards > previousCards) SoundService().cardMix();
+    final betsNow = list.fold<int>(0, (n, p) => n + p.totalBet);
+    if (betsNow > previousBets && phase == BlackjackPhase.betting) SoundService().chipsRaise();
+    if (phase == BlackjackPhase.roundEnd && previousPhase != BlackjackPhase.roundEnd) _playResultSound();
     _logAndNotify('applyRemoteState');
+  }
+
+  /// Chips sound if the local player won or pushed, a card "thud" if they lost.
+  void _playResultSound() {
+    final net = _roundNet[localPlayerId];
+    if (net == null || net >= 0) {
+      SoundService().chipsWin();
+    } else {
+      SoundService().cardFold();
+    }
   }
 
   void _attachNetwork(P2PService p2p, GameProvider lobby) {
@@ -450,6 +465,7 @@ class BlackjackProvider extends ChangeNotifier {
         totalBet: amount,
       );
       _state = _state.copyWith(players: updated);
+      SoundService().chipsRaise();
       _logAndNotify('placeBet');
 
       _autoBetBots();
@@ -883,7 +899,7 @@ class BlackjackProvider extends ChangeNotifier {
       _roundOutcome = outcome;
       _roundNet = net;
       _state = _state.copyWith(players: finalPlayers, phase: BlackjackPhase.roundEnd, message: msgs);
-      SoundService().chipsWin();
+      _playResultSound();
       _logAndNotify('_resolveRound');
       if (_isMultiplayer && _isHost) {
         _nextRoundTimer?.cancel();
