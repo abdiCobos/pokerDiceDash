@@ -31,14 +31,10 @@ class GameTableScreen extends StatefulWidget {
 
 class _GameTableScreenState extends State<GameTableScreen>
     with TickerProviderStateMixin {
-  late AnimationController _shakeController;
-  late Animation<double> _shakeAnimation;
 
   final GlobalKey _localSeatKey = GlobalKey();
 
-  int _lastRollCounter = 0;
   bool _lastMustSwap = false;
-  double _dieScale = 1.0;
   int _lastPot = 0;
   int _previousRevealed = 0;
   CardModel? _lastBurned;
@@ -71,14 +67,6 @@ class _GameTableScreenState extends State<GameTableScreen>
       DeviceOrientation.landscapeLeft,
     ]);
     GameSettings().applyWakelock(atTable: true);
-    _shakeController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-    _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut),
-    );
-
     _burnController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -105,20 +93,7 @@ class _GameTableScreenState extends State<GameTableScreen>
     GameSettings().applyWakelock(atTable: false);
     _hostConnectionSub?.cancel();
     _burnController.dispose();
-    _shakeController.dispose();
     super.dispose();
-  }
-
-  void _triggerShake() {
-    _shakeController.reset();
-    _shakeController.forward();
-  }
-
-  void _triggerBounce() {
-    setState(() => _dieScale = 1.4);
-    Future.delayed(const Duration(milliseconds: 180), () {
-      if (mounted) setState(() => _dieScale = 1.0);
-    });
   }
 
   void _showChaosOverlay() {
@@ -188,16 +163,7 @@ class _GameTableScreenState extends State<GameTableScreen>
         child: SafeArea(
           child: Consumer<GameProvider>(
             builder: (context, game, child) {
-              final diceChanged = game.rollCounter != _lastRollCounter;
               final mustSwapChanged = game.state.mustSwapHands && !_lastMustSwap;
-
-              if (diceChanged) {
-                _lastRollCounter = game.rollCounter;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _triggerShake();
-                  _triggerBounce();
-                });
-              }
 
               if (mustSwapChanged) {
                 _lastMustSwap = true;
@@ -625,83 +591,25 @@ class _GameTableScreenState extends State<GameTableScreen>
   }
 
   Widget _buildDiceArea(GameProvider game) {
-    return AnimatedBuilder(
-      animation: _shakeAnimation,
-      builder: (context, child) {
-        final shake = _shakeAnimation.value;
-        final offset = shake > 0 && shake < 1
-            ? Offset(
-                (shake * 9 * _s) * (shake < 0.5 ? 1 : -1),
-                (shake * 5 * _s) * (shake < 0.33 ? 1 : shake < 0.66 ? -1 : 1),
-              )
-            : Offset.zero;
-
-        return Transform.translate(
-          offset: offset,
-          child: child,
-        );
-      },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildDie(game.die1, isRed: true),
-          SizedBox(width: 12 * _s),
-          _buildDie(game.die2, isRed: false),
-        ],
-      ),
+    // The dice are thrown from the roller's seat toward the dice spot.
+    final diceCenter = Offset(_screenW * 0.25 + 46 * _s, _screenH - _screenH * 0.28 - 20 * _s);
+    final idx = game.state.currentPlayerIndex;
+    Offset origin = Offset(_screenW / 2, _screenH);
+    if (idx >= 0 && idx < game.players.length) {
+      final id = game.players[idx].id;
+      if (id != game.localPlayerId) origin = _seatRects[id]?.center ?? Offset(_screenW / 2, 0);
+    }
+    return _RollingDice(
+      key: ValueKey('dice_${game.rollCounter}'),
+      die1: game.die1,
+      die2: game.die2,
+      from: origin - diceCenter,
+      event: game.lastDiceEvent,
+      animate: game.rollCounter > 0,
+      scale: _s,
     );
   }
 
-  Widget _buildDie(int value, {required bool isRed}) {
-    final dieSize = 40 * _s;
-    final assetName = isRed
-        ? 'assets/images/dice/dieRed_border$value.png'
-        : 'assets/images/dice/dieWhite_border$value.png';
-
-    return AnimatedScale(
-      scale: _dieScale,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutBack,
-      child: Container(
-        width: dieSize,
-        height: dieSize,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(dieSize * 0.18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 8,
-              offset: const Offset(2, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(dieSize * 0.18),
-          child: Image.asset(
-            assetName,
-            width: dieSize,
-            height: dieSize,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: isRed ? Colors.red : Colors.white,
-                child: Center(
-                  child: Text(
-                    '$value',
-                    style: TextStyle(
-                      color: isRed ? Colors.white : Colors.black,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildControls(GameProvider game) {
     final activeIdx = game.state.currentPlayerIndex;
@@ -1884,6 +1792,194 @@ class _OddsPill extends StatelessWidget {
             ),
             child: Text('$pct%', style: TextStyle(color: color, fontSize: 9.5 * scale, fontWeight: FontWeight.bold)),
           ),
+        );
+      },
+    );
+  }
+}
+
+/// Dice Dash roll: the two dice fly in from the roller, tumble with bounces while
+/// their faces change, settle with a small squash and then the combination lights
+/// up with its event name. Keyed by the roll counter, so it plays once per roll.
+class _RollingDice extends StatefulWidget {
+  final int die1;
+  final int die2;
+  final Offset from;
+  final DiceEvent event;
+  final bool animate;
+  final double scale;
+
+  const _RollingDice({
+    super.key,
+    required this.die1,
+    required this.die2,
+    required this.from,
+    required this.event,
+    required this.animate,
+    required this.scale,
+  });
+
+  @override
+  State<_RollingDice> createState() => _RollingDiceState();
+}
+
+class _RollingDiceState extends State<_RollingDice> with SingleTickerProviderStateMixin {
+  static const _travel = 0.78; // share of the animation spent tumbling
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1150),
+    value: widget.animate ? 0 : 1,
+  );
+  final _rng = math.Random();
+  late final List<int> _faces1 = List.generate(16, (_) => 1 + _rng.nextInt(6));
+  late final List<int> _faces2 = List.generate(16, (_) => 1 + _rng.nextInt(6));
+  bool _showLabel = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animate) {
+      _ctrl.forward().then((_) {
+        if (!mounted || widget.event == DiceEvent.none) return;
+        setState(() => _showLabel = true);
+        Future.delayed(const Duration(milliseconds: 2800), () {
+          if (mounted) setState(() => _showLabel = false);
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  (String, Color)? get _label => switch (widget.event) {
+        DiceEvent.luckySeven => ('¡SUERTE! +30%', const Color(0xFFFFD54F)),
+        DiceEvent.swap => ('¡INTERCAMBIO!', Colors.redAccent),
+        DiceEvent.allIn => ('¡ALL-IN!', Colors.deepOrangeAccent),
+        DiceEvent.spy => ('¡ESPÍA!', Colors.purpleAccent),
+        DiceEvent.extraCard => ('¡CARTA EXTRA!', Colors.tealAccent),
+        DiceEvent.blackjack => ('¡21!', Colors.lightGreenAccent),
+        DiceEvent.none => null,
+      };
+
+  Widget _die(int value, bool red, double size) {
+    final asset = red ? 'assets/images/dice/dieRed_border$value.png' : 'assets/images/dice/dieWhite_border$value.png';
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.18),
+      child: Image.asset(
+        asset,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (c, e, st) => Container(
+          width: size,
+          height: size,
+          color: red ? Colors.red : Colors.white,
+          alignment: Alignment.center,
+          child: Text('$value', style: TextStyle(color: red ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    );
+  }
+
+  Widget _tumbling(double t, {required int value, required List<int> faces, required bool red, required double delay, required double spin}) {
+    final s = widget.scale;
+    final size = 40 * s;
+    final local = ((t - delay) / (1 - delay)).clamp(0.0, 1.0);
+    final k = Curves.easeOutCubic.transform((local / _travel).clamp(0.0, 1.0));
+    // Two bounces that shrink as the die slows down.
+    final hop = (math.sin(k * math.pi * 2.5)).abs() * (1 - k) * 46 * s;
+    final travel = widget.from * (1 - k);
+    final rolling = local < _travel;
+    final face = rolling ? faces[(local * faces.length / _travel).floor().clamp(0, faces.length - 1)] : value;
+    // Landing squash after the tumble.
+    final land = rolling ? 0.0 : math.sin(((local - _travel) / (1 - _travel)) * math.pi);
+    final scale = rolling ? 1 + 0.22 * (1 - k) : 1 - 0.07 * land;
+    return Opacity(
+      opacity: (local * 4).clamp(0.0, 1.0),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          // Shadow on the felt: follows the die but stays on the ground.
+          Transform.translate(
+            offset: Offset(travel.dx, travel.dy + size * 0.55),
+            child: Container(
+              width: size * 0.9,
+              height: size * 0.22,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.35 * (0.4 + 0.6 * k)),
+                borderRadius: BorderRadius.circular(size),
+              ),
+            ),
+          ),
+          Transform.translate(
+            offset: travel + Offset(0, -hop),
+            child: Transform.rotate(
+              angle: spin * (1 - k) * 4 * math.pi,
+              child: Transform.scale(scale: scale, child: _die(face, red, size)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.scale;
+    final label = _label;
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        final t = _ctrl.value;
+        final dice = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _tumbling(t, value: widget.die1, faces: _faces1, red: true, delay: 0, spin: 1),
+            SizedBox(width: 12 * s),
+            _tumbling(t, value: widget.die2, faces: _faces2, red: false, delay: 0.06, spin: -1),
+          ],
+        );
+        final lit = _showLabel && label != null;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              padding: EdgeInsets.all(4 * s),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12 * s),
+                boxShadow: lit ? [BoxShadow(color: label.$2.withValues(alpha: 0.65), blurRadius: 18 * s, spreadRadius: 2 * s)] : const [],
+              ),
+              child: dice,
+            ),
+            AnimatedOpacity(
+              opacity: lit ? 1 : 0,
+              duration: const Duration(milliseconds: 250),
+              child: AnimatedScale(
+                scale: lit ? 1 : 0.6,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOutBack,
+                child: Container(
+                  margin: EdgeInsets.only(top: 6 * s),
+                  padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 3 * s),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(12 * s),
+                    border: Border.all(color: label?.$2 ?? Colors.transparent, width: 1.5),
+                  ),
+                  child: Text(
+                    label?.$1 ?? '',
+                    style: TextStyle(color: label?.$2 ?? Colors.white, fontSize: 12 * s, fontWeight: FontWeight.w900, letterSpacing: 1),
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
