@@ -2255,6 +2255,7 @@ class _PlayerSeat extends StatelessWidget {
                       final isWinner = isShowdown && winning != null &&
                           winning.any((w) => w.value == card.value && w.suit == card.suit);
                       final cardScale = (isLocal ? 0.75 : (game.players.length > 5 ? 0.40 : 0.48)) * (isLocal ? 1.0 : shrink);
+                      final discarding = game.isDiscardingCard(playerId, cardIdx);
                       final cardWidget = _winningGlow(
                         isWinner: isWinner,
                         isShowdown: isShowdown,
@@ -2263,11 +2264,21 @@ class _PlayerSeat extends StatelessWidget {
                           child: _spiedCard(
                             spied: !faceUp && game.isCardSpied(game.localPlayerId, playerId, cardIdx),
                             scale: s,
-                            child: CardWidget(
-                              card: card,
-                              // Espía: the local player sees this one card of an opponent.
-                              isFaceUp: faceUp || game.isCardSpied(game.localPlayerId, playerId, cardIdx),
-                              scale: cardScale,
+                            // 6+1: the card that goes fades and rises before it is removed.
+                            child: AnimatedSlide(
+                              offset: discarding ? const Offset(0, -0.35) : Offset.zero,
+                              duration: const Duration(milliseconds: 600),
+                              curve: Curves.easeIn,
+                              child: AnimatedOpacity(
+                                opacity: discarding ? 0.25 : 1.0,
+                                duration: const Duration(milliseconds: 600),
+                                child: CardWidget(
+                                  card: card,
+                                  // Espía: the local player sees this one card of an opponent.
+                                  isFaceUp: faceUp || game.isCardSpied(game.localPlayerId, playerId, cardIdx),
+                                  scale: cardScale,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -2275,7 +2286,7 @@ class _PlayerSeat extends StatelessWidget {
                       return isPreFlop
                           ? _DealtCardAnimation(
                               key: ValueKey('deal_${game.roundCounter}_$cardIdx'),
-                              dealIndex: dealIndex,
+                              dealIndex: cardIdx >= 2 ? 0 : dealIndex,
                               child: cardWidget,
                             )
                           : cardWidget;

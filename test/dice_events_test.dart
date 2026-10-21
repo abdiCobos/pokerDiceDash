@@ -94,6 +94,11 @@ void main() {
     g.debugNextDice = [3, 3];
     g.rollDice();
     expect(g.lastDiceEvent, DiceEvent.spy);
+    // Nothing is revealed (and no message) until the dice land.
+    expect(g.centralMessage, isNull);
+    expect([for (final p in g.players) for (var i = 0; i < p.hand.length; i++) if (g.isCardSpied(g.localPlayerId, p.id, i)) 1], isEmpty);
+    await tester.pump(GameProvider.diceRollAnimation);
+    expect(g.centralMessage, isNotNull);
     final spiedSeats = [
       for (final p in g.players)
         for (var i = 0; i < p.hand.length; i++)
@@ -123,16 +128,26 @@ void main() {
     g.debugNextDice = [6, 1];
     g.rollDice();
     expect(g.lastDiceEvent, DiceEvent.extraCard);
-    expect(me.hand, hasLength(3));
+    expect(me.hand, hasLength(2), reason: 'the third card must wait for the dice to land');
     expect(g.diceEventBusy, isTrue);
+    await tester.pump(GameProvider.diceRollAnimation);
+    expect(me.hand, hasLength(3));
     final three = List.of(me.hand);
-    for (var i = 0; i < 25; i++) {
+    // The three cards stay on screen, then the one that goes is marked before it leaves.
+    await tester.pump(const Duration(milliseconds: 2000));
+    expect(me.hand, hasLength(3));
+    expect([for (var i = 0; i < 3; i++) if (g.isDiscardingCard(me.id, i)) i], isEmpty);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect([for (var i = 0; i < 3; i++) if (g.isDiscardingCard(me.id, i)) i], hasLength(1));
+    expect(me.hand, hasLength(3));
+    for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(me.hand, hasLength(2));
     final board = g.communityCards.take(g.revealedCommunityCount).toList();
     expect(me.hand, GameProvider.bestTwoOf(three, board));
     expect(g.diceEventBusy, isFalse);
+    expect([for (var i = 0; i < 2; i++) if (g.isDiscardingCard(me.id, i)) i], isEmpty);
     await finish(tester, g);
   });
 

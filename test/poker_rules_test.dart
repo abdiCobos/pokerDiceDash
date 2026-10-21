@@ -25,7 +25,7 @@ void humanActs(GameProvider g, Random rng) {
   if (idx < 0 || idx >= g.players.length) return;
   final me = g.players[idx];
   // Like the real UI: no buttons for someone who folded.
-  if (me.id != g.localPlayerId || me.isFolded || g.centralMessage != null || g.isBetting) return;
+  if (me.id != g.localPlayerId || me.isFolded || g.centralMessage != null || g.isBetting || g.diceEventBusy) return;
   if (g.state.status == GameStatus.diceTurn) {
     g.rollDice();
     return;

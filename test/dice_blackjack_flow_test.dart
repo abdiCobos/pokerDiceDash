@@ -62,6 +62,11 @@ void main() {
     g.debugDiceBjCards = [c('A'), c('K'), c('10'), c('7')];
     g.debugNextDice = [2, 1];
     g.rollDice();
+    // While the dice are still rolling nothing opens yet, but nobody may act.
+    await tester.pump(GameProvider.diceRollAnimation - const Duration(milliseconds: 100));
+    expect(g.diceBlackjack, isNull);
+    expect(g.diceEventBusy, isTrue);
+    await tester.pump(const Duration(milliseconds: 100));
     expect(g.diceBlackjack, isNotNull);
     expect(g.diceEventBusy, isTrue);
     g.diceBjBet(me.id, 100);
@@ -83,6 +88,7 @@ void main() {
     final before = me.chipBalance;
     g.debugNextDice = [1, 2];
     g.rollDice();
+    await tester.pump(GameProvider.diceRollAnimation);
     expect(g.diceBlackjack, isNotNull);
     await tester.pump(GameProvider.diceBjDecisionTime + const Duration(milliseconds: 200));
     expect(g.diceBlackjack?.skipped ?? true, isTrue);
@@ -101,6 +107,7 @@ void main() {
     g.debugDiceBjCards = [c('10'), c('8'), c('10'), c('6'), c('K')];
     g.debugNextDice = [2, 1];
     g.rollDice();
+    await tester.pump(GameProvider.diceRollAnimation);
     g.diceBjBet(me.id, 50);
     expect(me.chipBalance, before - 50);
     await tester.pump(GameProvider.diceBjDecisionTime + const Duration(milliseconds: 200));
@@ -119,6 +126,7 @@ void main() {
     final me = g.players.firstWhere((p) => p.id == g.localPlayerId);
     g.debugNextDice = [2, 1];
     g.rollDice();
+    await tester.pump(GameProvider.diceRollAnimation);
     final before = me.chipBalance;
     g.diceBjBet(me.id, 5);
     g.diceBjBet(me.id, 500);
@@ -175,6 +183,7 @@ void main() {
     g.debugDiceBjCards = [c('10'), c('6'), c('9'), c('7')];
     g.debugNextDice = [2, 1];
     g.rollDice();
+    await tester.pump(GameProvider.diceRollAnimation);
     final before = me.chipBalance;
     g.diceBjBet(me.id, 80);
     expect(me.chipBalance, before - 80);

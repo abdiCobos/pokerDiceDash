@@ -488,12 +488,39 @@ class GameProvider extends ChangeNotifier {
     return DiceEvent.none;
   }
 
-  /// Doble 6: the roller goes all-in (after the dice animation).
+  /// How long the dice tumble on screen (`_RollingDice`); events start after it.
+  static const Duration diceRollAnimation = Duration(milliseconds: 1250);
+
+  void _applyDiceEvent(DiceEvent event, PlayerModel roller) {
+    switch (event) {
+      case DiceEvent.allIn:
+        _scheduleForcedAllIn(roller);
+      case DiceEvent.spy:
+        _applySpy(roller);
+      case DiceEvent.extraCard:
+        _applyExtraCard(roller);
+      case DiceEvent.blackjack:
+        _startDiceBlackjack(roller);
+      case DiceEvent.luckySeven:
+        // House bonus, once per hand, as dead money for the main pot. Crediting it
+        // as the roller's own contribution broke side pots and could repeat every turn.
+        final extra = (pot * 0.30).toInt();
+        _houseBonus += extra;
+        SoundService().chipsMultiply();
+        AppLogger().event('lucky_seven', params: {'pot_bonus': extra.toString()});
+        setCentralMessage('Dados de la suerte. El Pot aumenta un 30%');
+      case DiceEvent.swap:
+      case DiceEvent.none:
+        break;
+    }
+  }
+
+  /// Doble 6: the roller goes all-in after the message.
   void _scheduleForcedAllIn(PlayerModel roller) {
     final epoch = _epoch;
     _diceEventBusy = true;
     setCentralMessage('¡Doble 6! ${roller.name} va ALL-IN');
-    Future.delayed(const Duration(milliseconds: 1600), () {
+    Future.delayed(const Duration(milliseconds: 1400), () {
       _diceEventBusy = false;
       if (_isExiting || epoch != _epoch) return;
       final ci = _state.currentPlayerIndex;
@@ -526,17 +553,35 @@ class GameProvider extends ChangeNotifier {
     final extra = _deck.removeLast();
     roller.hand = [...roller.hand, extra];
     _diceEventBusy = true;
+    SoundService().cardMix();
     setCentralMessage('¡Carta extra! ${roller.name} se queda con sus dos mejores cartas');
-    Future.delayed(const Duration(milliseconds: 1800), () {
-      _diceEventBusy = false;
-      if (_isExiting || epoch != _epoch || roller.hand.length != 3) return;
-      roller.hand = bestTwoOf(roller.hand, _state.communityCards.take(_state.revealedCommunityCount).toList());
-      _spied.forEach((_, set) => set.removeWhere((k) => k.startsWith('${roller.id}:')));
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (_isExiting || epoch != _epoch || roller.hand.length != 3) {
+        _diceEventBusy = false;
+        return;
+      }
+      final board = _state.communityCards.take(_state.revealedCommunityCount).toList();
+      final keep = bestTwoOf(roller.hand, board);
+      _extraDiscard = (roller.id, roller.hand.indexWhere((c) => !keep.contains(c)));
       notifyListeners();
       broadcastState();
-      _checkBotTurn();
+      Future.delayed(const Duration(milliseconds: 900), () {
+        _extraDiscard = null;
+        _diceEventBusy = false;
+        if (_isExiting || epoch != _epoch || roller.hand.length != 3) return;
+        roller.hand = keep;
+        _spied.forEach((_, set) => set.removeWhere((k) => k.startsWith('${roller.id}:')));
+        notifyListeners();
+        broadcastState();
+        _checkBotTurn();
+      });
     });
   }
+
+  /// 6+1: the card the roller is about to throw away (playerId, card index).
+  (String, int)? _extraDiscard;
+  bool isDiscardingCard(String playerId, int cardIndex) =>
+      _extraDiscard != null && _extraDiscard!.$1 == playerId && _extraDiscard!.$2 == cardIndex;
 
   // --- "21" event (2+1) --------------------------------------------------------
 
@@ -1876,35 +1921,20 @@ class GameProvider extends ChangeNotifier {
     if (event == DiceEvent.swap) {
       swapFlag = true;
     }
-    if (roller != null) {
-      switch (event) {
-        case DiceEvent.allIn:
-          _scheduleForcedAllIn(roller);
-        case DiceEvent.spy:
-          _applySpy(roller);
-        case DiceEvent.extraCard:
-          _applyExtraCard(roller);
-        case DiceEvent.blackjack:
-          _startDiceBlackjack(roller);
-        default:
-          break;
-      }
-    }
-    if (event == DiceEvent.luckySeven) {
-
-      _luckySevenApplied = true;
-
-      // House bonus, once per hand, as dead money for the main pot. Crediting it
-      // as the roller's own contribution broke side pots and could repeat every turn.
-      final extra = (pot * 0.30).toInt();
-      _houseBonus += extra;
-
-      SoundService().chipsMultiply();
-
-      AppLogger().event('lucky_seven', params: {'pot_bonus': extra.toString()});
-
-      setCentralMessage('Dados de la suerte. El Pot aumenta un 30%');
-
+    if (event == DiceEvent.luckySeven) _luckySevenApplied = true;
+    // Nothing happens (no message, no card, no panel) until the dice have landed
+    // on every screen; meanwhile nobody may act on the old situation.
+    if (roller != null && event != DiceEvent.none && event != DiceEvent.swap) {
+      _diceEventBusy = true;
+      final epoch = _epoch;
+      Future.delayed(diceRollAnimation, () {
+        if (_isExiting || epoch != _epoch) return;
+        _diceEventBusy = false;
+        _applyDiceEvent(event, roller);
+        notifyListeners();
+        broadcastState();
+        _checkBotTurn();
+      });
     }
 
 
@@ -2052,6 +2082,7 @@ class GameProvider extends ChangeNotifier {
     _spied.clear();
     _lastDiceEvent = DiceEvent.none;
     _abortDiceBlackjack();
+    _extraDiscard = null;
     _diceEventBusy = false;
     _houseBonus = 0;
     _luckySevenApplied = false;
@@ -2607,6 +2638,7 @@ class GameProvider extends ChangeNotifier {
       'diceEvent': _lastDiceEvent.name,
       'diceEventBusy': _diceEventBusy,
       'diceBj': _diceBj?.toMap(),
+      'extraDiscard': _extraDiscard == null ? null : [_extraDiscard!.$1, _extraDiscard!.$2],
       'spied': forPlayerId == null ? const <String>[] : (_spied[forPlayerId]?.toList() ?? const <String>[]),
       'payouts': _resultPayouts,
       'phase': _state.phase.name,
@@ -2781,6 +2813,8 @@ class GameProvider extends ChangeNotifier {
     _diceEventBusy = state['diceEventBusy'] as bool? ?? _diceEventBusy;
     final bj = state['diceBj'];
     _diceBj = bj is Map ? DiceBlackjack.fromMap(Map<String, dynamic>.from(bj)) : null;
+    final xd = state['extraDiscard'];
+    _extraDiscard = xd is List && xd.length == 2 ? (xd[0] as String, (xd[1] as num).toInt()) : null;
     final spied = state['spied'];
     if (spied is List) {
       _spied

@@ -33,10 +33,11 @@ ask the user which one is intended before "fixing" either.
 - Total 7 "Dados de la suerte": the pot grows by 30% of house money, once per hand.
 - Events come from `GameProvider.diceEventFor(a, b)` (`enum DiceEvent`); while one runs,
   `diceEventBusy` blocks bots, the UI and the turn watchdog:
-  - 6+6 "¡ALL-IN!": after 1.6 s the roller raises their whole stack (or calls if they cannot raise).
+  - Every event waits `diceRollAnimation` (1.25 s) so nothing shows before the dice land.
+  - 6+6 "¡ALL-IN!": after 1.4 s the roller raises their whole stack (or calls if they cannot raise).
   - 3+3 "¡ESPÍA!": the roller sees one random hole card of one live opponent (`isCardSpied`;
     unmasked only in that viewer's snapshot; cleared on each deal and on 1+1).
-  - 1+6 "¡CARTA EXTRA!": the roller gets a third hole card, then keeps the best two (`bestTwoOf`) after 1.8 s.
+  - 1+6 "¡CARTA EXTRA!": the roller gets a third hole card, shows all three 2.2 s, marks the one that goes (`isDiscardingCard`, fades 0.9 s), keeps the best two (`bestTwoOf`).
   - 2+1 "¡21!": the roller plays one Blackjack hand vs a dealer (`lib/models/dice_blackjack.dart`,
     own 52-card shoe, poker deck untouched). Bet 10-200 from their free chips (or "No apostar");
     blackjack 3:2, win 1:1, push returns, dealer stands on 17. Everyone sees the panel; only the
