@@ -260,7 +260,11 @@ class _GameTableScreenState extends State<GameTableScreen>
                       )),
                       _buildHeader(game),
                       _buildCenterArea(game),
-                      ..._buildPlayerSeats(players, game),
+                      // Seats and bets live in their own layer: their count changes with every
+                      // bet, which must not shift (and rebuild) the widgets after them.
+                      Positioned.fill(
+                        child: Stack(clipBehavior: Clip.none, children: _buildPlayerSeats(players, game)),
+                      ),
                       _buildControls(game),
                       if (game.state.status == GameStatus.betting)
                         _buildActionPanel(game),
@@ -446,6 +450,7 @@ class _GameTableScreenState extends State<GameTableScreen>
         ),
       );
       widgets.add(Positioned(
+        key: const ValueKey('seat_local'),
         bottom: 0,
         left: 0,
         right: 0,
@@ -480,10 +485,12 @@ class _GameTableScreenState extends State<GameTableScreen>
     void addBet(String playerId, Rect betRect, Offset from) {
       final amount = game.getPlayerBet(playerId);
       if (amount <= 0) return;
+      // Keyed per player: a new bet elsewhere must not re-animate this one.
       betWidgets.add(Positioned.fromRect(
+        key: ValueKey('betpos_$playerId'),
         rect: betRect,
         child: _BetStack(
-          key: ValueKey('bet_${playerId}_${game.roundCounter}_$amount'),
+          key: ValueKey('bet_${game.roundCounter}_$amount'),
           amount: amount,
           from: from - betRect.center,
           scale: _s,
@@ -521,6 +528,7 @@ class _GameTableScreenState extends State<GameTableScreen>
       _seatRects[opp.id] = rect;
 
       widgets.add(Positioned.fromRect(
+        key: ValueKey('seat_${opp.id}'),
         rect: rect,
         child: FittedBox(
           fit: BoxFit.scaleDown,
@@ -532,6 +540,7 @@ class _GameTableScreenState extends State<GameTableScreen>
             shrink: layout.scale,
             width: rect.width,
             inlineBet: inlineBets.contains(opp.id),
+            foldToward: _unitToward(rect.center, Offset(_screenW / 2, _screenH * 0.45)),
           ),
         ),
       ));
@@ -539,6 +548,11 @@ class _GameTableScreenState extends State<GameTableScreen>
 
     widgets.addAll(betWidgets);
     return widgets;
+  }
+
+  static Offset _unitToward(Offset from, Offset to) {
+    final d = to - from;
+    return d.distance == 0 ? const Offset(0, 1) : d / d.distance;
   }
 
   Widget _buildCommunityCards(GameProvider game) {
@@ -1673,6 +1687,7 @@ class _DealtCardAnimation extends StatefulWidget {
   final Widget child;
 
   const _DealtCardAnimation({
+    super.key,
     required this.dealIndex,
     required this.child,
   });
@@ -1724,6 +1739,69 @@ class _DealtCardAnimationState extends State<_DealtCardAnimation>
           child: Transform.translate(
             offset: Offset(0, -72 * s * _slideAnimation.value),
             child: child,
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+/// Fold: the cards are thrown a little toward the table, tilt and fade to the
+/// dimmed "folded" look. Plays on every fold; no animation for a seat that was
+/// already folded when it appeared.
+class _FoldAnimator extends StatefulWidget {
+  final bool folded;
+  final Offset direction;
+  final double scale;
+  final Widget child;
+
+  const _FoldAnimator({super.key, required this.folded, required this.direction, required this.scale, required this.child});
+
+  @override
+  State<_FoldAnimator> createState() => _FoldAnimatorState();
+}
+
+class _FoldAnimatorState extends State<_FoldAnimator> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+    value: widget.folded ? 1 : 0,
+  );
+
+  @override
+  void didUpdateWidget(covariant _FoldAnimator old) {
+    super.didUpdateWidget(old);
+    if (!old.folded && widget.folded) {
+      _ctrl.forward(from: 0);
+    } else if (old.folded && !widget.folded) {
+      _ctrl.value = 0; // new hand
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) {
+        final t = _ctrl.value;
+        // Out toward the table and back: the throw, then the cards settle dimmed.
+        final travel = Curves.easeOut.transform((t * 2).clamp(0.0, 1.0)) - Curves.easeIn.transform(((t - 0.5) * 2).clamp(0.0, 1.0));
+        final dim = Curves.easeInOut.transform(t);
+        return Opacity(
+          opacity: 1 - 0.6 * dim,
+          child: Transform.translate(
+            offset: widget.direction * 26 * widget.scale * travel,
+            child: Transform.rotate(
+              angle: 0.22 * travel * (widget.direction.dx >= 0 ? 1 : -1),
+              child: Transform.scale(scale: 1 - 0.1 * dim, child: child),
+            ),
           ),
         );
       },
@@ -1860,6 +1938,9 @@ class _PlayerSeat extends StatelessWidget {
   /// No room on the felt for this seat's bet: show it next to the chip count.
   final bool inlineBet;
 
+  /// Direction the cards are thrown when this player folds (toward the table centre).
+  final Offset foldToward;
+
   const _PlayerSeat({
     required this.playerId,
     required this.isLocal,
@@ -1868,6 +1949,7 @@ class _PlayerSeat extends StatelessWidget {
     this.shrink = 1.0,
     this.width,
     this.inlineBet = false,
+    this.foldToward = const Offset(0, -1),
   });
 
   @override
@@ -2043,7 +2125,11 @@ class _PlayerSeat extends StatelessWidget {
                         ),
                       );
                       return isPreFlop
-                          ? _DealtCardAnimation(dealIndex: dealIndex, child: cardWidget)
+                          ? _DealtCardAnimation(
+                              key: ValueKey('deal_${game.roundCounter}_$cardIdx'),
+                              dealIndex: dealIndex,
+                              child: cardWidget,
+                            )
                           : cardWidget;
                     }),
                   );
@@ -2062,17 +2148,15 @@ class _PlayerSeat extends StatelessWidget {
                     ),
                   );
 
-                  final result = Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      if (livePlayer.isFolded)
-                        Opacity(opacity: 0.4, child: wrappedRow)
-                      else
-                        wrappedRow,
-                    ],
+                  // Same widget folded or not (switching wrappers rebuilt the cards and
+                  // replayed the deal animation); every fold plays its own throw.
+                  return _FoldAnimator(
+                    key: ValueKey('fold_$playerId'),
+                    folded: livePlayer.isFolded,
+                    direction: foldToward,
+                    scale: s,
+                    child: wrappedRow,
                   );
-
-                  return result;
                 },
               ),
             ],

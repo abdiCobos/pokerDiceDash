@@ -65,9 +65,33 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
 - Status lines: "Turno de {name}... pensando jugada", "Tu turno", "Barajando...".
 - Money shown as `$900` in Blackjack, plain chip count in poker.
 
+## Cards
+- Face-up cards are the PNGs in `assets/images/cards/`, drawn to FILL the card box.
+- Card backs are drawn in code (`CardBackPainter` in `card_widget.dart`: red, gold inner border,
+  diamond lattice, rounded shadow). Do not reintroduce a PNG back: it had a white/grey rim.
+- The card box is `CardWidget.cardWidth/cardHeight * scale * CardWidget.autoScaleOf(context)`;
+  any layout that reserves space for cards must use the same factor.
+
+## Sound
+- MP3 only (`assets/sounds/*.mp3`): Windows, macOS and iOS cannot decode OGG.
+- Host/single player play sounds where the action happens (provider); LAN clients play the same
+  sounds from state diffs (`_SoundSnapshot` in game_provider, `applyRemoteState` in blackjack).
+  Community card flips play from the table widget. `test/sounds_test.dart` checks every table.
+
+## Table options
+- Gear `TableOptionsButton` (lib/ui/widgets/table_options.dart) in both table headers opens
+  "Opciones": Sonido, Juego rápido (`GameSettings().pace` scales bot/dealer delays), Mostrar mi
+  probabilidad (poker `_OddsPill` on the local seat), Pantalla siempre encendida, Salir de la mesa
+  (top bar, reachable without scrolling). Settings live in `GameSettings` (persisted).
+
 ## Motion
 - State changes 250 ms (`AnimatedContainer`), card deal ~350 ms per card, bot "thinking" 600-700 ms.
 - Animations must never gate game logic: logic advances on its own timers; UI follows state.
+- Animated widgets in variable-length lists (seats, bets) MUST have stable keys on the outermost
+  widget (`ValueKey('seat_<id>')`, `ValueKey('betpos_<id>')`) and live in their own Stack layer;
+  never toggle a wrapper widget (e.g. `if (folded) Opacity(...) else child`) around animated
+  children: it rebuilds them and replays their animation. Fold = `_FoldAnimator`.
+  Regression test: `test/table_identity_test.dart`.
 
 ## Before finishing a visual change
 Run the `visual-qa` skill and look at the PNGs at 800x360, 640x360 and 1280x720.
