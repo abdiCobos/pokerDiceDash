@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/game_provider.dart';
 import 'services/p2p_service.dart';
 import 'services/logger_service.dart';
-import 'services/sound_service.dart';
+import 'services/game_settings.dart';
 import 'ui/screens/lobby_screen.dart';
 
 void main() async {
@@ -21,7 +21,7 @@ void main() async {
   final p2pService = P2PService();
 
   final prefs = await SharedPreferences.getInstance();
-  await SoundService().load();
+  await GameSettings().load();
 
   runApp(
     MultiProvider(

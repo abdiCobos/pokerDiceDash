@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import '../models/game_state.dart';
 
 import '../models/player_model.dart';
+import '../services/game_settings.dart';
 import '../services/poker_bot_ai.dart';
 
 import '../models/card_model.dart';
@@ -2564,7 +2565,7 @@ class GameProvider extends ChangeNotifier {
   Future<void> _playBotDice(PlayerModel bot) async {
     final epoch = _epoch;
     if (_isExiting || epoch != _epoch) return;
-    await Future.delayed(Duration(milliseconds: 1000 + Random().nextInt(1000)));
+    await Future.delayed(GameSettings().scaled(Duration(milliseconds: 1000 + Random().nextInt(1000))));
     if (_isExiting || epoch != _epoch) return;
     if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
     if (_players[_state.currentPlayerIndex].id != bot.id) return;
@@ -2576,7 +2577,7 @@ class GameProvider extends ChangeNotifier {
   Future<void> _playBotTurn(PlayerModel bot) async {
     final epoch = _epoch;
     if (_isExiting || epoch != _epoch) return;
-    await Future.delayed(Duration(milliseconds: 1500 + Random().nextInt(1000)));
+    await Future.delayed(GameSettings().scaled(Duration(milliseconds: 1500 + Random().nextInt(1000))));
     if (_isExiting || epoch != _epoch) return;
     
     if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;

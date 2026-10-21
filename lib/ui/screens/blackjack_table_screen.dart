@@ -7,7 +7,8 @@ import '../../providers/blackjack_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../services/p2p_service.dart';
 import '../widgets/card_widget.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+import '../../services/game_settings.dart';
+import '../widgets/table_options.dart';
 import '../widgets/player_seat_card.dart';
 import 'lobby_screen.dart';
 
@@ -33,7 +34,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-    WakelockPlus.enable();
+    GameSettings().applyWakelock(atTable: true);
   }
 
   @override
@@ -59,7 +60,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
 
   @override
   void dispose() {
-    WakelockPlus.disable();
+    GameSettings().applyWakelock(atTable: false);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -268,6 +269,8 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                 style: TextStyle(color: Colors.white70, fontSize: 11 * _s, fontWeight: FontWeight.w500),
               ),
               const Spacer(),
+              TableOptionsButton(scale: _s, poker: false, onExit: _confirmExit),
+              SizedBox(width: 8 * _s),
               // Bankroll indicator
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 3 * _s),

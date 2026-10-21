@@ -13,7 +13,9 @@ import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
 import '../widgets/card_widget.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+import '../../services/game_settings.dart';
+import '../../services/poker_bot_ai.dart';
+import '../widgets/table_options.dart';
 import '../widgets/betting_chip_widget.dart';
 import 'lobby_screen.dart';
 
@@ -68,7 +70,7 @@ class _GameTableScreenState extends State<GameTableScreen>
       DeviceOrientation.landscapeRight,
       DeviceOrientation.landscapeLeft,
     ]);
-    WakelockPlus.enable();
+    GameSettings().applyWakelock(atTable: true);
     _shakeController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -100,7 +102,7 @@ class _GameTableScreenState extends State<GameTableScreen>
   @override
   void dispose() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    WakelockPlus.disable();
+    GameSettings().applyWakelock(atTable: false);
     _hostConnectionSub?.cancel();
     _burnController.dispose();
     _shakeController.dispose();
@@ -308,6 +310,8 @@ class _GameTableScreenState extends State<GameTableScreen>
                 icon: Icon(Icons.arrow_back, color: Colors.white70, size: 28 * _s),
                 onPressed: () => Navigator.maybePop(context),
               ),
+              SizedBox(width: 4 * _s),
+              TableOptionsButton(scale: _s, poker: true, onExit: () => Navigator.maybePop(context)),
             ],
           ),
           if (widget.isMultiplayer && widget.isHost && game.state.status == GameStatus.waitingPlayers)
@@ -1728,6 +1732,60 @@ class _DealtCardAnimationState extends State<_DealtCardAnimation>
   }
 }
 
+/// Optional helper (Opciones > Mostrar mi probabilidad): the local player's
+/// chance of winning against the players still in the hand. Uses only what the
+/// player can see (own cards + revealed board). Cached until that changes.
+class _OddsPill extends StatelessWidget {
+  final String playerId;
+  final double scale;
+
+  const _OddsPill({required this.playerId, required this.scale});
+
+  static String? _cacheKey;
+  static double _cacheValue = 0;
+
+  static double _equity(GameProvider game, PlayerModel me) {
+    final board = game.communityCards.take(game.revealedCommunityCount).toList();
+    final opponents = game.players.where((p) => p.id != me.id && !p.isFolded && !p.isBankrupt && p.hand.isNotEmpty).length;
+    final key = '${game.roundCounter}|${me.hand.map((c) => '${c.value}${c.suit.index}').join()}|${board.length}|$opponents';
+    if (key != _cacheKey) {
+      _cacheKey = key;
+      _cacheValue = opponents == 0 ? 1 : PokerBotBrain().estimateEquity(me.hand, board, opponents, iterations: 500);
+    }
+    return _cacheValue;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: GameSettings(),
+      builder: (context, _) {
+        if (!GameSettings().showOdds) return const SizedBox.shrink();
+        final game = context.watch<GameProvider>();
+        final me = game.players.where((p) => p.id == playerId).firstOrNull;
+        if (me == null || me.hand.length < 2 || me.isFolded || game.phase == PokerPhase.showdown) {
+          return const SizedBox.shrink();
+        }
+        final pct = (_equity(game, me) * 100).round();
+        final color = pct >= 50 ? Colors.greenAccent : (pct >= 25 ? Colors.amber : Colors.redAccent);
+        return Tooltip(
+          message: 'Probabilidad de ganar la mano',
+          child: Container(
+            margin: EdgeInsets.only(left: 6 * scale),
+            padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 1 * scale),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(8 * scale),
+              border: Border.all(color: color.withValues(alpha: 0.7)),
+            ),
+            child: Text('$pct%', style: TextStyle(color: color, fontSize: 9.5 * scale, fontWeight: FontWeight.bold)),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _ChaosOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -1909,6 +1967,7 @@ class _PlayerSeat extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (isLocal) _OddsPill(playerId: playerId, scale: s),
                   if (inlineBet)
                     Selector<GameProvider, int>(
                       selector: (_, g) => g.getPlayerBet(playerId),

@@ -8,6 +8,7 @@ import '../services/sound_service.dart';
 import '../services/logger_service.dart';
 import '../services/blackjack_bot_ai.dart';
 import '../services/bot_service.dart';
+import '../services/game_settings.dart';
 import '../services/poker_bot_ai.dart' show BotDifficulty;
 import '../services/p2p_service.dart';
 import 'game_provider.dart';
@@ -515,7 +516,7 @@ class BlackjackProvider extends ChangeNotifier {
       _state = _state.copyWith(players: updated, deck: _state.deck);
       _logAndNotify('_dealCardsSequentially-$dealStep');
       dealStep++;
-      Future.delayed(const Duration(milliseconds: 350), dealNextCard);
+      Future.delayed(GameSettings().scaled(const Duration(milliseconds: 350)), dealNextCard);
     }
 
     dealNextCard();
@@ -564,7 +565,7 @@ class BlackjackProvider extends ChangeNotifier {
             _state = _state.copyWith(players: updatedPlayers, currentPlayerIndex: pIdx % active.length, currentHandIndex: hIdx);
             _logAndNotify('_advanceToNextActivePlayer-$pIdx-$hIdx');
             if (p.isBot || (!_isMultiplayer && !p.isLocal)) {
-              Future.delayed(const Duration(milliseconds: 600), () => _autoPlayBot(p.id));
+              Future.delayed(GameSettings().scaled(const Duration(milliseconds: 600)), () => _autoPlayBot(p.id));
             } else {
               _armTurnTimer(p.id);
             }
@@ -628,7 +629,7 @@ class BlackjackProvider extends ChangeNotifier {
       final after = players.firstWhere((pl) => pl.id == playerId);
       final cur = _state.currentHandIndex;
       if (_isTurnOf(playerId) && cur < after.hands.length && !after.hands[cur].isFinished) {
-        Future.delayed(const Duration(milliseconds: 700), () => _autoPlayBot(playerId));
+        Future.delayed(GameSettings().scaled(const Duration(milliseconds: 700)), () => _autoPlayBot(playerId));
       }
     } catch (e, s) {
       AppLogger().error('BJ:_autoPlayBot crash: $e', s);
@@ -826,7 +827,7 @@ class BlackjackProvider extends ChangeNotifier {
     updated[dIdx] = updated[dIdx].copyWith(hands: [hand]);
     _state = _state.copyWith(players: updated, deck: _state.deck);
     _logAndNotify('_dealerDrawCard-hit-${hand.handValue}');
-    Future.delayed(const Duration(milliseconds: 700), () => _dealerDrawCardSequential(dIdx, hand));
+    Future.delayed(GameSettings().scaled(const Duration(milliseconds: 700)), () => _dealerDrawCardSequential(dIdx, hand));
   }
 
   void _resolveRound() {
