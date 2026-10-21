@@ -17,7 +17,10 @@ import 'blackjack_table_screen.dart';
 import 'room_list_screen.dart';
 
 class LobbyScreen extends StatefulWidget {
-  const LobbyScreen({super.key});
+  /// Open directly on the "Jugar en red" options (coming back from the room list).
+  final bool startInMultiplayer;
+
+  const LobbyScreen({super.key, this.startInMultiplayer = false});
 
   @override
   State<LobbyScreen> createState() => _LobbyScreenState();
@@ -26,7 +29,7 @@ class LobbyScreen extends StatefulWidget {
 class _LobbyScreenState extends State<LobbyScreen> {
   bool _isHosting = false;
   bool _isGlobalHost = false;
-  bool _showMultiplayer = false;
+  late bool _showMultiplayer = widget.startInMultiplayer;
   GameMode _selectedMode = GameMode.diceDash;
   int _bjBotCount = 2;
   int _pokerBotCount = 3;
@@ -87,12 +90,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
           builder: (dialogCtx, setDialogState) {
             final s = (MediaQuery.of(dialogCtx).size.shortestSide / 400).clamp(0.75, 1.35);
             return Dialog(
-              backgroundColor: const Color(0xFF1A1A2E),
+              backgroundColor: const Color(0xFF07160D),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14 * s),
-                side: const BorderSide(color: Colors.amber, width: 2),
+                borderRadius: BorderRadius.circular(16 * s),
+                side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
               ),
-              child: SingleChildScrollView(
+              // On PC the dialog would otherwise stretch across the whole window.
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 520 * s),
+                child: SingleChildScrollView(
                 child: Padding(
                   padding: EdgeInsets.all(20 * s),
                   child: Column(
@@ -186,6 +192,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   ),
                 ),
               ),
+              ),
             );
           },
         );
@@ -201,12 +208,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
         return StatefulBuilder(
           builder: (dialogCtx, setDialogState) {
             return Dialog(
-              backgroundColor: const Color(0xFF1A1A2E),
+              backgroundColor: const Color(0xFF07160D),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14 * s),
-                side: const BorderSide(color: Colors.amber, width: 2),
+                borderRadius: BorderRadius.circular(16 * s),
+                side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
               ),
-              child: SingleChildScrollView(
+              // On PC the dialog would otherwise stretch across the whole window.
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 520 * s),
+                child: SingleChildScrollView(
                 child: Padding(
                   padding: EdgeInsets.all(20 * s),
                   child: Column(
@@ -298,6 +308,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   ),
                 ),
               ),
+              ),
             );
           },
         );
@@ -314,12 +325,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
           builder: (dialogCtx, setDialogState) {
             final modeName = mode == GameMode.diceDash ? 'Dice Dash' : "Texas Hold'em";
             return Dialog(
-              backgroundColor: const Color(0xFF1A1A2E),
+              backgroundColor: const Color(0xFF07160D),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14 * s),
-                side: const BorderSide(color: Colors.amber, width: 2),
+                borderRadius: BorderRadius.circular(16 * s),
+                side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
               ),
-              child: SingleChildScrollView(
+              // On PC the dialog would otherwise stretch across the whole window.
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 520 * s),
+                child: SingleChildScrollView(
                 child: Padding(
                   padding: EdgeInsets.all(20 * s),
                   child: Column(
@@ -409,6 +423,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   ),
                 ),
               ),
+              ),
             );
           },
         );
@@ -483,39 +498,92 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   Widget _buildModeSelector(double s, StateSetter setDialogState) {
+    Widget option(GameMode mode, String label, Color accent, Color onAccent, Widget glyph) {
+      final selected = _selectedMode == mode;
+      return Expanded(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12 * s),
+            onTap: () {
+              setState(() => _selectedMode = mode);
+              setDialogState(() {});
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 6 * s),
+              decoration: BoxDecoration(
+                color: selected ? Color.lerp(const Color(0xFF07160D), accent, 0.16) : const Color(0xFF07160D),
+                borderRadius: BorderRadius.circular(12 * s),
+                border: Border.all(
+                  color: selected ? accent : Colors.white24,
+                  width: selected ? 2 : 1,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 34 * s,
+                        height: 34 * s,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(8 * s)),
+                        child: glyph,
+                      ),
+                      if (selected)
+                        Positioned(
+                          right: -6 * s,
+                          top: -6 * s,
+                          child: Container(
+                            padding: EdgeInsets.all(1.5 * s),
+                            decoration: BoxDecoration(color: onAccent, shape: BoxShape.circle),
+                            child: Icon(Icons.check, size: 12 * s, color: accent),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 6 * s),
+                  // Shrinks instead of cutting "Texas Hold'em" on narrow phones.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: selected ? Colors.white : Colors.white70,
+                      fontSize: 12.5 * s,
+                      fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                    ),
+                  ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Modo de juego', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
         SizedBox(height: 8 * s),
-        Wrap(
-          spacing: 8 * s,
-          children: GameMode.values.map((mode) {
-            final selected = _selectedMode == mode;
-            String label;
-            Color color;
-            switch (mode) {
-              case GameMode.diceDash:
-                label = '🎲 Dice Dash';
-                color = Colors.amber;
-              case GameMode.texasHoldem:
-                label = '♠️ Texas';
-                color = Colors.red;
-              case GameMode.blackjack:
-                label = '🃏 21';
-                color = Colors.green;
-            }
-            return ChoiceChip(
-              label: Text(label, style: TextStyle(color: selected ? Colors.white : Colors.white70, fontSize: 11 * s)),
-              selected: selected,
-              selectedColor: color,
-              backgroundColor: Colors.white10,
-              onSelected: (v) {
-                setState(() => _selectedMode = mode);
-                setDialogState(() {});
-              },
-            );
-          }).toList(),
+        Row(
+          children: [
+            option(GameMode.diceDash, 'Dice Dash', const Color(0xFFFAC775), const Color(0xFF633806),
+                Icon(Icons.casino, color: const Color(0xFF633806), size: 22 * s)),
+            SizedBox(width: 8 * s),
+            option(GameMode.texasHoldem, "Texas Hold'em", const Color(0xFFF7C1C1), const Color(0xFF791F1F),
+                CustomPaint(size: Size.square(20 * s), painter: const SpadePainter(Color(0xFF791F1F)))),
+            SizedBox(width: 8 * s),
+            option(GameMode.blackjack, 'Blackjack', const Color(0xFFC0DD97), const Color(0xFF27500A),
+                Text('21', style: TextStyle(color: const Color(0xFF27500A), fontSize: 16 * s, fontWeight: FontWeight.w900))),
+          ],
         ),
       ],
     );

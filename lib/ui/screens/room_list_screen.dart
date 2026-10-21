@@ -41,6 +41,17 @@ class _RoomListScreenState extends State<RoomListScreen> {
     super.dispose();
   }
 
+  Future<void> _goBack() async {
+    final p2p = context.read<GameProvider>().p2pService;
+    await p2p.stopDiscovery();
+    if (_isConnecting) await p2p.disconnectAll();
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LobbyScreen(startInMultiplayer: true)),
+    );
+  }
+
   void _startScanning() {
     final p2p = context.read<GameProvider>().p2pService;
     AppLogger().log('ROOMLIST: scanning');
@@ -394,11 +405,23 @@ class _RoomListScreenState extends State<RoomListScreen> {
   @override
   Widget build(BuildContext context) {
     final s = (MediaQuery.of(context).size.shortestSide / 400).clamp(0.75, 1.35);
-    return Scaffold(
+    // This screen replaces the menu, so there is no route to pop: go back explicitly
+    // (arrow on PC, back gesture on Android) to the network options.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goBack();
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFF0A4D28),
       appBar: AppBar(
         backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Volver',
+          onPressed: _goBack,
+        ),
         title: Text('Salas disponibles', style: TextStyle(fontSize: 16 * s, color: Colors.white)),
         centerTitle: true,
         actions: [
@@ -494,6 +517,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
           p2p.startDiscovery('player');
         },
       ),
+    ),
     );
   }
 }
