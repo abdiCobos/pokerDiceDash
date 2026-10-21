@@ -97,8 +97,9 @@ Future<void> showTableOptions(
                 ),
                 toggle('Sonido', 'Cartas, fichas y dados', settings.sound ? Icons.volume_up : Icons.volume_off,
                     settings.sound, settings.setSound),
-                toggle('Juego rápido', 'Los bots piensan y el crupier reparte más rápido', Icons.speed, settings.fastGame,
-                    settings.setFastGame),
+                if (GameSettings.fastGameAvailable)
+                  toggle('Juego rápido', 'Los bots piensan y el crupier reparte más rápido', Icons.speed,
+                      settings.fastGame, settings.setFastGame),
                 if (poker)
                   toggle('Mostrar mi probabilidad', 'Ayuda: tu % de ganar la mano en tu asiento', Icons.percent,
                       settings.showOdds, settings.setShowOdds),

@@ -30,8 +30,12 @@ class GameSettings extends ChangeNotifier {
   /// Keep the screen on while sitting at a table.
   bool get keepAwake => _keepAwake;
 
+  /// "Juego rápido" is hidden for now (the user did not like it). Flip this to
+  /// bring it back: the toggle in table_options.dart and the pace below return.
+  static const bool fastGameAvailable = false;
+
   /// Multiplier for bot "thinking" and dealing pauses.
-  double get pace => _fastGame ? 0.4 : 1.0;
+  double get pace => (fastGameAvailable && _fastGame) ? 0.4 : 1.0;
 
   Duration scaled(Duration d) => Duration(milliseconds: (d.inMilliseconds * pace).round());
 
