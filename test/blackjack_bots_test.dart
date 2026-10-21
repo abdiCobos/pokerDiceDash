@@ -1,13 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poker_dice_dash/models/blackjack_models.dart';
 import 'package:poker_dice_dash/providers/blackjack_provider.dart';
+import 'package:poker_dice_dash/services/poker_bot_ai.dart';
 
 void main() {
   // Regression: a bot that hit without finishing its hand never acted again
   // and the round froze on "Turno de <bot>... pensando jugada".
   testWidgets('bots always finish their turn and the round resolves', (tester) async {
-    for (var round = 0; round < 15; round++) {
-      final bj = BlackjackProvider()..initSinglePlayer(botCount: 3);
+    for (var round = 0; round < 24; round++) {
+      // Every difficulty, so splits and doubles of the basic-strategy bots are exercised too.
+      final bj = BlackjackProvider()
+        ..initSinglePlayer(botCount: 4, difficulty: BotDifficulty.values[round % BotDifficulty.values.length]);
       bj.placeBet('0', 100);
 
       var resolved = false;

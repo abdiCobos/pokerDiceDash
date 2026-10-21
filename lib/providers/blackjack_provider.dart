@@ -6,7 +6,9 @@ import '../models/blackjack_models.dart';
 import '../models/card_model.dart';
 import '../services/sound_service.dart';
 import '../services/logger_service.dart';
+import '../services/blackjack_bot_ai.dart';
 import '../services/bot_service.dart';
+import '../services/poker_bot_ai.dart' show BotDifficulty;
 import '../services/p2p_service.dart';
 import 'game_provider.dart';
 
@@ -308,7 +310,11 @@ class BlackjackProvider extends ChangeNotifier {
     super.dispose();
   }
 
-  void initSinglePlayer({int botCount = 0, String playerName = 'Yo'}) {
+  /// How the Blackjack bots play (see [BlackjackBotBrain]).
+  BotDifficulty botDifficulty = BotDifficulty.normal;
+
+  void initSinglePlayer({int botCount = 0, String playerName = 'Yo', BotDifficulty difficulty = BotDifficulty.normal}) {
+    botDifficulty = difficulty;
     try {
       AppLogger().event('blackjack_start', params: {'bot_count': botCount.toString()});
       _isMultiplayer = false;
@@ -582,18 +588,30 @@ class BlackjackProvider extends ChangeNotifier {
       final hIdx = _state.currentHandIndex;
       final p = players[pIdx];
       if (hIdx >= p.hands.length) return;
-      final value = p.hands[hIdx].handValue;
-      final up = _dealerUpcardValue();
-      // Simplified basic strategy: always hit <=11, stand on 17+,
-      // with 12-16 hit only against a strong dealer upcard (7..A).
-      final shouldHit = value <= 11 || (value < 17 && (up >= 7 || (value == 12 && up <= 3)));
-      if (!shouldHit) {
-        stand(playerId);
-        return;
+      final hand = p.hands[hIdx];
+      final affordable = p.chipBalance >= hand.betAmount;
+      final move = BlackjackBotBrain(difficulty: botDifficulty).decide(
+        hand,
+        _dealerUpcardValue(),
+        canDouble: affordable && hand.cards.length == 2,
+        canSplit: affordable && p.canSplit,
+      );
+      switch (move) {
+        case BlackjackMove.stand:
+          stand(playerId);
+          return;
+        case BlackjackMove.double:
+          doubleDown(playerId); // one card, then the turn moves on
+          return;
+        case BlackjackMove.split:
+          splitPair(playerId);
+        case BlackjackMove.hit:
+          hit(playerId);
       }
-      hit(playerId);
+      // Still deciding the same (or the next split) hand: think again.
       final after = players.firstWhere((pl) => pl.id == playerId);
-      if (hIdx < after.hands.length && !after.hands[hIdx].isFinished && _isTurnOf(playerId)) {
+      final cur = _state.currentHandIndex;
+      if (_isTurnOf(playerId) && cur < after.hands.length && !after.hands[cur].isFinished) {
         Future.delayed(const Duration(milliseconds: 700), () => _autoPlayBot(playerId));
       }
     } catch (e, s) {

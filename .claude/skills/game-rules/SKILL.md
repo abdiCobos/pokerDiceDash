@@ -67,5 +67,16 @@ High card < pair < two pair < trips < straight < flush < full house < quads < st
 14. (fixed 2026-10-20) Blackjack multiplayer: only bots are auto-played, the deal waits for
     every connected human (or 30 s), and players who did not bet are not dealt in.
 15. Blackjack result text says "Bust" if any split hand busted even when the other won.
-16. `lib/services/bot_service.dart` `decideAction` is dead code; real poker AI is
-    `_playBotTurn` in game_provider.dart.
+16. `lib/services/bot_service.dart` `decideAction` is dead code (only `getBotName` is used).
+
+## Bots (2026-10-21)
+- Poker: `lib/services/poker_bot_ai.dart` (`PokerBotBrain`, pure Dart). Monte Carlo equity vs
+  the live opponents (120/260/450 samples for Fácil/Normal/Difícil, easy adds noise), pot odds,
+  pot-sized raises in chip units of 10, shoves when committed, bluffs/steals in heads-up or
+  3-way pots after the flop. Each seat has a `BotPersonality` (Tiburón, Roca, Calculador,
+  Maníaco, Pescador). `_playBotTurn` calls it; bots stop re-raising after 3 raises per street.
+- Blackjack: `lib/services/blackjack_bot_ai.dart` (`BlackjackBotBrain`): full multi-deck basic
+  strategy (S17, DAS) for Normal/Difícil (Normal deviates ~12% on 12-16), "hit below 15" for Fácil.
+- Difficulty is picked in the table setup dialog and saved (`bot_difficulty` pref).
+- Tests: `test/poker_bot_ai_test.dart`, `test/blackjack_bot_ai_test.dart`,
+  `test/poker_bots_flow_test.dart` (full hands per mode/difficulty), `test/blackjack_bots_test.dart`.

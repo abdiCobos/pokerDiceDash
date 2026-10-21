@@ -18,6 +18,8 @@ description: How to test Poker Dice Dash (analyze, unit tests for rules/layout/p
   `test/blackjack_bots_test.dart`: `testWidgets` + `tester.pump(Duration)` as fake time,
   the human acts ONCE per turn (multiple calls hide stalls), assert end phase, then
   `pump(5 s)` to drain timers. Write the test so it FAILS on the bug first.
+- Bots: decision engines are pure Dart; test them with seeded `Random` and sample many
+  seeds (see `test/poker_bot_ai_test.dart`), plus a full-flow test per mode and difficulty.
 - Layout: `test/seat_layout_test.dart` asserts no overlaps across sizes and player counts.
 - Network: `test/p2p_service_test.dart` with real sockets on 127.0.0.1.
 - Visual: `visual-qa` skill (renders PNGs). Not a committed test.

@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import '../models/game_state.dart';
 
 import '../models/player_model.dart';
+import '../services/poker_bot_ai.dart';
 
 import '../models/card_model.dart';
 
@@ -553,6 +554,16 @@ class GameProvider extends ChangeNotifier {
 
   bool _matchStarted = false;
   int _botCount = 3;
+
+  BotDifficulty _botDifficulty = BotDifficulty.normal;
+  BotDifficulty get botDifficulty => _botDifficulty;
+  void setBotDifficulty(BotDifficulty d) {
+    _botDifficulty = d;
+    notifyListeners();
+  }
+
+  /// Short label of each bot's style, for the seat tooltip / debugging.
+  BotPersonality personalityOf(PlayerModel bot) => BotPersonality.forSeat(int.tryParse(bot.id) ?? 0);
   int get botCount => _botCount;
   void setBotCount(int count) {
     _botCount = count.clamp(1, 7);
@@ -692,7 +703,12 @@ class GameProvider extends ChangeNotifier {
 
 
 
+  /// Raises made in the current betting round (bots stop re-raising after [_botRaiseCap]).
+  int _raisesThisPhase = 0;
+  static const int _botRaiseCap = 3;
+
   void _clearBets() {
+    _raisesThisPhase = 0;
 
     _betsThisPhase.clear();
 
@@ -1489,6 +1505,7 @@ class GameProvider extends ChangeNotifier {
     _totalContributions.clear();
 
     _betsThisPhase.clear();
+    _raisesThisPhase = 0;
 
     _playersActedThisPhase.clear();
 
@@ -1626,6 +1643,7 @@ class GameProvider extends ChangeNotifier {
     _totalContributions.clear();
 
     _betsThisPhase.clear();
+    _raisesThisPhase = 0;
 
     _currentBet = 0;
 
@@ -2092,6 +2110,7 @@ class GameProvider extends ChangeNotifier {
     _currentBet += amount;
 
     _betsThisPhase[playerId] = (_betsThisPhase[playerId] ?? 0) + totalDeduction;
+    _raisesThisPhase++;
 
     _addContribution(playerId, totalDeduction);
 
@@ -2562,60 +2581,42 @@ class GameProvider extends ChangeNotifier {
     if (_players[_state.currentPlayerIndex].id != bot.id) return;
     if (_isExiting || epoch != _epoch || _state.status == GameStatus.finished) return;
 
-    final amountToCall = _currentBet - (_betsThisPhase[bot.id] ?? 0);
-    bool isHighConfidence = false;
-    bool isMediumConfidence = false;
-
-    if (_state.phase == PokerPhase.preFlop) {
-      if (bot.hand.length >= 2) {
-        final c1 = bot.hand[0].value;
-        final c2 = bot.hand[1].value;
-        if (c1 == c2) {
-          isHighConfidence = true;
-        } else if (['J', 'Q', 'K', 'A'].contains(c1) || ['J', 'Q', 'K', 'A'].contains(c2)) {
-          isMediumConfidence = true;
+    final amountToCall = max(0, _currentBet - (_betsThisPhase[bot.id] ?? 0));
+    final opponents = _players
+        .where((p) => p.id != bot.id && !p.isFolded && !p.isBankrupt && p.hand.isNotEmpty)
+        .length;
+    final situation = BotSituation(
+      hole: bot.hand,
+      board: _state.communityCards.take(_state.revealedCommunityCount).toList(),
+      toCall: amountToCall,
+      pot: pot,
+      chips: bot.chipBalance,
+      opponents: opponents,
+    );
+    BotDecision decision;
+    try {
+      decision = PokerBotBrain(difficulty: _botDifficulty).decide(situation, personalityOf(bot));
+    } catch (e, st) {
+      AppLogger().error('Bot ${bot.name}: fallo al decidir: $e', st);
+      decision = BotDecision(amountToCall > 0 ? BotActionKind.fold : BotActionKind.call);
+    }
+    AppLogger().log('Bot ${bot.name} (${personalityOf(bot).name}, ${_botDifficulty.name}): $decision');
+    // Still this bot's turn after thinking? (state may have moved on)
+    if (_isExiting || epoch != _epoch || _state.status != GameStatus.betting) return;
+    if (_state.currentPlayerIndex < 0 || _state.currentPlayerIndex >= _players.length) return;
+    if (_players[_state.currentPlayerIndex].id != bot.id) return;
+    switch (decision.kind) {
+      case BotActionKind.fold:
+        fold(bot.id);
+      case BotActionKind.call:
+        call(bot.id);
+      case BotActionKind.raise:
+        // Like a casino cap: no endless bot re-raise wars in one betting round.
+        if (_raisesThisPhase < _botRaiseCap && bot.chipBalance >= amountToCall + decision.raiseBy && decision.raiseBy > 0) {
+          raise(bot.id, decision.raiseBy);
+        } else {
+          call(bot.id);
         }
-      }
-    } else {
-      final eval = HandEvaluator.evaluate(bot.hand, _state.communityCards.take(_state.revealedCommunityCount).toList());
-      if (eval.rank == HandRank.highCard) {
-        // low
-      } else if (eval.rank == HandRank.onePair) {
-        isMediumConfidence = true;
-      } else {
-        isHighConfidence = true;
-      }
-    }
-
-    final rand = Random().nextInt(100);
-
-    void safeRaise(int raiseAmount) {
-      final totalDeduction = amountToCall + raiseAmount;
-      if (bot.chipBalance > totalDeduction) {
-        raise(bot.id, raiseAmount);
-      } else {
-        call(bot.id);
-      }
-    }
-
-    if (amountToCall > 0) {
-      if (!isMediumConfidence && !isHighConfidence) {
-        if (rand < 85) fold(bot.id);
-        else call(bot.id);
-      } else if (isMediumConfidence) {
-        if (rand < 80) call(bot.id);
-        else safeRaise(50);
-      } else {
-        if (rand < 30) call(bot.id);
-        else safeRaise(100);
-      }
-    } else {
-      if (isHighConfidence) {
-        if (rand < 50) call(bot.id);
-        else safeRaise(50);
-      } else {
-        call(bot.id);
-      }
     }
   }
 

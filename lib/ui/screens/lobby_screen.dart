@@ -9,6 +9,7 @@ import '../../services/logger_service.dart';
 import '../../services/p2p_service.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
+import '../../services/poker_bot_ai.dart';
 import '../../services/sound_service.dart';
 import '../widgets/app_icon_painter.dart';
 import '../widgets/app_logo.dart';
@@ -38,6 +39,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
   final TextEditingController _playerNameController = TextEditingController();
 
   static const _playerNamePref = 'player_name';
+  static const _difficultyPref = 'bot_difficulty';
+  BotDifficulty _botDifficulty = BotDifficulty.normal;
 
   @override
   void initState() {
@@ -62,6 +65,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
       if (name != null && name.isNotEmpty && mounted && _playerNameController.text.isEmpty) {
         setState(() => _playerNameController.text = name);
       }
+      final diff = (await SharedPreferences.getInstance()).getString(_difficultyPref);
+      final saved = BotDifficulty.values.where((d) => d.name == diff).firstOrNull;
+      if (saved != null && mounted) setState(() => _botDifficulty = saved);
     } catch (_) {}
   }
 
@@ -271,6 +277,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           ),
                         ],
                       ),
+                      if (_bjBotCount > 0) ...[
+                        SizedBox(height: 12 * s),
+                        _buildDifficultySelector(s, setDialogState),
+                      ],
                       SizedBox(height: 20 * s),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -293,6 +303,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                   builder: (_) => ChangeNotifierProvider(
                                     create: (_) => BlackjackProvider()..initSinglePlayer(
                                       botCount: _bjBotCount,
+                                      difficulty: _botDifficulty,
                                       playerName: pName.isEmpty ? 'Yo' : pName,
                                     ),
                                     child: const BlackjackTableScreen(),
@@ -388,6 +399,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           ),
                         ],
                       ),
+                      SizedBox(height: 12 * s),
+                      _buildDifficultySelector(s, setDialogState),
                       SizedBox(height: 20 * s),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -405,6 +418,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                               game.setMultiplayer(false);
                               game.setGameMode(mode);
                               game.setBotCount(_pokerBotCount);
+                              game.setBotDifficulty(_botDifficulty);
                               if (_playerNameController.text.trim().isNotEmpty) {
                                 game.setPlayerName(_playerNameController.text.trim());
                               }
@@ -495,6 +509,58 @@ class _LobbyScreenState extends State<LobbyScreen> {
         ? '${Platform.localHostname}-Poker'
         : _roomNameController.text.trim();
     return '$name|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}|${_selectedMode.name}';
+  }
+
+  /// Fácil / Normal / Difícil, remembered between games.
+  Widget _buildDifficultySelector(double s, StateSetter setDialogState) {
+    const hints = {
+      BotDifficulty.easy: 'Juegan a lo loco y cometen errores.',
+      BotDifficulty.normal: 'Juegan con cabeza, con algún error de vez en cuando.',
+      BotDifficulty.hard: 'Juegan casi perfecto: cuidado con sus apuestas.',
+    };
+    return Column(
+      children: [
+        Text('Dificultad de los bots', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+        SizedBox(height: 8 * s),
+        Row(
+          children: [
+            for (final d in BotDifficulty.values) ...[
+              if (d != BotDifficulty.easy) SizedBox(width: 8 * s),
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20 * s),
+                  onTap: () {
+                    setState(() => _botDifficulty = d);
+                    setDialogState(() {});
+                    SharedPreferences.getInstance().then((p) => p.setString(_difficultyPref, d.name)).catchError((_) => false);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: EdgeInsets.symmetric(vertical: 8 * s),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _botDifficulty == d ? const Color(0xFFD4AF37) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20 * s),
+                      border: Border.all(color: const Color(0xFFD4AF37), width: 1.2),
+                    ),
+                    child: Text(
+                      d.label,
+                      style: TextStyle(
+                        color: _botDifficulty == d ? const Color(0xFF412402) : const Color(0xFFFFD54F),
+                        fontSize: 13 * s,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        SizedBox(height: 6 * s),
+        Text(hints[_botDifficulty]!, textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 11.5 * s)),
+      ],
+    );
   }
 
   Widget _buildModeSelector(double s, StateSetter setDialogState) {
