@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "poker_dice_dash" "\0"
+            VALUE "CompanyName", "abdiCobos" "\0"
+            VALUE "FileDescription", "Poker Dice Dash" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "poker_dice_dash" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 abdiCobos. Licencia GPL-3.0." "\0"
             VALUE "OriginalFilename", "poker_dice_dash.exe" "\0"
-            VALUE "ProductName", "poker_dice_dash" "\0"
+            VALUE "ProductName", "Poker Dice Dash" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
