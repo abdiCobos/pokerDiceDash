@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import '../models/game_state.dart';
 
 import '../models/player_model.dart';
+import '../models/pot_calculator.dart';
 import '../services/game_settings.dart';
 import '../services/poker_bot_ai.dart';
 
@@ -427,7 +428,7 @@ class GameProvider extends ChangeNotifier {
 
   GameMode get gameMode => _gameMode;
 
-  int get pot => _totalContributions.values.fold(0, (a, b) => a + b);
+  int get pot => _totalContributions.values.fold(0, (a, b) => a + b) + _houseBonus;
 
   List<CardModel> get communityCards => _state.communityCards;
 
@@ -440,25 +441,49 @@ class GameProvider extends ChangeNotifier {
 
   int get dealerIndex => _state.dealerIndex;
 
-  int get smallBlindIndex {
-    if (_players.isEmpty) return 0;
-    final active = _players.where((p) => !p.isBankrupt).length;
-    if (active == 2) return _state.dealerIndex;
-    return (_state.dealerIndex + 1) % _players.length;
+  // Seats that actually posted the blinds this hand (bankrupt seats are skipped
+  // at the deal, so they cannot be derived from the dealer index alone).
+  int _sbIndex = 0;
+  int _bbIndex = 0;
+
+  int get smallBlindIndex => _players.isEmpty ? 0 : _sbIndex.clamp(0, _players.length - 1);
+
+  int get bigBlindIndex => _players.isEmpty ? 0 : _bbIndex.clamp(0, _players.length - 1);
+
+  /// Chips added to the pot by the house (Dice Dash "dados de la suerte").
+  /// Dead money: it belongs to whoever wins the main pot.
+  int _houseBonus = 0;
+
+  /// Players who can still put chips in this hand.
+  List<PlayerModel> get _canBet =>
+      _players.where((p) => !p.isFolded && !p.isBankrupt && p.chipBalance > 0 && p.hand.isNotEmpty).toList();
+
+  /// True when nobody can bet against anybody any more (everyone left is all-in,
+  /// or one player with chips has already matched): the board is dealt to showdown.
+  bool get _bettingIsOver {
+    final live = _players.where((p) => !p.isFolded && !p.isBankrupt && p.hand.isNotEmpty).length;
+    if (live < 2) return false;
+    final can = _canBet;
+    if (can.isEmpty) return true;
+    if (can.length == 1) return (_betsThisPhase[can.first.id] ?? 0) >= _currentBet;
+    return false;
   }
 
-  int get bigBlindIndex {
-    if (_players.isEmpty) return 0;
-    final active = _players.where((p) => !p.isBankrupt).length;
-    if (active == 2) {
-      var next = (_state.dealerIndex + 1) % _players.length;
-      while (next != _state.dealerIndex && (_players[next].isBankrupt)) {
-        next = (next + 1) % _players.length;
-      }
-      return next;
-    }
-    return (_state.dealerIndex + 2) % _players.length;
+  /// Deals the rest of the board without betting rounds (all-in run-out).
+  Future<void> _runOutBoard() async {
+    final epoch = _epoch;
+    _state = _state.copyWith(currentPlayerIndex: -1);
+    notifyListeners();
+    broadcastState();
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (_isExiting || epoch != _epoch) return;
+    advancePhase();
   }
+
+  /// Player ids clockwise starting left of the dealer (odd chips of split pots).
+  List<String> get _seatOrderFromDealer => [
+        for (var i = 1; i <= _players.length; i++) _players[(_state.dealerIndex + i) % _players.length].id,
+      ];
 
   P2PService get p2pService => _p2pService;
 
@@ -492,6 +517,12 @@ class GameProvider extends ChangeNotifier {
   int _resultAmount = 0;
   int get resultAmount => _resultAmount;
 
+  /// Chips each player won at the last showdown (main + side pots, refunds excluded).
+  Map<String, int> _resultPayouts = const {};
+  Map<String, int> _lastContributions = const {};
+  int resultPayoutOf(String playerId) =>
+      _resultPayouts[playerId] ?? (_resultWinnerIds.contains(playerId) ? _resultAmount : 0);
+
   void _setResult(List<String> winnerIds, String title, int amount) {
     _resultWinnerIds = List.unmodifiable(winnerIds);
     _resultTitle = title;
@@ -499,6 +530,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _clearResult() {
+    _resultPayouts = const {};
     _resultWinnerIds = const [];
     _resultTitle = null;
     _resultAmount = 0;
@@ -737,6 +769,15 @@ class GameProvider extends ChangeNotifier {
 
 
 
+  @visibleForTesting
+  Map<String, int> get debugContributions => Map.unmodifiable(_totalContributions);
+
+  @visibleForTesting
+  void debugSetChips(String playerId, int chips) {
+    final p = _players.where((x) => x.id == playerId).firstOrNull;
+    if (p != null) p.chipBalance = chips;
+  }
+
   void setGameMode(GameMode mode) {
 
     _gameMode = mode;
@@ -920,8 +961,8 @@ class GameProvider extends ChangeNotifier {
           _state = _state.copyWith(
 
             currentPlayerIndex: index,
-
-            status: GameStatus.diceTurn,
+            // Texas has no dice step: a client must not show "lanzar dados" there.
+            status: _gameMode == GameMode.diceDash ? GameStatus.diceTurn : GameStatus.betting,
 
             phase: phase != null ? PokerPhase.values.byName(phase) : null,
 
@@ -929,7 +970,6 @@ class GameProvider extends ChangeNotifier {
 
           );
 
-          _luckySevenApplied = false;
 
           notifyListeners();
 
@@ -1021,13 +1061,15 @@ class GameProvider extends ChangeNotifier {
 
       final winner = unFoldedPlayers.first;
 
-      final totalContribs = _totalContributions.values.fold(0, (a, b) => a + b);
-
+      final totalContribs = pot;
       winner.chipBalance += totalContribs;
-
       _totalContributions.clear();
+      _houseBonus = 0;
+      // The hand is over: no more actions until the next deal.
+      _state = _state.copyWith(status: GameStatus.finished, currentPlayerIndex: -1);
 
       _setResult([winner.id], 'por abandono', totalContribs);
+      _resultPayouts = {winner.id: totalContribs};
       SoundService().chipsWin();
       setCentralMessage('¡${winner.name} gana por abandono!');
 
@@ -1055,10 +1097,12 @@ class GameProvider extends ChangeNotifier {
 
 
 
+    if (_bettingIsOver) {
+      advancePhase();
+      return;
+    }
     final allActed = unFoldedPlayers.every(
-
       (p) => _playersActedThisPhase.contains(p.id),
-
     );
 
 
@@ -1115,7 +1159,6 @@ class GameProvider extends ChangeNotifier {
 
     AppLogger().log('ðŸ”„ nextTurn result: nextIndex=$nextIndex playersActed=${_playersActedThisPhase.toList()}');
 
-    _luckySevenApplied = false;
 
 
 
@@ -1212,24 +1255,19 @@ class GameProvider extends ChangeNotifier {
 
 
 
-    _luckySevenApplied = false;
-
-
-
-    // Post-flop: turn starts from Small Blind
-
-    int startIndex = smallBlindIndex;
-
-    var findLoop = 0;
-
-    while (findLoop < _players.length * 2 &&
-
-        (_players[startIndex].isFolded || _players[startIndex].chipBalance <= 0)) {
-
-      startIndex = (startIndex + 1) % _players.length;
-
-      findLoop++;
-
+    if (_bettingIsOver) {
+      _runOutBoard();
+      return;
+    }
+    // Post-flop the first to act is the first player left of the dealer who can
+    // still bet (the small blind with 3+ players, the big blind heads-up).
+    var startIndex = (_state.dealerIndex + 1) % _players.length;
+    for (var i = 0; i < _players.length; i++) {
+      final idx = (_state.dealerIndex + 1 + i) % _players.length;
+      if (_canBet.contains(_players[idx])) {
+        startIndex = idx;
+        break;
+      }
     }
 
     _state = _state.copyWith(
@@ -1349,50 +1387,50 @@ class GameProvider extends ChangeNotifier {
 
 
 
-      final totalPot = _totalContributions.values.fold(0, (a, b) => a + b);
-
-      final splitAmount = totalPot ~/ winners.length;
-
-      for (final w in winners) {
-
-        w.chipBalance += splitAmount;
-
+      // Main pot + side pots: an all-in player only wins what they could cover.
+      _lastContributions = Map.of(_totalContributions);
+      final payouts = PotCalculator.distribute(
+        contributions: Map.of(_totalContributions),
+        strength: {
+          for (final p in activePlayers)
+            if (p.hand.length >= 2) p.id: HandEvaluator.evaluate(p.hand, _state.communityCards).power,
+        },
+        seatOrder: _seatOrderFromDealer,
+        deadMoney: _houseBonus,
+      );
+      for (final e in payouts.entries) {
+        final p = _players.where((x) => x.id == e.key).firstOrNull;
+        if (p != null) p.chipBalance += e.value;
       }
-
       _totalContributions.clear();
-
-      _flyingPotAmount = splitAmount;
-
+      _houseBonus = 0;
+      final mainShare = payouts[winners.first.id] ?? 0;
+      _flyingPotAmount = mainShare;
+      // Ribbons show winnings, not the uncalled part of a bet that simply comes back.
+      final contribs = Map.of(_lastContributions);
+      final won = <String, int>{};
+      for (final e in payouts.entries) {
+        final others = contribs.entries.where((x) => x.key != e.key).map((x) => x.value);
+        final topOther = others.isEmpty ? 0 : others.reduce(max);
+        final refund = max(0, (contribs[e.key] ?? 0) - topOther);
+        final net = e.value - refund;
+        if (net > 0) won[e.key] = net;
+      }
+      _resultPayouts = Map.unmodifiable(won);
       SoundService().chipsWin();
-
-
-
-      _setResult([for (final w in winners) w.id], bestHandResult.rankName, splitAmount);
-
+      _setResult([for (final w in winners) w.id], bestHandResult.rankName, mainShare);
       if (winners.length > 1) {
-
         setCentralMessage('¡Empate! Bote dividido con ${bestHandResult.rankName}');
       } else {
-
         _winnerId = winners.first.id;
-
         _isPotFlying = true;
-
         setCentralMessage('¡${winners.first.name} gana con ${bestHandResult.rankName}!');
-
       }
-
       notifyListeners();
-
     } else {
-
       setCentralMessage('¡Showdown! No hay ganador');
-
       notifyListeners();
-
     }
-
-
 
     scheduleNewRound();
 
@@ -1500,7 +1538,6 @@ class GameProvider extends ChangeNotifier {
 
     _communityCardRenderCounter = 0;
 
-    _luckySevenApplied = false;
 
     _currentBet = 0;
 
@@ -1577,15 +1614,10 @@ class GameProvider extends ChangeNotifier {
 
       _luckySevenApplied = true;
 
+      // House bonus, once per hand, as dead money for the main pot. Crediting it
+      // as the roller's own contribution broke side pots and could repeat every turn.
       final extra = (pot * 0.30).toInt();
-
-      final activeIdx = _state.currentPlayerIndex;
-
-      if (activeIdx < _players.length) {
-
-        _addContribution(_players[activeIdx].id, extra);
-
-      }
+      _houseBonus += extra;
 
       SoundService().chipsMultiply();
 
@@ -1739,6 +1771,10 @@ class GameProvider extends ChangeNotifier {
 
 
     _state = _state.copyWith(dealerIndex: dealerIdx);
+    _sbIndex = sbIdx;
+    _bbIndex = bbIdx;
+    _houseBonus = 0;
+    _luckySevenApplied = false;
 
 
 
@@ -1849,17 +1885,27 @@ class GameProvider extends ChangeNotifier {
       _p2pService.broadcastMessage({
 
         'type': 'NEW_ROUND',
-
         'dealerIndex': dealerIdx,
-
         'pot': actualSB + actualBB,
-
       });
-
     }
-
-
-
+    // The blinds may have put players all-in: nobody left to bet against.
+    if (_bettingIsOver) {
+      notifyListeners();
+      _runOutBoard();
+      return;
+    }
+    // First to act must be someone who still has chips.
+    final first = _state.currentPlayerIndex;
+    if (first >= 0 && first < _players.length && _players[first].chipBalance <= 0) {
+      for (var i = 1; i <= _players.length; i++) {
+        final idx = (first + i) % _players.length;
+        if (_canBet.contains(_players[idx])) {
+          _state = _state.copyWith(currentPlayerIndex: idx);
+          break;
+        }
+      }
+    }
     notifyListeners();
     _checkBotTurn();
   }
@@ -2100,11 +2146,10 @@ class GameProvider extends ChangeNotifier {
 
     final player = _players[idx];
 
-    final amountToCall = _currentBet - (_betsThisPhase[playerId] ?? 0);
-
+    final amountToCall = max(0, _currentBet - (_betsThisPhase[playerId] ?? 0));
     final totalDeduction = amountToCall + amount;
-
-    if (totalDeduction <= 0 || player.chipBalance < totalDeduction) return;
+    // A raise adds chips on top of the call: never zero or negative (remote input is untrusted).
+    if (amount <= 0 || player.chipBalance < totalDeduction) return;
 
 
 
@@ -2164,21 +2209,6 @@ class GameProvider extends ChangeNotifier {
 
 
 
-  void _rushToShowdown() {
-    // Reveal all community cards and go directly to showdown
-    while (_state.phase != PokerPhase.showdown) {
-      advancePhase();
-    }
-    _state = _state.copyWith(
-      status: GameStatus.finished,
-      revealedCommunityCount: 5,
-    );
-    AppLogger().log('ALL_IN_SHOWDOWN: 5 cartas comunitarias reveladas');
-    determineWinner();
-    notifyListeners();
-    broadcastState();
-  }
-
   int get currentBet => _currentBet;
 
 
@@ -2226,7 +2256,9 @@ class GameProvider extends ChangeNotifier {
 
     local.isBankrupt = false;
 
-    local.isFolded = false;
+    // Mid-hand there are no cards for this seat: it plays from the next deal.
+    final handOver = _state.status == GameStatus.finished || _state.phase == PokerPhase.showdown;
+    local.isFolded = !handOver && local.hand.isEmpty;
 
     _playersActedThisPhase.remove(local.id);
 
@@ -2285,6 +2317,10 @@ class GameProvider extends ChangeNotifier {
       'currentBet': _currentBet,
       'currentPlayerIndex': _state.currentPlayerIndex,
       'dealerIndex': _state.dealerIndex,
+      'sbIndex': _sbIndex,
+      'bbIndex': _bbIndex,
+      'houseBonus': _houseBonus,
+      'payouts': _resultPayouts,
       'phase': _state.phase.name,
       'status': _state.status.name,
       'revealedCommunityCount': _state.revealedCommunityCount,
@@ -2450,6 +2486,9 @@ class GameProvider extends ChangeNotifier {
           .map((c) => CardModel.fromJson(c as Map<String, dynamic>))
           .toList();
     }
+    _sbIndex = state['sbIndex'] as int? ?? _sbIndex;
+    _bbIndex = state['bbIndex'] as int? ?? _bbIndex;
+    _houseBonus = state['houseBonus'] as int? ?? _houseBonus;
     final result = state['result'];
     if (result is Map) {
       _setResult(
@@ -2459,6 +2498,10 @@ class GameProvider extends ChangeNotifier {
       );
     } else {
       _clearResult();
+    }
+    final payouts = state['payouts'];
+    if (payouts is Map) {
+      _resultPayouts = {for (final e in payouts.entries) e.key.toString(): (e.value as num).toInt()};
     }
     before.playChanges(this);
   }
@@ -2488,6 +2531,12 @@ class GameProvider extends ChangeNotifier {
       final ci = _state.currentPlayerIndex;
       if (ci < 0 || ci >= _players.length || _players[ci].id != playerId) {
         AppLogger().log('Accion ignorada (no es su turno): $action $playerId');
+        return;
+      }
+      // Each action only in its step: bets while betting, the roll while rolling.
+      final wanted = action == 'ROLL_DICE' ? GameStatus.diceTurn : GameStatus.betting;
+      if (_state.status != wanted) {
+        AppLogger().log('Accion ignorada (estado ${_state.status.name}): $action $playerId');
         return;
       }
     }
@@ -2584,6 +2633,13 @@ class GameProvider extends ChangeNotifier {
     if (_players[_state.currentPlayerIndex].id != bot.id) return;
     if (_isExiting || epoch != _epoch || _state.status == GameStatus.finished) return;
 
+    // INTERCAMBIO in progress: decide with the new cards, not the old ones.
+    if (_isChaosSwapping) {
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (!_isExiting && epoch == _epoch) _checkBotTurn();
+      });
+      return;
+    }
     final amountToCall = max(0, _currentBet - (_betsThisPhase[bot.id] ?? 0));
     final opponents = _players
         .where((p) => p.id != bot.id && !p.isFolded && !p.isBankrupt && p.hand.isNotEmpty)

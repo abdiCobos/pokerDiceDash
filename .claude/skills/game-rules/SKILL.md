@@ -21,8 +21,7 @@ ask the user which one is intended before "fixing" either.
   No minimum raise, no cap. UI hides RAISE if calling already means all-in.
 - A street ends when every unfolded player has acted (all-ins count as acted). Last player
   standing wins by fold. Post-flop action starts from `smallBlindIndex`.
-- Showdown: `HandEvaluator` best 5 of 7. No side pots: winners take the whole pot;
-  ties split by integer division.
+- Showdown: `HandEvaluator` best 5 of 7, paid with main and side pots (`PotCalculator`).
 - Bankruptcy: a human with 0 chips is `isBankrupt` (folded, no cards) and rebuys to 1000 with
   RECOMPRAR. Bots auto-rebuy to 1000. If fewer than 2 active players remain, all reset to 1000.
 - Next hand starts 5 s after the end.
@@ -31,7 +30,7 @@ ask the user which one is intended before "fixing" either.
 - Turn = `GameStatus.diceTurn` (current player rolls 2d6; only the host rolls, clients send
   `ROLL_DICE`; bots roll after 1-2 s) -> `GameStatus.betting` (same player acts) -> next player.
 - 1+1 "INTERCAMBIO" (chaos): all live hole cards are pooled, shuffled and redealt 2 each (~2.4 s animation).
-- Total 7 "Dados de la suerte": the pot grows by 30% credited as the roller's contribution.
+- Total 7 "Dados de la suerte": the pot grows by 30% of house money, once per hand.
 - 6+6 forced all-in and 2+1 "Blackjack event": TODO, not implemented.
 
 ## Hand ranking - `lib/models/hand_evaluator.dart`
@@ -44,30 +43,32 @@ High card < pair < two pair < trips < straight < flush < full house < quads < st
 - Payouts (total returned): blackjack 2.5x (3:2), win 2x, 5-Card Charlie 2x (beats dealer 21),
   push 1x, bust 0.
 - Dealer draws below 17, stands on every 17 (including soft 17); skips drawing if all players busted.
+- Dealer blackjack (natural) ends the round before anyone plays; blackjack vs blackjack = push.
 - Double: doubles the bet, exactly one card, then stands. Split: once, identical values only
   (K+Q cannot split), each hand gets one card.
 - Bots: basic strategy-lite (hit <= 11; 12-16 hit vs dealer 7-A, 12 also vs 2-3; else stand).
 
-## Known rule bugs (not fixed yet - confirm with the user before changing behavior)
-1. All live players all-in/folded can stall a street (start index lands on a folded human;
-   watchdog is off in single player; `_rushToShowdown` is unused and would pay twice).
-2. Heads-up post-flop the dealer acts first (should be the big blind).
-3. `smallBlindIndex`/`bigBlindIndex` getters do not skip bankrupt seats (badges can be wrong).
-4. No side pots; split remainder chips are lost.
-5. Negative RAISE amounts are accepted (remote input can lower the bet).
-6. Lucky 7 creates chips and can trigger every turn.
-7. `rebuyLocalPlayer` unfolds the player mid-hand (they get turns without cards).
-8. After a fold-win, status stays `betting` during the 5 s wait (extra actions possible).
-9. Client `NEXT_TURN` forces `diceTurn` even in Texas until the next STATE_UPDATE.
-10. Remote actions are checked for turn but not for status (bet during diceTurn).
-11. Bots can act on their pre-swap hand during the chaos swap delay.
-12. Blackjack: dealer blackjack never detected (`isBlackjack` needs `betAmount > 0`).
-13. Blackjack: double is allowed after hitting. (Fixed 2026-10-20: a split 21 is no longer paid as
-    blackjack (`BlackjackHand.isSplit`), and the dealer's bust is flagged and shown.)
-14. (fixed 2026-10-20) Blackjack multiplayer: only bots are auto-played, the deal waits for
-    every connected human (or 30 s), and players who did not bet are not dealt in.
-15. Blackjack result text says "Bust" if any split hand busted even when the other won.
-16. `lib/services/bot_service.dart` `decideAction` is dead code (only `getBotName` is used).
+## Rule fixes (2026-10-21) - keep these invariants
+- Side pots: showdown pays with `PotCalculator.distribute` (lib/models/pot_calculator.dart):
+  one pot per all-in level, folded money stays in, odd chips go left of the dealer, house
+  bonus is dead money for the main pot. Never pay "pot / winners".
+- All-in run-out: when nobody can bet against anybody (`_bettingIsOver`), the board is dealt
+  to showdown without betting (`_runOutBoard`). Also checked right after the deal.
+- Post-flop the first to act is the first player LEFT OF THE DEALER who can still bet (SB with
+  3+ players, BB heads-up). Blinds seats are stored at the deal (`_sbIndex/_bbIndex`, synced).
+- Fold win ends the hand: status `finished`, no current player.
+- Raises must be > 0; remote actions are checked for turn AND step (bet vs roll).
+- Lucky 7 (Dice Dash): +30% of the pot as HOUSE money (`_houseBonus`), once per hand.
+- Rebuy mid-hand: chips now, cards from the next deal.
+- Bots wait while the INTERCAMBIO swap is running.
+- Blackjack: dealer natural (`isNatural`) ends the round at once; player blackjack vs dealer
+  blackjack is a push; double only on the first two cards.
+- Tests: `test/pot_calculator_test.dart`, `test/poker_rules_test.dart`,
+  `test/blackjack_rules_flow_test.dart` (each one was checked to FAIL on the old code).
+
+## Still open
+- 6+6 forced all-in and 2+1 "Blackjack event" in Dice Dash are TODOs (not implemented).
+- `lib/services/bot_service.dart` `decideAction` is dead code (only `getBotName` is used).
 
 ## Bots (2026-10-21)
 - Poker: `lib/services/poker_bot_ai.dart` (`PokerBotBrain`, pure Dart). Monte Carlo equity vs

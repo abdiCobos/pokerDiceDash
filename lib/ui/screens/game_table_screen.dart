@@ -1965,8 +1965,9 @@ class _PlayerSeat extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        final isWinner = context.select<GameProvider, bool>((g) => g.resultWinnerIds.contains(playerId));
-        final winAmount = context.select<GameProvider, int>((g) => g.resultAmount);
+        // Main or side pot: each winner shows what they actually collected.
+        final winAmount = context.select<GameProvider, int>((g) => g.resultTitle == null ? 0 : g.resultPayoutOf(playerId));
+        final isWinner = winAmount > 0;
         final highlight = isCurrentTurn || isWinner;
 
         final seat = AnimatedContainer(
