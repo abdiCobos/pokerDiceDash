@@ -55,7 +55,7 @@ void main() {
     expect(GameProvider.diceEventFor(3, 3), DiceEvent.spy);
     expect(GameProvider.diceEventFor(6, 1), DiceEvent.extraCard);
     expect(GameProvider.diceEventFor(1, 6), DiceEvent.extraCard);
-    expect(GameProvider.diceEventFor(2, 1), DiceEvent.blackjack);
+    expect(GameProvider.diceEventFor(2, 1), DiceEvent.none); // the 21 event was removed
     expect(GameProvider.diceEventFor(5, 2), DiceEvent.luckySeven);
     expect(GameProvider.diceEventFor(4, 3), DiceEvent.luckySeven);
     expect(GameProvider.diceEventFor(4, 3, luckySevenAvailable: false), DiceEvent.none);

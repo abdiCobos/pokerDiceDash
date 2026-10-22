@@ -95,10 +95,8 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
 
 - Dice roll (`_RollingDice`, keyed by `rollCounter`): 1150 ms tumble from the roller's seat with
   bounces and a landing squash, then a coloured event label (¡SUERTE!, ¡INTERCAMBIO!, ¡ALL-IN!,
-  ¡ESPÍA!, ¡CARTA EXTRA!, ¡21!). Spied cards get a purple glow + eye icon.
-- "21" event panel (`DiceBlackjackPanel`): dark overlay, centred card with lightGreenAccent border,
-  CardWidget scale 0.5 rows for dealer/player with value badges, custom gold chips for the bet
-  (not ChoiceChip), PEDIR green / PLANTAR red pills, result pill green/red/blueGrey.
+  ¡ESPÍA!, ¡CARTA EXTRA!). Spied cards get a purple glow + eye icon; the discarded extra card
+  fades and rises before it leaves.
 
 ## Before finishing a visual change
 Run the `visual-qa` skill and look at the PNGs at 800x360, 640x360 and 1280x720.

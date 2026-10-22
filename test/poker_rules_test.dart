@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:poker_dice_dash/models/dice_blackjack.dart';
 import 'package:poker_dice_dash/models/game_state.dart';
 import 'package:poker_dice_dash/providers/game_provider.dart';
 import 'package:poker_dice_dash/services/p2p_service.dart';
@@ -210,33 +209,15 @@ void main() {
     var handTotal = chipsOnTable(g);
     int? bonus;
     var hands = 0;
-    // The "21" event (2+1) is a bet against the house: its chips leave and come
-    // back by design, so they are counted apart from the lucky 7 bonus.
-    var eventsSettled = 0;
-    DiceBlackjack? open;
-    int eventFlow() {
-      final e = g.diceBlackjack;
-      if (e == null) return 0;
-      if (e.stage == DiceBlackjackStage.done) return e.net;
-      return -e.bet;
-    }
     for (var tick = 0; tick < 20000 && hands < 20; tick++) {
-      final before = g.diceBlackjack;
-      if (open != null && before == null) eventsSettled += open.net;
-      open = before;
       await tester.pump(const Duration(milliseconds: 100));
-      if (open != null && g.diceBlackjack == null) {
-        eventsSettled += open.net;
-        open = null;
-      }
       if (g.roundCounter != round) {
         round = g.roundCounter;
         handTotal = chipsOnTable(g);
         bonus = null;
-        eventsSettled = 0;
         hands++;
       }
-      final delta = chipsOnTable(g) - handTotal - eventsSettled - eventFlow();
+      final delta = chipsOnTable(g) - handTotal;
       expect(delta, greaterThanOrEqualTo(0), reason: 'chips lost');
       if (delta > 0) {
         bonus ??= delta;
