@@ -558,6 +558,8 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void _advanceToNextActivePlayer() {
+    // Delayed calls can arrive twice (stand + auto-stand) or after the round moved on.
+    if (_state.phase != BlackjackPhase.playerTurn) return;
     try {
       final active = activePlayers;
       if (active.isEmpty) { _startDealerTurn(); return; }
@@ -785,6 +787,9 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void _startDealerTurn() {
+    // Only once per round: a second dealer sequence would close the NEXT round
+    // (betting -> roundEnd without the other bets).
+    if (_state.phase != BlackjackPhase.playerTurn && _state.phase != BlackjackPhase.dealing) return;
     _turnTimer?.cancel();
     _turnTimer = null;
     try {
@@ -800,6 +805,7 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void _dealerPlay() {
+    if (_state.phase != BlackjackPhase.dealerTurn) return;
     try {
       AppLogger().log('BJ:_dealerPlay');
       final dIdx = players.indexWhere((p) => p.isDealer);
@@ -821,6 +827,7 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void _dealerDrawCardSequential(int dIdx, BlackjackHand hand) {
+    if (_state.phase != BlackjackPhase.dealerTurn) return;
     if (hand.handValue >= 17) {
       if (hand.handValue > 21) hand.isBusted = true; // shown as "BUST" on the dealer badge
       var updated = <BlackjackPlayer>[...players];
@@ -841,6 +848,7 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void _resolveRound() {
+    if (_state.phase != BlackjackPhase.dealerTurn) return;
     try {
       AppLogger().log('BJ:_resolveRound');
       final dIdx = players.indexWhere((p) => p.isDealer);

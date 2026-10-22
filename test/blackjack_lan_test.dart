@@ -134,6 +134,40 @@ void main() {
     expect(client.bj.localPlayer.chipBalance, hostChips);
   }, timeout: const Timeout(Duration(seconds: 60)));
 
+  test('second round: the host waits again for the client bet', () async {
+    final (host, client) = await _connect();
+    addTearDown(() async {
+      await client.close();
+      await host.close();
+    });
+    await waitFor(() => client.bj.players.length == 3, reason: 'client snapshot');
+    host.bj.startMatch();
+    await waitFor(() => client.bj.phase == BlackjackPhase.betting, reason: 'betting phase on client');
+
+    for (var round = 1; round <= 3; round++) {
+      host.bj.placeBet('0', 50);
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      expect(host.bj.phase, BlackjackPhase.betting, reason: 'round $round dealt without the client bet');
+      client.bj.placeBet(client.bj.localPlayerId, 50);
+      await waitFor(() => host.bj.phase != BlackjackPhase.betting, reason: 'deal after both bets (round $round)');
+      final ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
+        if (host.bj.phase != BlackjackPhase.playerTurn) return;
+        final active = host.bj.activePlayers;
+        final current = active[host.bj.currentPlayerIndex % active.length];
+        if (current.id == '0') {
+          host.bj.stand('0');
+        } else if (current.id == client.bj.localPlayerId && client.bj.phase == BlackjackPhase.playerTurn) {
+          client.bj.stand(client.bj.localPlayerId);
+        }
+      });
+      await waitFor(() => host.bj.phase == BlackjackPhase.roundEnd, timeout: const Duration(seconds: 30), reason: 'round $round end');
+      ticker.cancel();
+      await waitFor(() => client.bj.phase == BlackjackPhase.roundEnd, reason: 'round $round end on client');
+      host.bj.newRound();
+      await waitFor(() => client.bj.phase == BlackjackPhase.betting, reason: 'round ${round + 1} betting on client');
+    }
+  }, timeout: const Timeout(Duration(seconds: 120)));
+
   test('a client that disappears does not freeze the table', () async {
     final (host, client) = await _connect();
     var clientClosed = false;
