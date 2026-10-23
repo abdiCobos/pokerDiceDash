@@ -34,8 +34,10 @@ description: Preparing a Poker Dice Dash release for F-Droid (applicationId, FOS
 # Testing the recipe in WSL Ubuntu (before tagging / sending the MR)
 - Ubuntu already has `fdroidserver`, `openjdk-17-jdk-headless`, `unzip` (the user ran the sudo apt
   install; never type the sudo password). Use JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 (default java is 25).
-- Test fdroiddata at `~/fdroidtest/fdroiddata`: copy `metadata/<appid>.yml` there; it also holds
-  `config/categories.yml` (Games) and `srclibs/flutter.yml` like the real fdroiddata.
+- Test fdroiddata at `~/fdroidtest/fdroiddata`: copy `metadata/<appid>.yml` there plus `srclibs/flutter.yml`.
+  Categories must come from the REAL list (fdroiddata `config/categories.yml` / `schemas/metadata.json`):
+  this app uses `Card Game` + `Dice`; the old generic `Games` is rejected by the CI schema check.
+  Never dismiss a lint warning as a test-setup artifact without checking it against real fdroiddata.
 - `fdroid lint <appid>` and `fdroid rewritemeta <appid>` (copy the rewritten file back: CI requires that format, LF).
 - `fdroid scanner -v --exit-code <appid>` with `commit:` temporarily set to a pushed hash (restore it after).
   It requires `pubspec.lock` in git (`!pubspec.lock` in .gitignore).
