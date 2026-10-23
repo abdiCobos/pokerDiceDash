@@ -73,6 +73,18 @@ void main() {
     expect(withBoard.every((x) => x.suit == Suit.hearts), isTrue);
   });
 
+  testWidgets('1+1: the chaos swap waits for the dice to land too', (tester) async {
+    final g = diceGame(3);
+    expect(await waitMyRoll(tester, g), isTrue);
+    g.debugNextDice = [1, 1];
+    g.rollDice();
+    expect(g.lastDiceEvent, DiceEvent.swap);
+    expect(g.state.mustSwapHands, isFalse, reason: 'the CAOS screen would show before the dice land');
+    await tester.pump(GameProvider.diceRollAnimation);
+    expect(g.state.mustSwapHands, isTrue);
+    await finish(tester, g);
+  });
+
   testWidgets('doble 6: the roller goes all-in', (tester) async {
     final g = diceGame(3);
     expect(await waitMyRoll(tester, g), isTrue);

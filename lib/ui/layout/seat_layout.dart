@@ -68,6 +68,16 @@ class SeatLayout {
   /// Free felt kept between the community cards and any opponent seat (times the table scale).
   static const double boardClearance = 10.0;
 
+  /// Resting spot of the two Dice Dash dice (plus the event label under them): left of the
+  /// community cards, under the pot, so it never covers a card or the pot.
+  static Rect diceRect(Size size) {
+    final s = tableScale(size);
+    final board = boardRect(size);
+    final pot = potRect(size);
+    final w = 92 * s;
+    return Rect.fromLTWH(board.left - 10 * s - w, pot.bottom + 8 * s, w, 40 * s);
+  }
+
   static Rect boardRect(Size size) {
     final s = tableScale(size);
     final commW = communityWidth(cardAutoScale(size.width));
@@ -91,7 +101,7 @@ class SeatLayout {
       Rect.fromLTRB(w - w * 0.03 - 150 * s, h - h * 0.04 - 48 * s, w - w * 0.03, h - h * 0.04), // roll button
       Rect.fromLTRB(w - w * 0.03 - 150 * s, h - h * 0.28 - 36 * s, w - w * 0.03, h - h * 0.28), // start button
       if (diceMode)
-        Rect.fromLTRB(w * 0.25, h - h * 0.28 - 40 * s, w * 0.25 + 100 * s, h - h * 0.28), // dice
+        Rect.fromLTRB(diceRect(size).left, diceRect(size).top, diceRect(size).right, diceRect(size).bottom + 26 * s), // dice + event label
     ];
   }
 

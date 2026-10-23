@@ -507,6 +507,7 @@ class GameProvider extends ChangeNotifier {
         AppLogger().event('lucky_seven', params: {'pot_bonus': extra.toString()});
         setCentralMessage('Dados de la suerte. El Pot aumenta un 30%');
       case DiceEvent.swap:
+        _state = _state.copyWith(mustSwapHands: true);
       case DiceEvent.none:
         break;
     }
@@ -1085,15 +1086,8 @@ class GameProvider extends ChangeNotifier {
 
 
 
-          bool swapFlag = _state.mustSwapHands;
-
-
-
-          if (_die1 == 1 && _die2 == 1) {
-
-            swapFlag = true;
-
-          }
+          // 1+1: the host sets the swap flag once the dice land (state update).
+          final swapFlag = _state.mustSwapHands;
 
 
 
@@ -1758,14 +1752,12 @@ class GameProvider extends ChangeNotifier {
         : null;
     final event = diceEventFor(_die1, _die2, luckySevenAvailable: !_luckySevenApplied);
     _lastDiceEvent = event;
-    bool swapFlag = _state.mustSwapHands;
-    if (event == DiceEvent.swap) {
-      swapFlag = true;
-    }
+    // 1+1 included: the "¡CAOS!" screen starts when the swap flag is set, so it waits too.
+    final swapFlag = _state.mustSwapHands;
     if (event == DiceEvent.luckySeven) _luckySevenApplied = true;
     // Nothing happens (no message, no card, no panel) until the dice have landed
     // on every screen; meanwhile nobody may act on the old situation.
-    if (roller != null && event != DiceEvent.none && event != DiceEvent.swap) {
+    if (roller != null && event != DiceEvent.none) {
       _diceEventBusy = true;
       final epoch = _epoch;
       Future.delayed(diceRollAnimation, () {

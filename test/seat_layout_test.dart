@@ -15,6 +15,20 @@ void main() {
     Size(1920, 1080),
   ];
 
+  group('Dice Dash dice spot', () {
+    for (final size in sizes) {
+      test('${size.width.toInt()}x${size.height.toInt()} dice never cover the cards, the pot or the local seat', () {
+        final dice = SeatLayout.diceRect(size);
+        final screen = Offset.zero & size;
+        expect(screen.contains(dice.topLeft) && screen.contains(dice.bottomRight), isTrue);
+        expect(dice.overlaps(SeatLayout.boardRect(size)), isFalse, reason: 'dice on the community cards');
+        expect(dice.overlaps(SeatLayout.potRect(size)), isFalse, reason: 'dice on the pot');
+        final local = SeatLayout.fixedObstacles(size, diceMode: false)[1];
+        expect(dice.overlaps(local), isFalse, reason: 'dice on the local seat');
+      });
+    }
+  });
+
   group('SeatLayout.placeOpponents', () {
     for (final size in sizes) {
       for (final dice in [true, false]) {

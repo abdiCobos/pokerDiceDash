@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
 
@@ -30,12 +32,31 @@ android {
         versionName = flutter.versionName
     }
 
+    // Own release key only when android/key.properties exists (never committed).
+    // Without it the release APK is left unsigned: F-Droid signs its own builds.
+    val keyPropsFile = rootProject.file("key.properties")
+    if (keyPropsFile.exists()) {
+        val keyProps = Properties().apply { keyPropsFile.inputStream().use { load(it) } }
+        signingConfigs {
+            create("release") {
+                storeFile = file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keyPropsFile.exists()) signingConfigs.getByName("release") else null
         }
+    }
+
+    // No encrypted Google dependency blob in the APK (F-Droid requirement).
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 }
 

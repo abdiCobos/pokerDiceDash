@@ -404,8 +404,8 @@ class _GameTableScreenState extends State<GameTableScreen>
         ),
         if (game.gameMode == GameMode.diceDash)
           Positioned(
-            bottom: _screenH * 0.28,
-            left: _screenW * 0.25,
+            top: SeatLayout.diceRect(Size(_screenW, _screenH)).top,
+            left: SeatLayout.diceRect(Size(_screenW, _screenH)).left,
             child: _buildDiceArea(game),
           ),
       ],
@@ -605,7 +605,7 @@ class _GameTableScreenState extends State<GameTableScreen>
 
   Widget _buildDiceArea(GameProvider game) {
     // The dice are thrown from the roller's seat toward the dice spot.
-    final diceCenter = Offset(_screenW * 0.25 + 46 * _s, _screenH - _screenH * 0.28 - 20 * _s);
+    final diceCenter = SeatLayout.diceRect(Size(_screenW, _screenH)).center;
     final idx = game.state.currentPlayerIndex;
     Offset origin = Offset(_screenW / 2, _screenH);
     if (idx >= 0 && idx < game.players.length) {
