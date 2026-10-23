@@ -6,6 +6,8 @@ build/
 .idea/
 .vscode/
 *.lock
+# Apps commit their lock file: exact dependency versions (F-Droid scanner requires it).
+!pubspec.lock
 
 # Android
 android/.gradle/
