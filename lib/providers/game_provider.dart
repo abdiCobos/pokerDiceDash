@@ -256,6 +256,8 @@ class GameProvider extends ChangeNotifier {
   void _watchdogTick() {
     if (_isDisposed || _isExiting || !_isHost || !_isMultiplayer || !_matchStarted) return;
     if (_gameMode == GameMode.blackjack) return; // Blackjack runs its own turn timers
+    if (_diceEventBusy) return; // dice events (all-in, extra card) have their own timers
+    if (_matchWinnerId != null) return; // match over: waits for "Jugar otra vez"
     // 1) Showdown finished but no new round is scheduled.
     if (_state.phase == PokerPhase.showdown &&
         _state.status == GameStatus.finished &&
@@ -302,6 +304,7 @@ class GameProvider extends ChangeNotifier {
 
   void _initDebugMode() {
     _isExiting = false;
+    _matchWinnerId = null;
     _epoch++;
     _matchStarted = false;
     _newRoundTimer?.cancel();
@@ -651,6 +654,26 @@ class GameProvider extends ChangeNotifier {
 
   String? _winnerId;
   String? get winnerId => _winnerId;
+
+  /// Only one seat has chips left: the match is over until the host restarts it.
+  String? _matchWinnerId;
+  String? get matchWinnerId => _matchWinnerId;
+
+  /// "Jugar otra vez" after a match is won: everyone back to 1000 (host / local only).
+  void restartMatch() {
+    if (!_isHost || _matchWinnerId == null) return;
+    _matchWinnerId = null;
+    for (final p in _players) {
+      p.chipBalance = 1000;
+      p.isBankrupt = false;
+      p.isFolded = false;
+      p.hand = [];
+    }
+    AppLogger().event('match_restart', params: {'game_mode': _gameMode.name});
+    notifyListeners();
+    broadcastState();
+    scheduleNewRound();
+  }
 
   // Result of the last finished hand, shown by the results banner and the
   // winner ribbon on the seats. Cleared when the next hand is dealt.
@@ -1834,7 +1857,16 @@ class GameProvider extends ChangeNotifier {
 
     final activePlayers = _players.where((p) => !p.isBankrupt && p.chipBalance > 0).toList();
 
-    if (activePlayers.length < 2) {
+    if (activePlayers.length == 1) {
+      // Everybody else is out of chips: announce the winner, nobody is reset behind their back.
+      _matchWinnerId = activePlayers.first.id;
+      AppLogger().event('match_over', params: {'winner': activePlayers.first.name});
+      _state = _state.copyWith(status: GameStatus.finished);
+      notifyListeners();
+      broadcastState();
+      return;
+    }
+    if (activePlayers.isEmpty) {
       AppLogger().log('NOT_ENOUGH_PLAYERS: resetting all chips to 1000');
       for (final p in _players) {
         p.isBankrupt = false;
@@ -1849,6 +1881,8 @@ class GameProvider extends ChangeNotifier {
     }
 
 
+
+    _matchWinnerId = null;
 
     int nextActive(int startIndex) {
 
@@ -2457,6 +2491,7 @@ class GameProvider extends ChangeNotifier {
       'extraDiscard': _extraDiscard == null ? null : [_extraDiscard!.$1, _extraDiscard!.$2],
       'spied': forPlayerId == null ? const <String>[] : (_spied[forPlayerId]?.toList() ?? const <String>[]),
       'payouts': _resultPayouts,
+      'matchWinner': _matchWinnerId,
       'phase': _state.phase.name,
       'status': _state.status.name,
       'revealedCommunityCount': _state.revealedCommunityCount,
@@ -2645,6 +2680,7 @@ class GameProvider extends ChangeNotifier {
     } else {
       _clearResult();
     }
+    _matchWinnerId = state['matchWinner'] as String?;
     final payouts = state['payouts'];
     if (payouts is Map) {
       _resultPayouts = {for (final e in payouts.entries) e.key.toString(): (e.value as num).toInt()};

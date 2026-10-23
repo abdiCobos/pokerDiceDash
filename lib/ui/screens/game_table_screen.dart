@@ -254,6 +254,19 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _CenteredStatusAlert(message: game.centralMessage!),
                       if (_showPotFlying && game.winnerId != null)
                         _buildPotFlyingAnimation(game),
+                      if (game.matchWinnerId != null)
+                        Positioned.fill(
+                          child: _MatchOverOverlay(
+                            winnerName: game.players
+                                .firstWhere((p) => p.id == game.matchWinnerId, orElse: () => PlayerModel(id: '', name: '?'))
+                                .name,
+                            localWon: game.matchWinnerId == game.localPlayerId,
+                            canRestart: game.isHost,
+                            scale: _s,
+                            onRestart: game.restartMatch,
+                            onExit: () => Navigator.maybePop(context),
+                          ),
+                        ),
                     ],
                   );
                 },
@@ -1192,6 +1205,108 @@ class _BetStack extends StatelessWidget {
 /// End-of-hand banner: who won, with what, and how much. Pops in over the
 /// table for a couple of seconds, then gets out of the way so the showdown
 /// cards (and the winner ribbon on the seat) stay visible.
+/// Only one player has chips left: who won the match, then "Jugar otra vez" (host / local)
+/// or leave. Nobody is reset to 1000 behind the players' backs.
+class _MatchOverOverlay extends StatelessWidget {
+  final String winnerName;
+  final bool localWon;
+  final bool canRestart;
+  final double scale;
+  final VoidCallback onRestart;
+  final VoidCallback onExit;
+
+  const _MatchOverOverlay({
+    required this.winnerName,
+    required this.localWon,
+    required this.canRestart,
+    required this.scale,
+    required this.onRestart,
+    required this.onExit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    return Container(
+      color: Colors.black.withValues(alpha: 0.6),
+      alignment: Alignment.center,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.7, end: 1),
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutBack,
+        builder: (context, k, child) => Transform.scale(scale: k, child: child),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Container(
+            width: 420 * s,
+            padding: EdgeInsets.fromLTRB(20 * s, 16 * s, 20 * s, 16 * s),
+            decoration: BoxDecoration(
+              color: const Color(0xFF07160D).withValues(alpha: 0.97),
+              borderRadius: BorderRadius.circular(16 * s),
+              border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
+              boxShadow: [BoxShadow(color: const Color(0xFFD4AF37).withValues(alpha: 0.3), blurRadius: 22 * s)],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.emoji_events, color: const Color(0xFFFFD54F), size: 44 * s),
+                SizedBox(height: 6 * s),
+                Text(
+                  localWon ? '¡Ganaste la partida!' : '¡$winnerName gana la partida!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: const Color(0xFFFFD54F), fontSize: 20 * s, fontWeight: FontWeight.w900),
+                ),
+                SizedBox(height: 4 * s),
+                Text(
+                  localWon ? 'Te quedaste con todas las fichas de la mesa.' : 'Se quedó con todas las fichas de la mesa.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70, fontSize: 12 * s),
+                ),
+                SizedBox(height: 14 * s),
+                if (!canRestart)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10 * s),
+                    child: Text(
+                      'Esperando a que el anfitrión empiece otra partida...',
+                      style: TextStyle(color: Colors.white54, fontSize: 11 * s),
+                    ),
+                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutlinedButton(
+                      onPressed: onExit,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white38),
+                        padding: EdgeInsets.symmetric(horizontal: 18 * s, vertical: 10 * s),
+                      ),
+                      child: Text('Salir', style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
+                    ),
+                    if (canRestart) ...[
+                      SizedBox(width: 10 * s),
+                      ElevatedButton.icon(
+                        onPressed: onRestart,
+                        icon: Icon(Icons.replay, size: 16 * s),
+                        label: Text('Jugar otra vez', style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(horizontal: 18 * s, vertical: 10 * s),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ResultsBanner extends StatefulWidget {
   final List<String> names;
   final String title;
@@ -2193,7 +2308,7 @@ class _PlayerSeat extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 3 * s),
-              if (isLocal && player.isBankrupt)
+              if (isLocal && player.isBankrupt && Provider.of<GameProvider>(context).matchWinnerId == null)
                 Padding(
                   padding: EdgeInsets.only(top: 4 * s, bottom: 4 * s),
                   child: Consumer<GameProvider>(

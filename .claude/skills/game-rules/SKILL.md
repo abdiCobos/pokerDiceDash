@@ -59,7 +59,10 @@ High card < pair < two pair < trips < straight < flush < full house < quads < st
   the hand goes on. Settled in `_resolveRound` together with the hand. No even money.
 - Out of chips: Blackjack refills any seat at 0 to 1000 at the next round (humans, bots, LAN).
   Poker: bots auto-rebuy 1000 at the next deal; a human at 0 is `isBankrupt` (sits out, RECOMPRAR
-  button sends REBUY); if fewer than 2 seats have chips, EVERYONE is reset to 1000.
+  button sends REBUY). If only ONE seat has chips the match is over: `matchWinnerId` (synced as
+  `matchWinner`), status finished, no new hand and no watchdog restart until the host / local
+  player taps "Jugar otra vez" (`restartMatch`, everyone to 1000). Clients only see "Salir".
+  Bots always auto-rebuy, so against bots the human can lose the match but never "win" it.
 - Double: doubles the bet, exactly one card, then stands. Split: once, identical values only
   (K+Q cannot split), each hand gets one card.
 - Bots: basic strategy-lite (hit <= 11; 12-16 hit vs dealer 7-A, 12 also vs 2-3; else stand).
