@@ -1,70 +1,92 @@
-# Poker Dice Dash 🎲🃏
+<p align="center">
+  <img src="fastlane/metadata/android/es-MX/images/featureGraphic.png" alt="Poker Dice Dash" width="100%">
+</p>
 
-**Poker Dice Dash** es un juego para dispositivos móviles desarrollado en Flutter que reúne la emoción del casino y los juegos de mesa clásicos en un solo lugar. Disfruta de múltiples modos de juego, tanto en solitario como en multijugador.
+<p align="center">
+  <b>Casino de bolsillo:</b> póker con dados, Texas Hold'em y Blackjack.<br>
+  Juega contra bots o con tus amigos en la misma red Wi-Fi. Sin cuentas, sin anuncios y sin internet.
+</p>
 
-## 🎮 Modos de Juego
+<p align="center">
+  <a href="https://github.com/abdiCobos/pokerDiceDash/releases/latest"><img alt="Descargar" src="https://img.shields.io/github/v/release/abdiCobos/pokerDiceDash?label=descargar&color=2e7d32"></a>
+  <img alt="Android y Windows" src="https://img.shields.io/badge/plataformas-Android%20%7C%20Windows-d4af37">
+  <a href="LICENSE"><img alt="Licencia GPL-3.0" src="https://img.shields.io/badge/licencia-GPL--3.0-blue"></a>
+</p>
 
-1. **21 Black Jack**
-   - El clásico juego de casino donde debes vencer al crupier (Dealer) acercándote lo más posible a 21 sin pasarte.
-   - **Reglas especiales:** Implementación de la regla "5-Card Charlie" (si consigues 5 cartas en una mano sin pasarte de 21, ¡ganas automáticamente 1 a 1!).
-   - Opciones para Pedir, Plantarse, Doblar y Dividir (Split).
-   - Bots inteligentes en modo solitario y opciones multijugador.
+## Capturas
 
-2. **Texas Hold'em Poker**
-   - Reta a tus amigos o a los bots en el modo de póker más famoso del mundo.
-   - Apuestas, rondas de Flop, Turn y River con gestión avanzada de botes y combinaciones.
+<table>
+  <tr>
+    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/2_dicedash.png" alt="Dice Dash"><p align="center">Dice Dash: póker con dados</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/3_texas.png" alt="Texas Hold'em"><p align="center">Texas Hold'em</p></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/4_blackjack.png" alt="Blackjack"><p align="center">Blackjack</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/5_blackjack_result.png" alt="Resultados de Blackjack"><p align="center">Resultados de la ronda</p></td>
+  </tr>
+</table>
 
-3. **Dice Dash**
-   - Un modo rápido y divertido basado en lanzamiento de dados.
+<p align="center">
+  <img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/1_menu.png" alt="Menú" width="24%">
+  &nbsp;
+  <img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/6_lan.png" alt="Jugar en red" width="24%">
+</p>
 
-## 🌐 Modos Multijugador
+## Descargar
 
-- **Práctica (Solitario):** Juega sin conexión contra el Crupier o contra bots integrados en la aplicación.
-- **Local (LAN):** Crea salas locales y conecta con amigos en la misma red Wi-Fi (usando mDNS y Sockets estándar), 100% privado y de código abierto.
-  - Reconexión automática: si un jugador pierde la señal, la app reintenta durante ~1 minuto y recupera su asiento; mientras tanto el anfitrión juega su turno (fold/check) para que la ronda siga.
-  - El anfitrión es la fuente de verdad: cada cliente solo recibe sus propias cartas hasta el showdown.
+| Plataforma | Archivo |
+|---|---|
+| **Android** | `PokerDiceDash-<versión>.apk` en [Releases](https://github.com/abdiCobos/pokerDiceDash/releases/latest) (pronto también en F-Droid) |
+| **Windows 10/11** | Instalador `PokerDiceDash-<versión>-setup.exe` o versión portátil `PokerDiceDash-<versión>-windows-x64.zip` en [Releases](https://github.com/abdiCobos/pokerDiceDash/releases/latest) |
 
+> **Windows:** el juego no tiene una firma digital de pago, así que SmartScreen puede mostrar «Windows protegió tu PC». Pulsa **Más información → Ejecutar de todas formas**. La primera vez que crees una sala, permite el acceso en **redes privadas**.
 
+## Modos de juego
 
-## 🚀 Características Técnicas
+### 🎲 Dice Dash: póker con dados
+Antes de cada jugada tiras dos dados, y algunas combinaciones cambian la mano:
 
-- Construido con **Flutter** para lograr rendimiento nativo en Android.
-- Acomodo de interfaz adaptable (`_s` responsive factor) y animaciones fluidas (slide-in cards).
-- Arquitectura basada en **Provider** para la gestión de estados (`GameProvider`, `BlackjackProvider`).
-- Rendering nativo avanzado mediante **Impeller (Vulkan)**.
+| Dados | Evento |
+|---|---|
+| 1 + 1 | **Intercambio**: las cartas de todos se mezclan y se reparten otra vez |
+| 6 + 6 | **All-in**: quien tira apuesta todas sus fichas |
+| 3 + 3 | **Espía**: ves una carta de un rival |
+| 6 + 1 | **Carta extra**: recibes una tercera carta y te quedas con las dos mejores |
+| Suma 7 | **Dados de la suerte**: el bote crece un 30 % (una vez por mano) |
 
-## 🛠 Instalación y Ejecución Local
+### ♠️ Texas Hold'em
+El póker clásico con ciegas, botes paralelos y todo el reglamento.
 
-Para compilar y ejecutar este proyecto en tu entorno local:
+### 🃏 Blackjack
+Pide, plántate, dobla o divide. Blackjack paga 3 a 2, el crupier se planta en 17, regla 5-Card Charlie y seguro cuando el crupier muestra un As.
 
-1. Asegúrate de tener instalado [Flutter](https://flutter.dev/docs/get-started/install).
-2. Clona el repositorio:
-   ```bash
-   git clone https://github.com/abdiCobos/pokerDiceDash.git
-   ```
-3. Instala las dependencias:
-   ```bash
-   cd poker_dice_dash
-   flutter pub get
-   ```
-4. Conecta tu dispositivo Android (vía USB o depuración inalámbrica) y ejecuta:
-   ```bash
-   flutter run
-   ```
+### 🤖 Bots con personalidad
+Tres niveles (fácil, normal y difícil). Calculan sus probabilidades, farolean y cada uno juega distinto.
 
-## 🧰 Skills de desarrollo (`.agents/skills`)
+## Multijugador en red local
 
-- `flutter-responsive-layout`: reglas para colocar asientos sin solapes en móviles (`lib/ui/layout/seat_layout.dart`).
-- `flutter-lan-networking`: protocolo LAN (heartbeat, reconexión con token, estado enmascarado).
-- `fdroid-release`: checklist de publicación en F-Droid (sin servicios propietarios).
-- `flutter-testing`: guía de pruebas (`flutter analyze` y `flutter test`).
+- Crea una sala y únete desde otros móviles o PC con Windows en la **misma red Wi-Fi**; también puedes entrar por IP.
+- Póker y Blackjack en red, con contraseña opcional.
+- Reconexión automática: si alguien pierde la señal recupera su asiento, y mientras tanto la mesa sigue.
+- El anfitrión manda: cada jugador solo recibe sus propias cartas hasta el final de la mano.
+- Sin servidores externos: todo ocurre dentro de tu red.
 
-## 📦 Publicación en F-Droid
+## Compilar desde el código
 
-Receta en `metadata/io.github.abdicobos.pokerdicedash.yml` y textos en `fastlane/metadata/android/`. Licencia: GPL-3.0-or-later (ver `LICENSE`). El proyecto no usa Firebase, analíticas ni anuncios.
+Necesitas [Flutter](https://docs.flutter.dev/get-started/install) 3.38 o superior.
 
-## 📝 Contribuciones
-¡Toda contribución es bienvenida! Si deseas mejorar la inteligencia de los bots, agregar nuevos modos de juego o refinar el código, siéntete libre de hacer un Fork y enviar un Pull Request.
+```bash
+git clone https://github.com/abdiCobos/pokerDiceDash.git
+cd pokerDiceDash
+flutter pub get
+flutter run
+```
 
----
-*Desarrollado con ❤️ para los amantes del Poker, el Blackjack y los Dados.*
+- **APK:** `flutter build apk --release`
+- **Windows (ZIP e instalador):** `powershell -ExecutionPolicy Bypass -File windows/packaging/build_release.ps1` (el instalador requiere [Inno Setup 6](https://jrsoftware.org/isinfo.php))
+- **Pruebas:** `flutter test`
+
+## Licencia
+
+Software libre bajo **GPL-3.0-or-later**. Ver [LICENSE](LICENSE).
+La fuente del título, Alfa Slab One, se distribuye bajo la licencia SIL Open Font License (`assets/fonts/AlfaSlabOne-OFL.txt`).
