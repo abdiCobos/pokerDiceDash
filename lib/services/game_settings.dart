@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'logger_service.dart';
 import 'sound_service.dart';
 
 /// Player options shown in the in-table "Opciones" dialog (and partly in Ajustes).
@@ -81,8 +82,11 @@ class GameSettings extends ChangeNotifier {
 
   /// Tables call this on enter (atTable: true) and on leave (false).
   void applyWakelock({required bool atTable}) {
+    // Fails asynchronously on desktops without the screensaver service (e.g. Linux without
+    // xdg-desktop-portal): catch it on the future, a try/catch here would not see it.
     try {
-      (atTable && _keepAwake) ? WakelockPlus.enable() : WakelockPlus.disable();
+      ((atTable && _keepAwake) ? WakelockPlus.enable() : WakelockPlus.disable())
+          .catchError((Object e) => AppLogger().log('Wakelock no disponible: $e'));
     } catch (_) {}
   }
 }
