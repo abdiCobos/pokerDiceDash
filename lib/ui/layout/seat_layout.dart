@@ -62,6 +62,19 @@ class SeatLayout {
 
   static double communityWidth(double autoScale) => 5 * (80 * 0.65 * autoScale + 4);
 
+  /// Top of the community-card row.
+  static double boardTop(Size size) => size.height * 0.38;
+
+  /// Free felt kept between the community cards and any opponent seat (times the table scale).
+  static const double boardClearance = 10.0;
+
+  static Rect boardRect(Size size) {
+    final s = tableScale(size);
+    final commW = communityWidth(cardAutoScale(size.width));
+    final top = boardTop(size);
+    return Rect.fromLTRB(size.width / 2 - commW / 2, top, size.width / 2 + commW / 2, top + 84 * s);
+  }
+
   /// Widgets of the table that opponents must never cover (used by tests too).
   static List<Rect> fixedObstacles(Size size, {required bool diceMode}) {
     final w = size.width;
@@ -69,11 +82,10 @@ class SeatLayout {
     final s = tableScale(size);
     final a = cardAutoScale(w);
     final local = localSeatSize(s: s, autoScale: a);
-    final commW = communityWidth(a);
     return [
       Rect.fromLTRB(0, 0, w, 46 * s), // header
       Rect.fromLTRB(w / 2 - local.width / 2, h - local.height, w / 2 + local.width / 2, h), // local seat
-      Rect.fromLTRB(w / 2 - commW / 2, h * 0.35, w / 2 + commW / 2, h * 0.35 + 84 * s), // community cards
+      boardRect(size), // community cards
       potRect(size), // pot (beside the cards; the pre-flop spot is inside the card row)
       Rect.fromLTRB(w * 0.05, h - h * 0.06 - 56 * s, w * 0.05 + 270 * s, h - h * 0.06), // action panel
       Rect.fromLTRB(w - w * 0.03 - 150 * s, h - h * 0.04 - 48 * s, w - w * 0.03, h - h * 0.04), // roll button
@@ -91,7 +103,7 @@ class SeatLayout {
     final a = cardAutoScale(size.width);
     final potW = 110 * s;
     final potH = 22 * s;
-    final rowCenterY = size.height * 0.35 + 112 * 0.65 * a / 2;
+    final rowCenterY = boardTop(size) + 112 * 0.65 * a / 2;
     final cx = beside ? size.width / 2 - communityWidth(a) / 2 - 6 * s - potW / 2 : size.width / 2;
     return Rect.fromCenter(center: Offset(cx, rowCenterY), width: potW, height: potH);
   }
@@ -197,7 +209,11 @@ class SeatLayout {
     final s = tableScale(size);
     final a = cardAutoScale(w);
     final base = opponentSeatSize(s: s, autoScale: a, totalPlayers: opponents + 1);
-    final obstacles = fixedObstacles(size, diceMode: diceMode).skip(1).toList(); // header handled by yTop
+    // Header handled by yTop; seats also keep some felt free around the community cards.
+    final board = boardRect(size);
+    final obstacles = [
+      for (final o in fixedObstacles(size, diceMode: diceMode).skip(1)) o == board ? board.inflate(boardClearance * s) : o,
+    ];
     final header = 46 * s;
     final actionTop = h - h * 0.06 - 56 * s;
     final rollTop = h - h * 0.04 - 48 * s;
@@ -274,7 +290,7 @@ class SeatLayout {
 
     final header = 46 * s;
     final commHalf = communityWidth(a) / 2;
-    final commTop = h * 0.35;
+    final commTop = boardTop(size) - boardClearance * s;
     final actionTop = h - h * 0.06 - 56 * s;
     final rollTop = h - h * 0.04 - 48 * s;
     final startTop = h - h * 0.28 - 36 * s;

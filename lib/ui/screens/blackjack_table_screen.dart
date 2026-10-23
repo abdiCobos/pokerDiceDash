@@ -985,7 +985,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       case 'BUST':
         return 'Te pasaste de 21 ($net)';
       case 'PIERDE':
-        return 'Gana el crupier ($net)';
+        // A dealer natural ends the round at once: say why nobody was asked to play.
+        final dealerNatural = bj.dealer?.hands.firstOrNull?.isNatural ?? false;
+        return dealerNatural ? '¡Blackjack del crupier! ($net)' : 'Gana el crupier ($net)';
       default:
         return 'Ronda finalizada';
     }

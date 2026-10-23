@@ -25,6 +25,8 @@ description: Placing player seats, cards, the table oval and controls on the Tex
   already `placedBets` so bets never stack. Tests require every bet on the felt up to 5
   opponents (4 below 700 dp wide).
 - `SeatLayout.tableRect` is the felt oval; seats may sit on its rail, never on the community cards.
+- The board row starts at `SeatLayout.boardTop` (h * 0.38, also used by the screen); seats keep
+  `boardClearance * s` of free felt around `boardRect` so the top row never looks glued to the cards.
 - `opponentSeatSize` must match `_PlayerSeat` (name row 18*s fixed + chips row + cards).
   Seats get `width: rect.width` as a MIN width so the ring looks uniform; `FittedBox(scaleDown)`
   is the last-resort guard against overflow.

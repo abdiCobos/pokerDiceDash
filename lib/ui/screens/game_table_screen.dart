@@ -384,7 +384,7 @@ class _GameTableScreenState extends State<GameTableScreen>
             ),
           ),
         Positioned(
-          top: _screenH * 0.35,
+          top: SeatLayout.boardTop(Size(_screenW, _screenH)),
           left: 0,
           right: 0,
           child: Center(child: _buildCommunityCards(game)),
