@@ -6,6 +6,7 @@ SourceCode: https://github.com/abdiCobos/pokerDiceDash
 IssueTracker: https://github.com/abdiCobos/pokerDiceDash/issues
 
 AutoName: Poker Dice Dash
+
 RepoType: git
 Repo: https://github.com/abdiCobos/pokerDiceDash.git
 
@@ -22,10 +23,8 @@ Builds:
       - windows/
       - linux/
       - web/
-    prebuild:
-      - $$flutter$$/bin/flutter config --no-analytics
-    build:
-      - $$flutter$$/bin/flutter build apk --release
+    prebuild: $$flutter$$/bin/flutter config --no-analytics
+    build: $$flutter$$/bin/flutter build apk --release
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags

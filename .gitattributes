@@ -1,0 +1,2 @@
+metadata/*.yml text eol=lf
+fastlane/**/*.txt text eol=lf
