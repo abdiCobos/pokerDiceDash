@@ -30,3 +30,14 @@ description: Preparing a Poker Dice Dash release for F-Droid (applicationId, FOS
   and LEEME.txt (SmartScreen + firewall instructions; never change those settings for the user).
 - Never change the `AppId` GUID in `poker_dice_dash.iss`: upgrades depend on it. Version comes from pubspec.
 - Test: silent install `/VERYSILENT /CURRENTUSER`, run the game, then uninstall from the registry's UninstallString.
+
+# Testing the recipe in WSL Ubuntu (before tagging / sending the MR)
+- Ubuntu already has `fdroidserver`, `openjdk-17-jdk-headless`, `unzip` (the user ran the sudo apt
+  install; never type the sudo password). Use JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 (default java is 25).
+- Test fdroiddata at `~/fdroidtest/fdroiddata`: copy `metadata/<appid>.yml` there; it also holds
+  `config/categories.yml` (Games) and `srclibs/flutter.yml` like the real fdroiddata.
+- `fdroid lint <appid>` and `fdroid rewritemeta <appid>` (copy the rewritten file back: CI requires that format, LF).
+- `fdroid scanner -v --exit-code <appid>` with `commit:` temporarily set to a pushed hash (restore it after).
+  It requires `pubspec.lock` in git (`!pubspec.lock` in .gitignore).
+- Full build like the buildserver: `~/fdroid_build.sh` (fresh clone, Flutter srclib tag, rm platforms,
+  `flutter build apk --release`); APK must be unsigned and list only the allowed permissions.
