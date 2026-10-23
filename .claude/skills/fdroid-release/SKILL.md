@@ -21,3 +21,12 @@ description: Preparing a Poker Dice Dash release for F-Droid (applicationId, FOS
   CHANGE_WIFI_MULTICAST_STATE, WAKE_LOCK.
 - Tag (`git tag vX.Y.Z`) only when the user asks; then point the recipe to the tag.
 - No secrets or leftover service configs (`firebase.json`, `google-services.json`).
+
+# Windows release (GitHub Releases)
+- `powershell -ExecutionPolicy Bypass -File windows/packaging/build_release.ps1` builds and writes
+  `dist/PokerDiceDash-<ver>-windows-x64.zip` and, with Inno Setup 6 installed (user scope, winget
+  `JRSoftware.InnoSetup`), `dist/PokerDiceDash-<ver>-setup.exe`. `dist/` is git-ignored.
+- The package bundles msvcp140/vcruntime140/vcruntime140_1 (app-local VC++ runtime), LICENSE.txt
+  and LEEME.txt (SmartScreen + firewall instructions; never change those settings for the user).
+- Never change the `AppId` GUID in `poker_dice_dash.iss`: upgrades depend on it. Version comes from pubspec.
+- Test: silent install `/VERYSILENT /CURRENTUSER`, run the game, then uninstall from the registry's UninstallString.
