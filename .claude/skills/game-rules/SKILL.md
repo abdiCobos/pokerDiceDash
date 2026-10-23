@@ -52,6 +52,14 @@ High card < pair < two pair < trips < straight < flush < full house < quads < st
   push 1x, bust 0.
 - Dealer draws below 17, stands on every 17 (including soft 17); skips drawing if all players busted.
 - Dealer blackjack (natural) ends the round before anyone plays; blackjack vs blackjack = push.
+- Insurance (`BlackjackPhase.insurance`): when the dealer's UP card is an ace, before the peek, each
+  human who bet and has no blackjack may insure for `bet ~/ 2` (`canInsure`, `takeInsurance`, LAN
+  intent `INSURANCE` value 1/0). 8 s (`insuranceTimeout`) then "no". Bots and away seats never insure.
+  Dealer blackjack: insurance pays 2:1 (stake x3 back), outcome `SEGURO`; otherwise it is lost and
+  the hand goes on. Settled in `_resolveRound` together with the hand. No even money.
+- Out of chips: Blackjack refills any seat at 0 to 1000 at the next round (humans, bots, LAN).
+  Poker: bots auto-rebuy 1000 at the next deal; a human at 0 is `isBankrupt` (sits out, RECOMPRAR
+  button sends REBUY); if fewer than 2 seats have chips, EVERYONE is reset to 1000.
 - Double: doubles the bet, exactly one card, then stands. Split: once, identical values only
   (K+Q cannot split), each hand gets one card.
 - Bots: basic strategy-lite (hit <= 11; 12-16 hit vs dealer 7-A, 12 also vs 2-3; else stand).

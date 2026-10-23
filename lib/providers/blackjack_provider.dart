@@ -52,6 +52,7 @@ class BlackjackProvider extends ChangeNotifier {
   static const Duration awayTurnDelay = Duration(seconds: 2);
   static const Duration bettingTimeout = Duration(seconds: 30);
   static const Duration autoNextRound = Duration(seconds: 12);
+  static const Duration insuranceTimeout = Duration(seconds: 8);
 
   P2PService? _p2p;
   GameProvider? _lobby;
@@ -61,6 +62,7 @@ class BlackjackProvider extends ChangeNotifier {
   Timer? _turnTimer;
   Timer? _bettingTimer;
   Timer? _nextRoundTimer;
+  Timer? _insuranceTimer;
   bool _disposed = false;
   final String _session = '${DateTime.now().microsecondsSinceEpoch}';
   int _seq = 0;
@@ -68,6 +70,24 @@ class BlackjackProvider extends ChangeNotifier {
   int _lastRemoteSeq = -1;
   int _remoteDeckCount = 0;
   final Set<String> _away = {};
+
+  /// Seats that already answered the insurance offer this round (bots and away seats included).
+  final Set<String> _insuranceAnswered = {};
+
+  /// Insurance costs half the bet (rounded down).
+  static int insuranceCost(BlackjackPlayer p) => p.totalBet ~/ 2;
+
+  /// [p] may still buy insurance: the dealer shows an ace, they bet, they have no
+  /// blackjack themselves, can pay it and have not answered yet.
+  bool canInsure(BlackjackPlayer p) =>
+      _state.phase == BlackjackPhase.insurance &&
+      !p.isDealer &&
+      p.totalBet > 0 &&
+      p.hands.isNotEmpty &&
+      !p.hands[0].isNatural &&
+      insuranceCost(p) >= 1 &&
+      p.chipBalance >= insuranceCost(p) &&
+      !_insuranceAnswered.contains(p.id);
 
   /// Seats whose player is disconnected (host and clients see the same set).
   Set<String> get awaySeats => _away;
@@ -105,6 +125,7 @@ class BlackjackProvider extends ChangeNotifier {
       'away': _away.toList(),
       'roundOutcome': _roundOutcome,
       'roundNet': _roundNet,
+      'insuranceAnswered': _insuranceAnswered.toList(),
       'players': [
         for (final p in _state.players)
           if (p.isDealer && !reveal && p.hands.isNotEmpty && p.hands[0].cards.length > 1)
@@ -152,6 +173,9 @@ class BlackjackProvider extends ChangeNotifier {
       ..clear()
       ..addAll([for (final a in (st['away'] as List? ?? const [])) a.toString()]);
     _roundOutcome = Map<String, String>.from((st['roundOutcome'] as Map?) ?? const {});
+    _insuranceAnswered
+      ..clear()
+      ..addAll([for (final a in (st['insuranceAnswered'] as List? ?? const [])) a.toString()]);
     _roundNet = {
       for (final e in ((st['roundNet'] as Map?) ?? const {}).entries) e.key.toString(): (e.value as num).toInt(),
     };
@@ -271,6 +295,8 @@ class BlackjackProvider extends ChangeNotifier {
         doubleDown(seatId);
       case 'SPLIT':
         splitPair(seatId);
+      case 'INSURANCE':
+        takeInsurance(seatId, value == 1);
     }
   }
 
@@ -323,6 +349,7 @@ class BlackjackProvider extends ChangeNotifier {
     _turnTimer?.cancel();
     _bettingTimer?.cancel();
     _nextRoundTimer?.cancel();
+    _insuranceTimer?.cancel();
     super.dispose();
   }
 
@@ -489,6 +516,7 @@ class BlackjackProvider extends ChangeNotifier {
       for (var i = 0; i < updated.length; i++) {
         updated[i] = updated[i].copyWith(
           hands: [BlackjackHand(betAmount: updated[i].totalBet)],
+          insuranceBet: 0,
         );
       }
       _state = BlackjackState(players: updated, deck: _state.deck, phase: BlackjackPhase.dealing);
@@ -529,6 +557,62 @@ class BlackjackProvider extends ChangeNotifier {
   }
 
   void _afterDealComplete() {
+    if (_disposed) return;
+    final d = dealer;
+    final upAce = d != null && d.hands.isNotEmpty && d.hands[0].cards.isNotEmpty && d.hands[0].cards.first.value == 'A';
+    _insuranceAnswered.clear();
+    if (upAce) {
+      _state = _state.copyWith(phase: BlackjackPhase.insurance);
+      // Bots never insure (bad bet); disconnected seats cannot answer.
+      for (final p in activePlayers) {
+        if (p.isBot || _away.contains(p.id)) _insuranceAnswered.add(p.id);
+      }
+      if (activePlayers.any(canInsure)) {
+        AppLogger().log('BJ:insurance offered');
+        _logAndNotify('insurance');
+        _insuranceTimer?.cancel();
+        _insuranceTimer = Timer(insuranceTimeout, _closeInsurance);
+        return;
+      }
+      _state = _state.copyWith(phase: BlackjackPhase.dealing);
+    }
+    _peekAndPlay();
+  }
+
+  /// Insurance answer ([take] = buy it). Clients send it to the host.
+  void takeInsurance(String playerId, bool take) {
+    if (_sendIntent('INSURANCE', take ? 1 : 0)) return;
+    if (_state.phase != BlackjackPhase.insurance) return;
+    final idx = players.indexWhere((p) => p.id == playerId);
+    if (idx < 0 || _insuranceAnswered.contains(playerId)) return;
+    final p = players[idx];
+    if (take && canInsure(p)) {
+      final cost = insuranceCost(p);
+      final updated = <BlackjackPlayer>[...players];
+      updated[idx] = p.copyWith(chipBalance: p.chipBalance - cost, insuranceBet: cost);
+      _state = _state.copyWith(players: updated);
+      SoundService().chipsRaise();
+      AppLogger().log('BJ:insurance $playerId=$cost');
+    }
+    _insuranceAnswered.add(playerId);
+    _logAndNotify('takeInsurance');
+    if (!activePlayers.any(canInsure)) _closeInsurance();
+  }
+
+  /// Everyone answered (or the time ran out, which counts as "no"): the dealer peeks.
+  void _closeInsurance() {
+    _insuranceTimer?.cancel();
+    _insuranceTimer = null;
+    if (_disposed || _state.phase != BlackjackPhase.insurance) return;
+    for (final p in activePlayers) {
+      _insuranceAnswered.add(p.id);
+    }
+    _state = _state.copyWith(phase: BlackjackPhase.dealing);
+    _peekAndPlay();
+  }
+
+  /// The dealer peeks: a blackjack ends the round at once, otherwise players play.
+  void _peekAndPlay() {
     try {
       AppLogger().log('BJ:_afterDealComplete');
       var updated = <BlackjackPlayer>[..._state.players];
@@ -885,9 +969,12 @@ class BlackjackProvider extends ChangeNotifier {
           }
           totalWinnings += winAmount;
         }
-        final netChange = totalWinnings - p.totalBet;
-        p = p.copyWith(chipBalance: p.chipBalance + totalWinnings);
-        String result;
+        // Insurance pays 2:1 (stake back + twice) only against a dealer blackjack.
+        final insured = p.insuranceBet;
+        final insurancePay = insured > 0 && dealerNatural ? insured * 3 : 0;
+        final netChange = totalWinnings - p.totalBet + insurancePay - insured;
+        p = p.copyWith(chipBalance: p.chipBalance + totalWinnings + insurancePay);
+        var result = '';
         if (dealerNatural) {
           result = p.isBlackjack ? 'Blackjack contra blackjack: empate' : 'Blackjack del crupier - Pierdes ${p.totalBet}';
         } else if (p.hands.any((h) => h.isBusted)) {
@@ -905,12 +992,15 @@ class BlackjackProvider extends ChangeNotifier {
         } else {
           result = 'Dealer gana con: $dealerVal - Pierdes ${p.totalBet}';
         }
+        if (insured > 0) result += dealerNatural ? ' · Seguro +${insured * 2}' : ' · Seguro -$insured';
         AppLogger().log('BJ:result $i: $result');
         results[p.id] = result;
         final played = p.hands.where((h) => h.cards.isNotEmpty).toList();
         if (played.isNotEmpty) {
           net[p.id] = netChange;
-          if (netChange > 0) {
+          if (insured > 0 && dealerNatural) {
+            outcome[p.id] = 'SEGURO';
+          } else if (netChange > 0) {
             outcome[p.id] = p.isBlackjack ? 'BLACKJACK' : (p.hands.any((h) => h.isCharlie) ? 'CHARLIE' : 'GANA');
           } else if (netChange == 0) {
             outcome[p.id] = 'EMPATE';
@@ -943,6 +1033,9 @@ class BlackjackProvider extends ChangeNotifier {
     if (isClient) return; // the host deals the next round
     _nextRoundTimer?.cancel();
     _nextRoundTimer = null;
+    _insuranceTimer?.cancel();
+    _insuranceTimer = null;
+    _insuranceAnswered.clear();
     try {
       _roundOutcome = const {};
       _roundNet = const {};
@@ -953,6 +1046,7 @@ class BlackjackProvider extends ChangeNotifier {
           chipBalance: balance,
           hands: [BlackjackHand()],
           totalBet: 0,
+          insuranceBet: 0,
         );
       }
       _state = BlackjackState(players: updated, deck: _state.deck, phase: BlackjackPhase.betting);

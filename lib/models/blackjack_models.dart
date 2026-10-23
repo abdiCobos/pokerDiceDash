@@ -100,6 +100,8 @@ class BlackjackPlayer {
   final List<BlackjackHand> hands;
   int activeHandIndex;
   int totalBet;
+  /// Insurance bought this round (half the bet, pays 2:1 if the dealer has blackjack).
+  int insuranceBet;
 
   BlackjackPlayer({
     required this.id,
@@ -111,6 +113,7 @@ class BlackjackPlayer {
     List<BlackjackHand>? hands,
     this.activeHandIndex = 0,
     this.totalBet = 0,
+    this.insuranceBet = 0,
   }) : hands = hands ?? [BlackjackHand()];
 
   BlackjackHand get currentHand => hands[activeHandIndex];
@@ -122,7 +125,7 @@ class BlackjackPlayer {
 
   BlackjackPlayer copyWith({
     String? id, String? name, int? chipBalance, bool? isLocal, bool? isDealer, bool? isBot,
-    List<BlackjackHand>? hands, int? activeHandIndex, int? totalBet,
+    List<BlackjackHand>? hands, int? activeHandIndex, int? totalBet, int? insuranceBet,
   }) => BlackjackPlayer(
       id: id ?? this.id, name: name ?? this.name,
       chipBalance: chipBalance ?? this.chipBalance,
@@ -132,6 +135,7 @@ class BlackjackPlayer {
       hands: hands ?? this.hands,
       activeHandIndex: activeHandIndex ?? this.activeHandIndex,
       totalBet: totalBet ?? this.totalBet,
+      insuranceBet: insuranceBet ?? this.insuranceBet,
     );
 
   Map<String, dynamic> toMap() => {
@@ -139,6 +143,7 @@ class BlackjackPlayer {
     'isLocal': isLocal, 'isDealer': isDealer, 'isBot': isBot,
     'hands': hands.map((h) => h.toMap()).toList(),
     'activeHandIndex': activeHandIndex, 'totalBet': totalBet,
+    'insuranceBet': insuranceBet,
   };
 
   factory BlackjackPlayer.fromMap(Map<String, dynamic> m) => BlackjackPlayer(
@@ -149,10 +154,12 @@ class BlackjackPlayer {
     hands: (m['hands'] as List?)?.map((h) => BlackjackHand.fromMap(h)).toList() ?? [BlackjackHand()],
     activeHandIndex: m['activeHandIndex'] ?? 0,
     totalBet: m['totalBet'] ?? 0,
+    insuranceBet: m['insuranceBet'] ?? 0,
   );
 }
 
-enum BlackjackPhase { waiting, betting, dealing, playerTurn, dealerTurn, roundEnd }
+/// [insurance]: the dealer shows an ace; players may insure before the dealer peeks.
+enum BlackjackPhase { waiting, betting, dealing, insurance, playerTurn, dealerTurn, roundEnd }
 
 class BlackjackState {
   final List<BlackjackPlayer> players;

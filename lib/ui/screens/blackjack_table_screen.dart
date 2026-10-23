@@ -556,6 +556,27 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                   ),
                 ),
               ],
+              if (player.insuranceBet > 0) ...[
+                SizedBox(width: 4 * _s),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 4 * _s, vertical: 1 * _s),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade700,
+                    borderRadius: BorderRadius.circular(4 * _s),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.shield, color: Colors.white, size: 9 * _s),
+                      SizedBox(width: 2 * _s),
+                      Text(
+                        '\$${player.insuranceBet}',
+                        style: TextStyle(color: Colors.white, fontSize: 9 * _s, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
           SizedBox(height: 4 * _s),
@@ -650,6 +671,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       case 'EMPATE':
         bg = Colors.blueGrey.shade600;
         fg = Colors.white;
+      case 'SEGURO':
+        bg = Colors.teal.shade600;
+        fg = Colors.white;
       default:
         bg = Colors.red.shade700;
         fg = Colors.white;
@@ -731,6 +755,10 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       return _buildRoundEndControls(bj);
     }
 
+    if (bj.phase == BlackjackPhase.insurance && localPlayer != null && bj.canInsure(localPlayer)) {
+      return _buildInsuranceDock(localPlayer, bj);
+    }
+
     if (localNeedsBet && localPlayer != null) {
       return _buildHorizontalBettingDock(localPlayer, bj);
     }
@@ -743,6 +771,8 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     String statusText = 'Partida en curso...';
     if (bj.phase == BlackjackPhase.dealing) {
       statusText = 'Repartiendo cartas...';
+    } else if (bj.phase == BlackjackPhase.insurance) {
+      statusText = 'El crupier muestra un As... esperando el seguro';
     } else if (bj.phase == BlackjackPhase.dealerTurn) {
       statusText = '🎩 Turno del Crupier... jugando mano';
     } else if (bj.phase == BlackjackPhase.playerTurn) {
@@ -777,6 +807,75 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           ),
         ],
       ),
+    );
+  }
+
+  // ─── INSURANCE DOCK ──────────────────────────────────────
+
+  /// Dealer shows an ace: "¿Seguro?" with both answers and a bar that runs out
+  /// with the host's timer (no answer = no insurance).
+  Widget _buildInsuranceDock(BlackjackPlayer player, BlackjackProvider bj) {
+    final cost = BlackjackProvider.insuranceCost(player);
+    return Row(
+      children: [
+        Icon(Icons.shield, color: Colors.tealAccent, size: 20 * _s),
+        SizedBox(width: 8 * _s),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'El crupier muestra un As. ¿Seguro por \$$cost?',
+                style: TextStyle(color: Colors.white, fontSize: 13 * _s, fontWeight: FontWeight.bold),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                'Si tiene blackjack, el seguro paga 2 a 1 y recuperas tu apuesta.',
+                style: TextStyle(color: Colors.white60, fontSize: 10 * _s),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 4 * _s),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2 * _s),
+                child: TweenAnimationBuilder<double>(
+                  key: ValueKey('insurance_${bj.deckCount}'),
+                  tween: Tween(begin: 1, end: 0),
+                  duration: BlackjackProvider.insuranceTimeout,
+                  builder: (context, v, _) => LinearProgressIndicator(
+                    value: v,
+                    minHeight: 3 * _s,
+                    backgroundColor: Colors.white12,
+                    color: Colors.tealAccent,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 10 * _s),
+        OutlinedButton(
+          onPressed: () => bj.takeInsurance(player.id, false),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.white70,
+            side: const BorderSide(color: Colors.white38),
+            padding: EdgeInsets.symmetric(horizontal: 14 * _s, vertical: 10 * _s),
+          ),
+          child: Text('No, gracias', style: TextStyle(fontSize: 12 * _s, fontWeight: FontWeight.bold)),
+        ),
+        SizedBox(width: 8 * _s),
+        ElevatedButton(
+          onPressed: () => bj.takeInsurance(player.id, true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal.shade600,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(horizontal: 16 * _s, vertical: 10 * _s),
+          ),
+          child: Text('Asegurar \$$cost', style: TextStyle(fontSize: 12 * _s, fontWeight: FontWeight.bold)),
+        ),
+      ],
     );
   }
 
@@ -982,6 +1081,10 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         return '¡Ganaste +$net!';
       case 'EMPATE':
         return 'Empate: recuperas tu apuesta';
+      case 'SEGURO':
+        return net == 0
+            ? 'Blackjack del crupier: el seguro te cubrió'
+            : 'Blackjack del crupier: el seguro te cubrió ($net)';
       case 'BUST':
         return 'Te pasaste de 21 ($net)';
       case 'PIERDE':

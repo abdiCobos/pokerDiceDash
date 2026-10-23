@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poker_dice_dash/models/blackjack_models.dart';
+import 'package:poker_dice_dash/models/card_model.dart';
 import 'package:poker_dice_dash/models/game_state.dart';
 import 'package:poker_dice_dash/providers/blackjack_provider.dart';
 import 'package:poker_dice_dash/providers/game_provider.dart';
@@ -167,6 +168,36 @@ void main() {
       await waitFor(() => client.bj.phase == BlackjackPhase.betting, reason: 'round ${round + 1} betting on client');
     }
   }, timeout: const Timeout(Duration(seconds: 120)));
+
+  test('insurance over the LAN: the client insures, the host pays it 2:1', () async {
+    final (host, client) = await _connect();
+    addTearDown(() async {
+      await client.close();
+      await host.close();
+    });
+    await waitFor(() => client.bj.players.length == 3, reason: 'client snapshot');
+    host.bj.startMatch();
+    await waitFor(() => client.bj.phase == BlackjackPhase.betting, reason: 'betting phase on client');
+    // Deal order: dealer, host, client, dealer, host, client -> dealer A + K (blackjack).
+    CardModel c(String v, Suit s) => CardModel(value: v, suit: s);
+    host.bj.debugStackDeck([
+      c('A', Suit.spades), c('9', Suit.spades), c('9', Suit.clubs),
+      c('K', Suit.hearts), c('7', Suit.spades), c('7', Suit.clubs),
+    ]);
+    host.bj.placeBet('0', 100);
+    client.bj.placeBet(client.bj.localPlayerId, 100);
+    await waitFor(() => client.bj.phase == BlackjackPhase.insurance, reason: 'insurance offered on the client');
+    expect(client.bj.canInsure(client.bj.localPlayer), isTrue);
+    expect(client.bj.dealer!.hands[0].cards[1].value, isNot('K'), reason: 'hole card leaked during insurance');
+    client.bj.takeInsurance(client.bj.localPlayerId, true);
+    await waitFor(() => host.bj.players.firstWhere((p) => p.id == client.bj.localPlayerId).insuranceBet == 50,
+        reason: 'host received the insurance');
+    host.bj.takeInsurance('0', false);
+    await waitFor(() => client.bj.phase == BlackjackPhase.roundEnd, timeout: const Duration(seconds: 30), reason: 'round end');
+    await waitFor(() => client.bj.localPlayer.chipBalance == 1000, reason: 'client chips after insurance');
+    expect(client.bj.roundOutcome[client.bj.localPlayerId], 'SEGURO');
+    expect(host.bj.players.firstWhere((p) => p.id == '0').chipBalance, 900);
+  }, timeout: const Timeout(Duration(seconds: 60)));
 
   test('a client that disappears does not freeze the table', () async {
     final (host, client) = await _connect();
