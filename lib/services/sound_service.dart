@@ -1,5 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'logger_service.dart';
 
 class SoundService {
   static final SoundService _instance = SoundService._();
@@ -16,6 +19,32 @@ class SoundService {
   /// Tests set this to a list to record which sounds the game asked for.
   static List<String>? debugLog;
 
+  /// Failed plays this session. A broken audio stack (e.g. Linux without a working
+  /// GStreamer decoder or sound server) can block the UI thread inside the plugin, and every
+  /// retry leaves another stuck pipeline: after [maxFailures] the game stays silent.
+  static const int maxFailures = 3;
+  int _failures = 0;
+  bool get audioBroken => _failures >= maxFailures;
+
+  @visibleForTesting
+  void debugResetFailures() => _failures = 0;
+
+  @visibleForTesting
+  void recordFailure(Object error) {
+    _failures++;
+    if (_failures == maxFailures) {
+      AppLogger().log('Sonido desactivado en esta sesion: el audio fallo $maxFailures veces ($error)');
+      dispose();
+    }
+  }
+
+  AudioPlayer _newPlayer() {
+    final p = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+    // Plugin errors also arrive on the event stream, not only as thrown exceptions.
+    p.eventStream.listen((_) {}, onError: (Object e) => recordFailure(e));
+    return p;
+  }
+
   Future<void> load() async {
     try {
       enabled = (await SharedPreferences.getInstance()).getBool(_prefKey) ?? true;
@@ -30,18 +59,14 @@ class SoundService {
   }
 
   Future<void> _play(String file) async {
-    if (!enabled) return;
+    if (!enabled || audioBroken) return;
     debugLog?.add(file);
     try {
-      final player = _players.putIfAbsent(file, () {
-        final p = AudioPlayer();
-        p.setReleaseMode(ReleaseMode.stop);
-        return p;
-      });
+      final player = _players.putIfAbsent(file, _newPlayer);
       await player.stop();
       await player.play(AssetSource('sounds/$file'));
-    } catch (_) {
-      // Ignored: sound is non-critical
+    } catch (e) {
+      recordFailure(e); // sound is non-critical, but do not keep hammering a broken stack
     }
   }
 
@@ -51,19 +76,19 @@ class SoundService {
   int _flipNext = 0;
 
   Future<void> cardFlip() async {
-    if (!enabled) return;
+    if (!enabled || audioBroken) return;
     debugLog?.add('cardflip');
     try {
       if (_flipPool.isEmpty) {
         for (var i = 0; i < 3; i++) {
-          _flipPool.add(AudioPlayer()..setReleaseMode(ReleaseMode.stop));
+          _flipPool.add(_newPlayer());
         }
       }
       final player = _flipPool[_flipNext++ % _flipPool.length];
       await player.stop();
       await player.play(AssetSource('sounds/cardfold.mp3'));
-    } catch (_) {
-      // Ignored: sound is non-critical
+    } catch (e) {
+      recordFailure(e);
     }
   }
 

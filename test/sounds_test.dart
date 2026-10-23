@@ -87,4 +87,22 @@ void main() {
     SoundService().cardFlip();
     expect(log, isEmpty);
   });
+
+  testWidgets('a broken audio stack is given up after a few failures (no more stuck pipelines)', (tester) async {
+    final sound = SoundService();
+    addTearDown(sound.debugResetFailures);
+    sound.debugResetFailures();
+    for (var i = 0; i < SoundService.maxFailures - 1; i++) {
+      sound.recordFailure('missing plug-in');
+    }
+    sound.cardMix();
+    expect(log, ['cardmix.mp3'], reason: 'still trying before the limit');
+    log.clear();
+    sound.recordFailure('missing plug-in');
+    expect(sound.audioBroken, isTrue);
+    sound.cardMix();
+    sound.cardFlip();
+    sound.chipsWin();
+    expect(log, isEmpty, reason: 'after the limit the game stays silent instead of retrying');
+  });
 }
