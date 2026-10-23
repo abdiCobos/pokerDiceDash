@@ -1,13 +1,27 @@
-Poker Dice Dash junta el póker estilo Texas, los dados y el Blackjack 21 en una sola app, para jugar solo contra bots o con tus amigos.
+Poker Dice Dash es un casino de bolsillo: póker con dados, Texas Hold'em clásico y Blackjack en una sola app. Juega solo contra bots o con tus amigos en la misma red Wi-Fi, sin cuentas, sin anuncios y sin internet.
 
-Modos de juego:
-• Texas Hold'em con dados: una variante con eventos aleatorios que cambian la partida.
-• Texas Hold'em clásico, sin dados.
-• Blackjack 21 con Pedir, Plantarse, Doblar, Dividir y la regla 5-Card Charlie.
+<b>Dice Dash: póker con dados</b>
+Antes de cada jugada tiras dos dados, y algunas combinaciones cambian la mano:
+• 1 + 1, Intercambio: las cartas de todos los jugadores se mezclan y se reparten otra vez.
+• 6 + 6, All-in: quien tira apuesta todas sus fichas.
+• 3 + 3, Espía: ves una carta de un rival.
+• 6 + 1, Carta extra: recibes una tercera carta y te quedas con las dos mejores.
+• Suma 7, Dados de la suerte: el bote crece un 30 % (una vez por mano).
 
-Multijugador local:
-• Crea una sala y conecta móviles y PC que estén en la misma red Wi-Fi.
-• Sin servidores externos, sin cuentas y sin anuncios.
-• Reconexión automática si se pierde la señal un momento.
+<b>Texas Hold'em</b>
+El póker clásico con ciegas, botes paralelos y todo el reglamento.
+
+<b>Blackjack</b>
+Pide, plántate, dobla o divide. Blackjack paga 3 a 2, el crupier se planta en 17, regla 5-Card Charlie y seguro cuando el crupier muestra un As.
+
+<b>Bots con personalidad</b>
+Rivales en tres niveles (fácil, normal y difícil) que calculan sus probabilidades, farolean y juegan distinto unos de otros.
+
+<b>Multijugador en tu red local</b>
+• Crea una sala y únete desde otros móviles o PC con Windows en la misma red Wi-Fi.
+• Las salas aparecen solas; también puedes entrar por IP.
+• Póker y Blackjack en red, con contraseña opcional y reconexión automática.
+
+Sin servidores externos, sin cuentas, sin anuncios y sin rastreo.
 
 Software libre bajo GPL-3.0-or-later.

@@ -1,1 +1,1 @@
-Texas Hold'em con dados, Blackjack 21 y partidas en tu red local.
+Póker con dados, Texas Hold'em y Blackjack. Contra bots o en tu red local.

@@ -1,0 +1,5 @@
+Primera versión.
+• Dice Dash (póker con dados), Texas Hold'em y Blackjack.
+• Bots en tres niveles de dificultad.
+• Multijugador en red local para póker y Blackjack.
+• Seguro en Blackjack y anuncio del ganador de la partida.

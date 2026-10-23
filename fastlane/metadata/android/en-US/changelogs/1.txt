@@ -1,0 +1,5 @@
+First release.
+• Dice Dash (poker with dice), Texas Hold'em and Blackjack.
+• Bots at three difficulty levels.
+• Local network multiplayer for poker and Blackjack.
+• Blackjack insurance and a match-winner announcement.

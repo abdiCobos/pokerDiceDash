@@ -15,9 +15,7 @@ Builds:
     commit: v1.0.0
     output: build/app/outputs/flutter-apk/app-release.apk
     srclibs:
-      # TODO(release): pubspec.yaml requires Dart ^3.10.8, so use the Flutter
-      # tag that ships that Dart version (not 3.24.3) before submitting.
-      - flutter@stable
+      - flutter@3.38.9
     rm:
       - ios/
       - macos/

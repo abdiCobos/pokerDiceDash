@@ -1,1 +1,1 @@
-Texas Hold'em with dice, Blackjack 21 and local-network multiplayer.
+Poker with dice, Texas Hold'em and Blackjack. Against bots or on your Wi-Fi.
