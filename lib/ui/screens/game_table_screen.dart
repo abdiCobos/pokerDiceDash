@@ -734,13 +734,6 @@ class _GameTableScreenState extends State<GameTableScreen>
                   ]
                 : [
               _ActionButton(
-                label: 'FOLD',
-                color: Colors.red.shade700,
-                enabled: !blocked,
-                onTap: !blocked ? () => game.fold(activePlayer.id) : null,
-              ),
-              const SizedBox(width: 8),
-              _ActionButton(
                 label: callLabel,
                 color: Colors.blue.shade700,
                 enabled: !blocked,
@@ -752,6 +745,13 @@ class _GameTableScreenState extends State<GameTableScreen>
                 color: Colors.orange.shade800,
                 enabled: !blocked && !isAllInCall,
                 onTap: !blocked && !isAllInCall ? () => _showRaiseDialog(context, game, activePlayer.id) : null,
+              ),
+              const SizedBox(width: 8),
+              _ActionButton(
+                label: 'FOLD',
+                color: Colors.red.shade700,
+                enabled: !blocked,
+                onTap: !blocked ? () => game.fold(activePlayer.id) : null,
               ),
             ],
           ),
@@ -927,10 +927,11 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
   final playerIdx = game.players.indexWhere((p) => p.id == playerId);
   if (playerIdx < 0) return;
   final maxBalance = game.players[playerIdx].chipBalance;
-  final amountToCall = game.currentBet - game.getPlayerBet(playerId);
-  final s = (MediaQuery.of(context).size.width / 800).clamp(0.55, 1.3);
-  final btnSize = (40 * s).clamp(32.0, 60.0);
-  final btnFont = (10 * s).clamp(8.0, 13.0);
+  final amountToCall = max(0, game.currentBet - game.getPlayerBet(playerId));
+  final screen = MediaQuery.of(context).size;
+  // Landscape phones are ~360 dp tall: everything sits in a few short rows and the whole
+  // card scales down to the screen, so it never needs scrolling.
+  final s = min(screen.width / 800, screen.height / 400).clamp(0.6, 1.3);
 
   showDialog(
     context: context,
@@ -939,140 +940,123 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
       int raiseAmount = 0;
       return StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
+          final canConfirm = raiseAmount > 0 && amountToCall + raiseAmount <= maxBalance;
+
+          Widget chip(String label, VoidCallback? onTap, {bool allIn = false}) {
+            final enabled = onTap != null;
+            final bg = allIn ? Colors.red.shade800 : Colors.amber;
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4 * s),
+              child: Material(
+                color: enabled ? bg : Colors.grey.shade700,
+                shape: StadiumBorder(
+                  side: BorderSide(
+                    color: enabled ? (allIn ? Colors.red : Colors.amber.shade700) : Colors.transparent,
+                    width: 1.5,
+                  ),
+                ),
+                child: InkWell(
+                  customBorder: const StadiumBorder(),
+                  onTap: onTap,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 10 * s),
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: enabled ? (allIn ? Colors.white : Colors.black) : Colors.white54,
+                        fontSize: 13 * s,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Dialog(
             backgroundColor: const Color(0xFF1A1A2E),
+            insetPadding: EdgeInsets.symmetric(horizontal: 24 * s, vertical: 12 * s),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14 * s),
-              side: BorderSide(color: Colors.amber, width: 2),
+              side: const BorderSide(color: Colors.amber, width: 2),
             ),
-            title: Text(
-              'Subir Apuesta',
-              style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16 * s),
-              textAlign: TextAlign.center,
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (amountToCall > 0)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 4 * s),
-                    child: Text(
-                      'Para Igualar: ${max(0, amountToCall)}',
-                      style: TextStyle(color: Colors.blue, fontSize: 13 * s),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                Text(
-                  'Aumento: +$raiseAmount',
-                  style: TextStyle(
-                    color: Colors.amber,
-                    fontSize: 26 * s,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 3 * s),
-                Text(
-                  'Total: ${max(0, amountToCall + raiseAmount)}',
-                  style: TextStyle(
-                    color: Colors.orange,
-                    fontSize: 15 * s,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 14 * s),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [10, 50, 100].map((amount) {
-                    final canAdd = amountToCall + raiseAmount + amount <= maxBalance;
-                    return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4 * s),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: canAdd
-                              ? () => setState(() => raiseAmount += amount)
-                              : null,
-                          borderRadius: BorderRadius.circular(btnSize * 0.4),
-                          child: Container(
-                            width: btnSize,
-                            height: btnSize,
-                            decoration: BoxDecoration(
-                              color: canAdd ? Colors.amber : Colors.grey.shade700,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: canAdd ? Colors.amber.shade700 : Colors.transparent,
-                                width: 2,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text('+$amount',
-                                style: TextStyle(
-                                  color: canAdd ? Colors.black : Colors.white54,
-                                  fontSize: btnFont,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: screen.height - 24 * s, maxWidth: 460 * s),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20 * s, 14 * s, 20 * s, 10 * s),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Subir apuesta', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 15 * s)),
+                      SizedBox(height: 6 * s),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text('+$raiseAmount', style: TextStyle(color: Colors.amber, fontSize: 28 * s, fontWeight: FontWeight.bold)),
+                          SizedBox(width: 12 * s),
+                          Text(
+                            amountToCall > 0
+                                ? 'Igualas $amountToCall · Total ${amountToCall + raiseAmount}'
+                                : 'Total ${amountToCall + raiseAmount}',
+                            style: TextStyle(color: Colors.orange, fontSize: 13 * s, fontWeight: FontWeight.bold),
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 8 * s),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      final allInRaise = maxBalance - amountToCall;
-                      AppLogger().log('ALL IN tap: maxBalance=$maxBalance amountToCall=$amountToCall allInRaise=$allInRaise');
-                      if (allInRaise > 0) {
-                        setState(() => raiseAmount = allInRaise);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(7 * s),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 18 * s, vertical: 7 * s),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade800,
-                        borderRadius: BorderRadius.circular(7 * s),
-                        border: Border.all(color: Colors.red, width: 1.5),
+                      SizedBox(height: 10 * s),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final amount in [10, 50, 100])
+                            chip(
+                              '+$amount',
+                              amountToCall + raiseAmount + amount <= maxBalance
+                                  ? () => setState(() => raiseAmount += amount)
+                                  : null,
+                            ),
+                          chip(
+                            'ALL IN',
+                            maxBalance - amountToCall > 0
+                                ? () => setState(() => raiseAmount = maxBalance - amountToCall)
+                                : null,
+                            allIn: true,
+                          ),
+                        ],
                       ),
-                      child: Text('ALL IN',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12 * s),
+                      SizedBox(height: 10 * s),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: Text('Cancelar', style: TextStyle(color: Colors.white60, fontSize: 13 * s)),
+                          ),
+                          SizedBox(width: 24 * s),
+                          ElevatedButton(
+                            onPressed: canConfirm
+                                ? () {
+                                    Navigator.pop(dialogContext);
+                                    game.raise(playerId, raiseAmount);
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange.shade800,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.white12,
+                              disabledForegroundColor: Colors.white38,
+                              padding: EdgeInsets.symmetric(horizontal: 22 * s, vertical: 10 * s),
+                            ),
+                            child: Text('Confirmar', style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
                       ),
-                    ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 16 * s),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
-                    ),
-                    TextButton(
-                      onPressed: raiseAmount > 0 && amountToCall + raiseAmount <= maxBalance
-                          ? () {
-                              Navigator.pop(dialogContext);
-                              game.raise(playerId, raiseAmount);
-                            }
-                          : null,
-                      child: Text('Confirmar',
-                        style: TextStyle(
-                          color: raiseAmount > 0 ? Colors.amber : Colors.white24,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13 * s,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
               ),
             ),
           );
