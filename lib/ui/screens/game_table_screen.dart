@@ -13,6 +13,7 @@ import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
 import '../widgets/scene_background.dart';
 import '../widgets/host_address_chip.dart';
+import '../widgets/connection_banner.dart';
 import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
 import '../../services/game_settings.dart';
@@ -228,8 +229,8 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _buildActionPanel(game),
                       if (_lastBurned != null)
                         _buildBurnedCardAnimation(),
-                      if (game.isConnectionLost && !game.roomClosed)
-                        _ConnectionBanner(gaveUp: game.reconnectGaveUp, scale: _s),
+                      if (game.connectionNotice != null)
+                        ConnectionBanner(text: game.connectionNotice!, warning: game.isConnectionLost, scale: _s),
                       if (game.resultTitle != null)
                         _ResultsBanner(
                           key: ValueKey('result_${game.roundCounter}_${game.resultWinnerIds.join(',')}'),
@@ -2493,34 +2494,3 @@ class _PlayerSeat extends StatelessWidget {
 
 
 /// Shown while the client is trying to get back into the room.
-class _ConnectionBanner extends StatelessWidget {
-  final bool gaveUp;
-  final double scale;
-  const _ConnectionBanner({required this.gaveUp, required this.scale});
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: 52 * scale,
-      left: 0,
-      right: 0,
-      child: IgnorePointer(
-        child: Center(
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 6 * scale),
-            decoration: BoxDecoration(
-              color: (gaveUp ? Colors.red.shade900 : Colors.orange.shade800).withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(12 * scale),
-            ),
-            child: Text(
-              gaveUp
-                  ? 'Conexión perdida. Vuelve al menú e inténtalo de nuevo.'
-                  : 'Conexión perdida, reconectando…',
-              style: TextStyle(color: Colors.white, fontSize: 12 * scale, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

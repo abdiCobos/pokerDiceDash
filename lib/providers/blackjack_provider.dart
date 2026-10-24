@@ -58,6 +58,7 @@ class BlackjackProvider extends ChangeNotifier {
   GameProvider? _lobby;
   StreamSubscription<Map<String, dynamic>>? _messageSub;
   StreamSubscription<SeatEvent>? _seatSub;
+  StreamSubscription<void>? _takeOverSub;
   Timer? _broadcastTimer;
   Timer? _turnTimer;
   Timer? _bettingTimer;
@@ -214,8 +215,40 @@ class BlackjackProvider extends ChangeNotifier {
       lobby.connectedSeats.forEach((id, name) => addRemotePlayer(id, name));
     } else {
       localPlayerId = lobby.localPlayerId;
+      _takeOverSub = lobby.onBecameHost.listen((_) => _takeOverTable());
       // The host's first snapshot may have arrived before this table existed.
       p2p.broadcastMessage({'type': 'BJ_HELLO'});
+    }
+  }
+
+  /// The lobby inherited the room (the host left): this device now runs the table. The
+  /// round in progress is called off (the dealer's hole card and the shoe were only on
+  /// the old host) and every bet goes back to its owner before a new betting round.
+  void _takeOverTable() {
+    final lobby = _lobby;
+    if (_disposed || _isHost || lobby == null) return;
+    AppLogger().log('BJ: esta mesa pasa a este dispositivo');
+    _isHost = true;
+    final roundOver = _state.phase == BlackjackPhase.roundEnd;
+    final departed = lobby.departedHostSeat;
+    final list = <BlackjackPlayer>[
+      for (final p in _state.players)
+        if (p.id != departed)
+          p.copyWith(
+            isLocal: p.id == localPlayerId,
+            chipBalance: p.isDealer || roundOver ? p.chipBalance : p.chipBalance + p.totalBet + p.insuranceBet,
+          ),
+    ];
+    _away
+      ..clear()
+      ..addAll([for (final p in list) if (!p.isDealer && !p.isBot && p.id != localPlayerId) p.id]);
+    final started = _state.phase != BlackjackPhase.waiting;
+    _state = BlackjackState(players: list, deck: _freshDeck(), phase: _state.phase);
+    _seatSub = lobby.seatEvents.listen(_onSeatEvent);
+    if (started) {
+      newRound(); // fresh hands, bets at zero, betting phase
+    } else {
+      _logAndNotify('takeOverTable');
     }
   }
 
@@ -345,6 +378,7 @@ class BlackjackProvider extends ChangeNotifier {
     _disposed = true;
     _messageSub?.cancel();
     _seatSub?.cancel();
+    _takeOverSub?.cancel();
     _broadcastTimer?.cancel();
     _turnTimer?.cancel();
     _bettingTimer?.cancel();

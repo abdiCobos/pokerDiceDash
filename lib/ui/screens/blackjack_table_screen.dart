@@ -7,6 +7,7 @@ import '../../providers/blackjack_provider.dart';
 import '../../providers/game_provider.dart';
 import '../widgets/scene_background.dart';
 import '../widgets/host_address_chip.dart';
+import '../widgets/connection_banner.dart';
 import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
 import '../../services/game_settings.dart';
@@ -142,7 +143,14 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                 if (bj.players.isEmpty) {
                   return const Center(child: CircularProgressIndicator(color: Colors.amber));
                 }
-                return _buildLandscapeTable(bj);
+                final notice = lobby?.connectionNotice;
+                if (notice == null) return _buildLandscapeTable(bj);
+                return Stack(
+                  children: [
+                    Positioned.fill(child: _buildLandscapeTable(bj)),
+                    ConnectionBanner(text: notice, warning: lobby!.isConnectionLost, scale: _s),
+                  ],
+                );
               },
             ),
           ),

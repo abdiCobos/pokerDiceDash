@@ -42,6 +42,22 @@ bet, next round auto-deals 12 s after the result. Test: `test/blackjack_lan_test
 (real sockets on 127.0.0.1; close a side fully to simulate a dead app, because a client
 that only drops its socket auto-reconnects).
 
+## Host migration (the room survives the host)
+- Host sends `ROSTER` on every seat change and at match start: `heirs` (connected humans in
+  seat order, never bots or the host, each with `host` ip + `port` = the `listenPort` it sent
+  in `JOIN_REQUEST`, default 47474), `seats`, `room`, `password`, `hostSeat`. Only the first
+  two heirs also get `tokens` (token -> seat).
+- Host leaving after the match started with >= 2 heirs sends `ROSTER` + `HOST_LEAVING`
+  instead of `ROOM_CLOSED`. Fewer heirs (one player would be left alone) -> `ROOM_CLOSED`.
+- Client lost the host: 2 tries on the old host, then each heir in order (6 quick tries).
+  When the turn reaches its own seat it becomes host (`_becomeHost`): opens the server on
+  `P2PService.preferredPort`, marks every other human away (15 s watchdog grace), calls the
+  hand off (every bet refunded: only the old host knew the deck and hidden cards) and
+  fires `onBecameHost` so `BlackjackProvider._takeOverTable` refunds bets and starts a new
+  betting round. A seat without a known token is reclaimed by name.
+- Tests: `test/host_migration_test.dart` (each simulated device has its own
+  `preferredPort`, since all of them share 127.0.0.1).
+
 ## Phones + PCs
 - `getLocalIpAddress` ranks adapters (`scoreAddress`): Wi-Fi/Ethernet private ranges first,
   Hyper-V/WSL/VirtualBox/VMware/Docker/VPN adapters ignored.

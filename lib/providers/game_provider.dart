@@ -18,6 +18,7 @@ import '../models/card_model.dart';
 import '../models/hand_evaluator.dart';
 
 import '../services/p2p_service.dart';
+import '../services/room_address.dart';
 import '../services/sound_service.dart';
 import '../services/bot_service.dart';
 
@@ -67,6 +68,47 @@ class GameProvider extends ChangeNotifier {
   int _reconnectAttempt = 0;
   bool _reconnectBusy = false;
   bool _hasSeat = false; // client: the host confirmed our seat at least once
+
+  // --- Host migration (traspaso de anfitrión) ---------------------------------
+  // The host keeps every client told who inherits the room (ROSTER): the connected humans
+  // in seat order, with the address each would host on. If the host leaves (HOST_LEAVING)
+  // or stops answering, the first heir reopens the room on its own device and the others
+  // reconnect to it with their tokens. The hand in progress is called off and every bet goes
+  // back to its owner: only the old host knew the deck and the hidden cards.
+  // Needs at least two heirs: a lone player gets "sala cerrada" as before.
+  final Map<String, int> _seatListenPort = {};
+  List<HostHeir> _heirs = const [];
+  List<Map<String, dynamic>> _rosterSeats = const [];
+  final Map<String, String> _inheritedTokens = {};
+  String _rosterPassword = '';
+  String? _oldHostSeat;
+  bool _oldHostLeft = false;
+  int _migrationStep = -1; // -1: still trying the old host; i: trying _heirs[i]
+  DateTime? _awayGraceUntil;
+  String? _hostNotice;
+  Timer? _hostNoticeTimer;
+  final StreamController<void> _becameHost = StreamController<void>.broadcast();
+
+  /// Fires when this device inherits the room (Blackjack takes over its table then).
+  Stream<void> get onBecameHost => _becameHost.stream;
+
+  /// Who would inherit the room right now, best first (both sides keep it up to date).
+  List<HostHeir> get heirs => _heirs;
+
+  /// Seat of the host that left on purpose before this device inherited the room.
+  String? get departedHostSeat => _oldHostLeft ? _oldHostSeat : null;
+
+  /// Short line for the banner: the room is changing hands, or just did.
+  String? get connectionNotice {
+    if (_reconnectGaveUp || _roomClosed) return null;
+    if (_clientConnectionLost) {
+      if (_migrationStep >= 0 && _migrationStep < _heirs.length) {
+        return 'El anfitrión salió. ${_heirs[_migrationStep].name} se queda con la mesa…';
+      }
+      return 'Conexión perdida, reconectando…';
+    }
+    return _hostNotice;
+  }
 
 
 
@@ -143,6 +185,7 @@ class GameProvider extends ChangeNotifier {
   void markMatchStarted() {
     _matchStarted = true;
     updateAdvertisedName();
+    _sendRoster();
   }
 
   GameProvider({required P2PService p2pService}) : _p2pService = p2pService {
@@ -175,6 +218,7 @@ class GameProvider extends ChangeNotifier {
         _players.removeWhere((x) => x.id == seatId);
         updateAdvertisedName();
         notifyListeners();
+        _sendRoster();
         return;
       }
       final p = _players.where((x) => x.id == seatId).firstOrNull;
@@ -182,6 +226,7 @@ class GameProvider extends ChangeNotifier {
         p.isAway = true;
         notifyListeners();
       }
+      _sendRoster();
     } else if (_isMultiplayer && _hasSeat) {
       _startReconnect();
     }
@@ -203,19 +248,29 @@ class GameProvider extends ChangeNotifier {
     _clientConnectionLost = true;
     _reconnectGaveUp = false;
     _reconnectAttempt = 0;
+    _migrationStep = -1;
     notifyListeners();
     _scheduleReconnectAttempt();
   }
 
   void _scheduleReconnectAttempt() {
-    if (_isExiting || _isDisposed) return;
-    if (_reconnectAttempt >= 10) {
-      _reconnectGaveUp = true;
-      _reconnectTimer = null;
+    if (_isExiting || _isDisposed || _isHost) return;
+    // The old host gets two tries when the room can change hands (ten when it cannot);
+    // then the room moves down the list of heirs, several quick tries each.
+    final limit = _migrationStep >= 0 ? 6 : (_canMigrate ? 2 : 10);
+    if (_reconnectAttempt >= limit) {
+      if (!_canMigrate || !_nextMigrationTarget()) {
+        _reconnectGaveUp = true;
+        _reconnectTimer = null;
+        notifyListeners();
+        return;
+      }
       notifyListeners();
-      return;
+      if (_isHost) return; // this device inherited the room
     }
-    final delay = Duration(seconds: min(1 << _reconnectAttempt, 8));
+    final delay = _migrationStep >= 0
+        ? const Duration(milliseconds: 1500)
+        : Duration(seconds: min(1 << _reconnectAttempt, 8));
     _reconnectTimer = Timer(delay, () async {
       _reconnectTimer = null;
       if (_isExiting || _isDisposed) return;
@@ -228,9 +283,10 @@ class GameProvider extends ChangeNotifier {
         _p2pService.sendMessage(ep, {
           'type': 'JOIN_REQUEST',
           'playerName': _hostName,
-          'password': '',
+          'password': _rosterPassword,
           'token': playerToken,
           'endpointId': ep,
+          'listenPort': _p2pService.preferredPort,
         });
         // If the host never answers with ASSIGN_SEAT, try again.
         _reconnectTimer = Timer(const Duration(seconds: 6), () {
@@ -248,6 +304,10 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _onSeatConfirmed() {
+    if (_migrationStep >= 0 && _migrationStep < _heirs.length) {
+      _showHostNotice('Ahora el anfitrión es ${_heirs[_migrationStep].name}');
+    }
+    _migrationStep = -1;
     _hasSeat = true;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
@@ -280,6 +340,8 @@ class GameProvider extends ChangeNotifier {
     if (ci < 0 || ci >= _players.length) return;
     final p = _players[ci];
     if (!p.isAway || p.isFolded) return;
+    final grace = _awayGraceUntil;
+    if (grace != null && DateTime.now().isBefore(grace)) return; // still reconnecting after a handoff
     if (_state.status == GameStatus.diceTurn && _gameMode == GameMode.diceDash) {
       rollDice();
     } else if (_state.status == GameStatus.betting) {
@@ -322,6 +384,14 @@ class GameProvider extends ChangeNotifier {
     _reconnectTimer = null;
     _endpointPlayer.clear();
     _tokenToPlayer.clear();
+    _seatListenPort.clear();
+    _heirs = const [];
+    _rosterSeats = const [];
+    _inheritedTokens.clear();
+    _oldHostSeat = null;
+    _oldHostLeft = false;
+    _migrationStep = -1;
+    _awayGraceUntil = null;
 
     _players.clear();
 
@@ -807,23 +877,29 @@ class GameProvider extends ChangeNotifier {
 
     if (!_isHost || _roomName.isEmpty) return;
 
+    _p2pService.updateServiceName(_advertisedMetadata()); // keeps the TCP port stable
+
+  }
+
+  String _advertisedMetadata() {
     final hasPassword = _roomPassword.isNotEmpty;
-
-    final count = _players.length;
-
-    final started = _matchStarted;
-
-    final metadata = '$_roomName|$count/4|${hasPassword ? '1' : '0'}|${started ? '1' : '0'}|${_gameMode.name}';
-
-    _p2pService.updateServiceName(metadata); // keeps the TCP port stable
-
+    return '$_roomName|${_players.length}/4|${hasPassword ? '1' : '0'}|${_matchStarted ? '1' : '0'}|${_gameMode.name}';
   }
 
 
 
-  void assignSeatToClient(String endpointId, {String playerName = '', String token = ''}) {
+  void assignSeatToClient(String endpointId, {String playerName = '', String token = '', int? listenPort}) {
     AppLogger().log('assignSeatToClient: endpointId=$endpointId');
     if (!_isHost) return;
+
+    // An inherited room may not know this token (only the first heirs get the list): a
+    // player coming back under the same name takes back their empty seat.
+    if (_matchStarted && token.isNotEmpty && !_tokenToPlayer.containsKey(token) && playerName.isNotEmpty) {
+      final byName = _players
+          .where((p) => p.isAway && !p.isBot && !p.isLocal && p.name == playerName && !_leftSeats.contains(p.id))
+          .firstOrNull;
+      if (byName != null) _tokenToPlayer[token] = byName.id;
+    }
 
     // Reconnection: a known token reclaims its previous seat.
     if (token.isNotEmpty && _tokenToPlayer.containsKey(token)) {
@@ -840,6 +916,7 @@ class GameProvider extends ChangeNotifier {
         }
         existing.isAway = false;
         _endpointPlayer[endpointId] = seatId;
+        if (listenPort != null) _seatListenPort[seatId] = listenPort;
         AppLogger().log('Jugador ${existing.name} recupera su asiento $seatId');
         _p2pService.sendMessage(endpointId, {
           'type': 'ASSIGN_SEAT',
@@ -850,6 +927,7 @@ class GameProvider extends ChangeNotifier {
         _emitSeat(SeatEventKind.back, seatId, existing.name, endpointId);
         notifyListeners();
         _sendStateNow();
+        _sendRoster();
         return;
       }
     }
@@ -865,6 +943,7 @@ class GameProvider extends ChangeNotifier {
     ));
     _endpointPlayer[endpointId] = playerId;
     if (token.isNotEmpty) _tokenToPlayer[token] = playerId;
+    if (listenPort != null) _seatListenPort[playerId] = listenPort;
 
     updateAdvertisedName();
     AppLogger().event('player_joined', params: {'player_name': playerName.isEmpty ? 'Jugador' : playerName, 'game_mode': _gameMode.name});
@@ -879,6 +958,7 @@ class GameProvider extends ChangeNotifier {
 
     notifyListeners();
     _sendStateNow();
+    _sendRoster();
   }
 
 
@@ -1025,7 +1105,12 @@ class GameProvider extends ChangeNotifier {
 
         AppLogger().log('ðŸ”“ JOIN_REQUEST aceptado: $senderEpId');
 
-        assignSeatToClient(senderEpId, playerName: message['playerName'] as String? ?? 'Jugador', token: message['token'] as String? ?? '');
+        assignSeatToClient(
+          senderEpId,
+          playerName: message['playerName'] as String? ?? 'Jugador',
+          token: message['token'] as String? ?? '',
+          listenPort: (message['listenPort'] as num?)?.toInt(),
+        );
 
         return;
 
@@ -1035,6 +1120,16 @@ class GameProvider extends ChangeNotifier {
 
       if (type == 'LEAVE' && _isHost) {
         _handleLeave(message['_senderEndpointId'] as String? ?? '');
+        return;
+      }
+
+      if (type == 'ROSTER' && !_isHost) {
+        _applyRoster(message);
+        return;
+      }
+
+      if (type == 'HOST_LEAVING' && !_isHost) {
+        _onHostLeaving();
         return;
       }
 
@@ -1687,6 +1782,7 @@ class GameProvider extends ChangeNotifier {
     updateAdvertisedName();
 
     notifyListeners();
+    _sendRoster();
 
     AppLogger().event('game_started', params: {'game_mode': _gameMode.name});
 
@@ -2868,6 +2964,197 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
+  // --- Host migration ---------------------------------------------------------
+
+  bool get _canMigrate => _heirs.length >= 2 && _matchStarted;
+
+  /// Host: connected humans in seat order (never bots, never the host itself).
+  List<HostHeir> _computeHeirs() {
+    final out = <HostHeir>[];
+    for (final p in _players) {
+      if (p.isBot || p.id == localPlayerId || _leftSeats.contains(p.id)) continue;
+      final ep = _endpointPlayer.entries.where((e) => e.value == p.id).map((e) => e.key).firstOrNull;
+      final address = ep == null ? null : P2PService.parseEndpoint(ep);
+      if (address == null) continue;
+      out.add(HostHeir(
+        seat: p.id,
+        name: p.name,
+        host: address.$1,
+        port: _seatListenPort[p.id] ?? RoomAddress.defaultPort,
+      ));
+    }
+    return out;
+  }
+
+  /// Host: tells every client who inherits the room. The first two heirs also get the
+  /// tokens, so whoever takes over recognizes everybody coming back.
+  void _sendRoster() {
+    if (!_isHost || !_isMultiplayer || _isDisposed) return;
+    final heirs = _computeHeirs();
+    final base = <String, dynamic>{
+      'type': 'ROSTER',
+      'hostSeat': localPlayerId,
+      'heirs': [for (final h in heirs) h.toMap()],
+      'seats': [
+        for (final p in _players) {'id': p.id, 'name': p.name, 'isBot': p.isBot},
+      ],
+      'room': _roomName,
+      'password': _roomPassword,
+      'started': _matchStarted,
+    };
+    final keyHolders = {for (final h in heirs.take(2)) h.seat};
+    for (final e in _endpointPlayer.entries) {
+      _p2pService.sendMessage(
+        e.key,
+        keyHolders.contains(e.value) ? {...base, 'tokens': Map<String, String>.from(_tokenToPlayer)} : base,
+      );
+    }
+  }
+
+  void _applyRoster(Map<String, dynamic> m) {
+    _heirs = [
+      for (final h in (m['heirs'] as List? ?? const []))
+        if (h is Map) HostHeir.fromMap(Map<String, dynamic>.from(h)),
+    ];
+    _rosterSeats = [
+      for (final s in (m['seats'] as List? ?? const []))
+        if (s is Map) Map<String, dynamic>.from(s),
+    ];
+    _oldHostSeat = m['hostSeat'] as String?;
+    _roomName = m['room'] as String? ?? _roomName;
+    _rosterPassword = m['password'] as String? ?? '';
+    if (m['started'] == true) _matchStarted = true;
+    final tokens = m['tokens'];
+    _inheritedTokens.clear();
+    if (tokens is Map) {
+      tokens.forEach((k, v) => _inheritedTokens[k.toString()] = v.toString());
+    }
+  }
+
+  /// Client: the host is leaving on purpose; go straight to the heirs.
+  void _onHostLeaving() {
+    if (!_canMigrate) {
+      _roomClosed = true;
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
+      _clientConnectionLost = false;
+      notifyListeners();
+      return;
+    }
+    AppLogger().log('HOST_LEAVING: la sala pasa a ${_heirs.first.name}');
+    _oldHostLeft = true;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _clientConnectionLost = true;
+    _reconnectGaveUp = false;
+    _migrationStep = -1;
+    _reconnectAttempt = 0;
+    if (!_nextMigrationTarget()) {
+      _reconnectGaveUp = true;
+    } else if (!_isHost) {
+      _scheduleReconnectAttempt();
+    }
+    notifyListeners();
+  }
+
+  /// Moves to the next heir. Returns false when there is nobody left to try.
+  bool _nextMigrationTarget() {
+    _migrationStep++;
+    _reconnectAttempt = 0;
+    if (_migrationStep >= _heirs.length) return false;
+    final heir = _heirs[_migrationStep];
+    if (heir.seat == localPlayerId) {
+      _becomeHost();
+      return true;
+    }
+    AppLogger().log('Traspaso: probando con ${heir.name} en ${heir.host}:${heir.port}');
+    _p2pService.lastHost = heir.host;
+    _p2pService.lastPort = heir.port;
+    return true;
+  }
+
+  /// This device inherits the room: it opens it under the same name and password, waits
+  /// for the others to come back and deals a fresh hand with every bet returned.
+  void _becomeHost() {
+    AppLogger().log('Traspaso: este dispositivo se queda con la sala');
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _isHost = true;
+    _epoch++;
+    _clientConnectionLost = false;
+    _reconnectGaveUp = false;
+    _migrationStep = -1;
+    _reconnectAttempt = 0;
+    _hasSeat = true;
+    _matchStarted = true;
+    _roomPassword = _rosterPassword;
+    _endpointPlayer.clear();
+    _tokenToPlayer
+      ..clear()
+      ..addAll(_inheritedTokens);
+    // Poker clients know every seat from the last state; Blackjack ones only from the roster.
+    if (_players.isEmpty || _gameMode == GameMode.blackjack) {
+      _players
+        ..clear()
+        ..addAll([
+          for (final s in _rosterSeats)
+            PlayerModel(id: s['id'] as String? ?? '', name: s['name'] as String? ?? '', isBot: s['isBot'] == true),
+        ]);
+    }
+    for (final p in _players) {
+      p.isLocal = p.id == localPlayerId;
+      if (!p.isBot && !p.isLocal) p.isAway = true; // until they reconnect
+    }
+    final oldHost = _oldHostSeat;
+    if (_oldHostLeft && oldHost != null) _leftSeats.add(oldHost);
+    _nextSeatId = 1 + _players.map((p) => int.tryParse(p.id) ?? 0).fold(0, max);
+    _awayGraceUntil = DateTime.now().add(const Duration(seconds: 15));
+    if (_gameMode != GameMode.blackjack) _callOffHand();
+    _p2pService.startAdvertising(_advertisedMetadata());
+    _showHostNotice('El anfitrión salió: ahora tú tienes la mesa');
+    notifyListeners();
+    if (!_becameHost.isClosed) _becameHost.add(null);
+    AppLogger().event('host_migrated', params: {'game_mode': _gameMode.name});
+  }
+
+  /// Poker: the hand in progress cannot go on without the old host's deck. Everyone gets
+  /// back what they put in and a new hand is dealt shortly.
+  void _callOffHand() {
+    for (final p in _players) {
+      p.chipBalance += _totalContributions[p.id] ?? 0;
+      p.hand = [];
+      p.isFolded = false;
+    }
+    _totalContributions.clear();
+    _betsThisPhase.clear();
+    _playersActedThisPhase.clear();
+    _currentBet = 0;
+    _raisesThisPhase = 0;
+    _houseBonus = 0;
+    _diceEventBusy = false;
+    _isChaosSwapping = false;
+    _isBetting = false;
+    _isPotFlying = false;
+    _winnerId = null;
+    _winningCards = null;
+    _extraDiscard = null;
+    _spied.clear();
+    _clearResult();
+    _state = _state.copyWith(communityCards: [], revealedCommunityCount: 0);
+    if (_matchWinnerId != null) return; // match over: the new host decides when to play again
+    _state = _state.copyWith(status: GameStatus.finished, currentPlayerIndex: -1);
+    scheduleNewRound();
+  }
+
+  void _showHostNotice(String text) {
+    _hostNotice = text;
+    _hostNoticeTimer?.cancel();
+    _hostNoticeTimer = Timer(const Duration(seconds: 5), () {
+      _hostNotice = null;
+      notifyListeners();
+    });
+  }
+
   void exitGame() {
     _isExiting = true;
     _newRoundTimer?.cancel();
@@ -2878,8 +3165,14 @@ class GameProvider extends ChangeNotifier {
     final wasSeated = _hasSeat;
     _hasSeat = false;
     if (_isMultiplayer && _isHost) {
-      // Clients used to stay connected to a host that no longer played: frozen table.
-      _p2pService.broadcastMessage({'type': 'ROOM_CLOSED'});
+      if (_matchStarted && _computeHeirs().length >= 2) {
+        // Enough players stay: the first heir keeps the room going.
+        _sendRoster();
+        _p2pService.broadcastMessage({'type': 'HOST_LEAVING'});
+      } else {
+        // Clients used to stay connected to a host that no longer played: frozen table.
+        _p2pService.broadcastMessage({'type': 'ROOM_CLOSED'});
+      }
       Future.delayed(const Duration(milliseconds: 300), _p2pService.disconnectAll);
     }
     if (_isMultiplayer && !_isHost) {
@@ -2904,12 +3197,32 @@ class GameProvider extends ChangeNotifier {
     _newRoundTimer?.cancel();
     _watchdogTimer?.cancel();
     _reconnectTimer?.cancel();
+    _hostNoticeTimer?.cancel();
     _seatEvents.close();
+    _becameHost.close();
     super.dispose();
   }
 }
 
 enum SeatEventKind { joined, back, away, left }
+
+/// A player who would inherit the room, and where their device would open it.
+class HostHeir {
+  final String seat;
+  final String name;
+  final String host;
+  final int port;
+  const HostHeir({required this.seat, required this.name, required this.host, required this.port});
+
+  Map<String, dynamic> toMap() => {'seat': seat, 'name': name, 'host': host, 'port': port};
+
+  factory HostHeir.fromMap(Map<String, dynamic> m) => HostHeir(
+        seat: m['seat'] as String? ?? '',
+        name: m['name'] as String? ?? '',
+        host: m['host'] as String? ?? '',
+        port: (m['port'] as num?)?.toInt() ?? RoomAddress.defaultPort,
+      );
+}
 
 class SeatEvent {
   final SeatEventKind kind;
