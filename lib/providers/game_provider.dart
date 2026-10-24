@@ -363,6 +363,9 @@ class GameProvider extends ChangeNotifier {
 
 
 
+    // Single player: you are always seat 0. A LAN client left another seat here (e.g. '2'):
+    // the table then showed you as an opponent and waited forever for "your" turn.
+    localPlayerId = '0';
     final localName = _hostName.isNotEmpty ? _hostName : 'Yo';
 
     // Texas Holdem: bots, direct into betting (no dice)
