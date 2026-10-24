@@ -42,6 +42,12 @@ bet, next round auto-deals 12 s after the result. Test: `test/blackjack_lan_test
 (real sockets on 127.0.0.1; close a side fully to simulate a dead app, because a client
 that only drops its socket auto-reconnects).
 
+## Turn clock (LAN poker)
+`GameProvider.turnTimeout` (60 s): the host watchdog plays for a connected human who does not
+act (rolls the dice, checks when nothing is owed, folds otherwise). The host numbers turns
+(`turnSerial` in `STATE_UPDATE`) so every device restarts its clock together; `TurnClock`
+shows the last 15 s. Not in single player. Test: `test/turn_timeout_test.dart`.
+
 ## Host migration (the room survives the host)
 - Host sends `ROSTER` on every seat change and at match start: `heirs` (connected humans in
   seat order, never bots or the host, each with `host` ip + `port` = the `listenPort` it sent

@@ -23,7 +23,7 @@ void main() {
 
   test('LAN poker: a player who does not act is played for after the turn time', () async {
     GameProvider.turnTimeout = const Duration(seconds: 3);
-    addTearDown(() => GameProvider.turnTimeout = const Duration(seconds: 45));
+    addTearDown(() => GameProvider.turnTimeout = const Duration(seconds: 60));
     final hostP2p = P2PService();
     final clientP2p = P2PService();
     final host = GameProvider(p2pService: hostP2p)
@@ -66,6 +66,10 @@ void main() {
     expect(host.players.firstWhere((p) => p.id == idle).isFolded, isTrue,
         reason: 'they owed the big blind, so the clock folded for them');
   }, timeout: const Timeout(Duration(seconds: 60)));
+
+  test('a turn lasts one minute', () {
+    expect(GameProvider.turnTimeout, const Duration(seconds: 60));
+  });
 
   test('single player has no turn clock (take your time)', () {
     final g = GameProvider(p2pService: P2PService())

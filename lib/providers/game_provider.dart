@@ -74,7 +74,7 @@ class GameProvider extends ChangeNotifier {
   // forever. After [turnTimeout] the host plays for them: rolls the dice, checks when
   // nothing is owed, folds otherwise. Every device starts the clock when it sees the turn
   // change (the host numbers the turns: turnSerial).
-  static Duration turnTimeout = const Duration(seconds: 45); // shortened by tests
+  static Duration turnTimeout = const Duration(seconds: 60); // shortened by tests
   int _turnSerial = 0;
   String _turnKey = '';
   DateTime _turnStartedAt = DateTime.now();
@@ -485,6 +485,9 @@ class GameProvider extends ChangeNotifier {
 
 
 
+    // Single player: you are always seat 0. A LAN client left another seat here (e.g. '2'):
+    // the table then showed you as an opponent and waited forever for "your" turn.
+    localPlayerId = '0';
     final localName = _hostName.isNotEmpty ? _hostName : 'Yo';
 
     // Texas Holdem: bots, direct into betting (no dice)
