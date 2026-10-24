@@ -75,7 +75,9 @@ class P2PService {
   /// Adapters that are never the shared Wi-Fi/LAN (PCs often list these first).
   static final RegExp _virtualAdapter = RegExp(
     r'vEthernet|Hyper-V|WSL|VirtualBox|VMware|vmnet|vboxnet|docker|br-|veth|virbr|'
-    r'Tailscale|ZeroTier|Hamachi|WireGuard|wg\d|tun\d|TAP-|^tap\d|utun|VPN|Bluetooth|llw|awdl|Loopback',
+    r'Tailscale|ZeroTier|Hamachi|WireGuard|wg\d|tun\d|TAP-|^tap\d|utun|VPN|Bluetooth|llw|awdl|Loopback|'
+    // Mobile data (Android: MediaTek ccmni, Qualcomm rmnet, clat; iOS pdp_ip): never the Wi-Fi.
+    r'^ccmni|^rmnet|^clat|^pdp_ip|^wwan|^seth_|^v4-',
     caseSensitive: false,
   );
 
