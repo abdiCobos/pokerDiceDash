@@ -41,7 +41,7 @@ int _nextPort = 47800;
 
 /// Host + two clients over real TCP sockets on 127.0.0.1, wired like the app does.
 Future<List<_Device>> _room(GameMode mode) async {
-  final devices = [for (final n in ['Ana', 'Beto', 'Carla']) _Device(n, _nextPort++)];
+  final devices = [for (final n in ['Ana', 'Luis', 'Carla']) _Device(n, _nextPort++)];
   addTearDown(() async {
     for (final d in devices) {
       d.lobby.exitGame();
@@ -101,86 +101,86 @@ void main() {
 
   test('poker: the host leaves mid-hand, the first heir keeps the room and the bets come back', () async {
     final d = await _room(GameMode.texasHoldem);
-    final ana = d[0].lobby, beto = d[1].lobby, carla = d[2].lobby;
+    final ana = d[0].lobby, luis = d[1].lobby, carla = d[2].lobby;
     ana.startMatch();
-    await waitFor(() => beto.heirs.length == 2 && carla.heirs.length == 2, reason: 'roster on both clients');
-    expect(beto.heirs.first.name, 'Beto', reason: 'heirs follow the seat order');
+    await waitFor(() => luis.heirs.length == 2 && carla.heirs.length == 2, reason: 'roster on both clients');
+    expect(luis.heirs.first.name, 'Luis', reason: 'heirs follow the seat order');
     await waitFor(() => carla.players.any((p) => p.isLocal && p.hand.isNotEmpty), reason: 'first hand dealt');
     // Blinds are in: chips + pot is what everybody owns.
-    await waitFor(() => beto.pot > 0, reason: 'blinds on the client');
+    await waitFor(() => luis.pot > 0, reason: 'blinds on the client');
     final carlaSeat = carla.localPlayerId;
-    final total = _chipsAndPot(beto);
-    final roundsBefore = beto.roundCounter;
+    final total = _chipsAndPot(luis);
+    final roundsBefore = luis.roundCounter;
 
     ana.exitGame();
-    await waitFor(() => beto.isHost, reason: 'Beto inherits the room');
-    expect(beto.connectionNotice, contains('tú tienes la mesa'));
-    expect(_chipsAndPot(beto), total, reason: 'the bets of the called-off hand went back to their owners');
-    await waitFor(() => !carla.isConnectionLost, reason: 'Carla reconnects to Beto');
+    await waitFor(() => luis.isHost, reason: 'Luis inherits the room');
+    expect(luis.connectionNotice, contains('tú tienes la mesa'));
+    expect(_chipsAndPot(luis), total, reason: 'the bets of the called-off hand went back to their owners');
+    await waitFor(() => !carla.isConnectionLost, reason: 'Carla reconnects to Luis');
     expect(carla.localPlayerId, carlaSeat, reason: 'Carla keeps her seat');
-    await waitFor(() => beto.players.firstWhere((p) => p.id == carlaSeat).isAway == false, reason: 'Carla is back');
+    await waitFor(() => luis.players.firstWhere((p) => p.id == carlaSeat).isAway == false, reason: 'Carla is back');
     expect(carla.roomClosed, isFalse);
 
-    // A new hand is dealt by Beto and reaches Carla with her own cards.
-    await waitFor(() => beto.roundCounter > roundsBefore, reason: 'Beto deals a new hand');
+    // A new hand is dealt by Luis and reaches Carla with her own cards.
+    await waitFor(() => luis.roundCounter > roundsBefore, reason: 'Luis deals a new hand');
     String cards(List<dynamic> hand) => hand.map((c) => c.toMap().toString()).join(',');
     await waitFor(
         () =>
             cards(carla.players.firstWhere((p) => p.isLocal).hand) ==
-            cards(beto.players.firstWhere((p) => p.id == carlaSeat).hand),
-        reason: 'Carla holds the cards Beto dealt her');
-    expect(beto.players.firstWhere((p) => p.id == carlaSeat).hand, isNotEmpty);
+            cards(luis.players.firstWhere((p) => p.id == carlaSeat).hand),
+        reason: 'Carla holds the cards Luis dealt her');
+    expect(luis.players.firstWhere((p) => p.id == carlaSeat).hand, isNotEmpty);
     // Ana left on purpose: her seat no longer plays.
-    expect(beto.players.firstWhere((p) => p.id == '0').isFolded, isTrue);
-    expect(beto.players.where((p) => p.isLocal).single.id, beto.localPlayerId);
+    expect(luis.players.firstWhere((p) => p.id == '0').isFolded, isTrue);
+    expect(luis.players.where((p) => p.isLocal).single.id, luis.localPlayerId);
   }, timeout: const Timeout(Duration(seconds: 90)));
 
   test('poker: the host app dies without a word, the room still moves on', () async {
     final d = await _room(GameMode.diceDash);
-    final ana = d[0].lobby, beto = d[1].lobby, carla = d[2].lobby;
+    final ana = d[0].lobby, luis = d[1].lobby, carla = d[2].lobby;
     ana.startMatch();
     await waitFor(() => carla.heirs.length == 2, reason: 'roster');
-    await waitFor(() => beto.players.isNotEmpty && beto.players.every((p) => p.hand.isNotEmpty || p.isLocal),
-        reason: 'first hand on Beto');
-    final total = _chipsAndPot(beto);
+    await waitFor(() => luis.players.isNotEmpty && luis.players.every((p) => p.hand.isNotEmpty || p.isLocal),
+        reason: 'first hand on Luis');
+    final total = _chipsAndPot(luis);
 
     await d[0].crash();
-    await waitFor(() => beto.isHost, reason: 'Beto inherits after the old host stops answering');
-    await waitFor(() => !carla.isConnectionLost && !carla.isHost, reason: 'Carla joins Beto');
+    await waitFor(() => luis.isHost, reason: 'Luis inherits after the old host stops answering');
+    await waitFor(() => !carla.isConnectionLost && !carla.isHost, reason: 'Carla joins Luis');
     // Nothing lost: chips + whatever is still in play adds up to the same total.
-    expect(_chipsAndPot(beto), total, reason: 'bets are returned, not lost');
+    expect(_chipsAndPot(luis), total, reason: 'bets are returned, not lost');
     // The old host's seat stays (away) in case it comes back.
-    expect(beto.players.firstWhere((p) => p.id == '0').isAway, isTrue);
+    expect(luis.players.firstWhere((p) => p.id == '0').isAway, isTrue);
   }, timeout: const Timeout(Duration(seconds: 120)));
 
   test('blackjack: the host leaves, the heir runs the table and refunds the bets', () async {
     final d = await _room(GameMode.blackjack);
-    final ana = d[0], beto = d[1], carla = d[2];
+    final ana = d[0], luis = d[1], carla = d[2];
     await waitFor(() => carla.bj!.players.length == 4, reason: 'everyone at the table');
     ana.bj!.startMatch();
-    await waitFor(() => beto.bj!.phase == BlackjackPhase.betting, reason: 'betting');
-    beto.bj!.placeBet(beto.bj!.localPlayerId, 100);
-    await waitFor(() => ana.bj!.players.firstWhere((p) => p.id == beto.lobby.localPlayerId).totalBet == 100,
+    await waitFor(() => luis.bj!.phase == BlackjackPhase.betting, reason: 'betting');
+    luis.bj!.placeBet(luis.bj!.localPlayerId, 100);
+    await waitFor(() => ana.bj!.players.firstWhere((p) => p.id == luis.lobby.localPlayerId).totalBet == 100,
         reason: 'bet reached the host');
-    await waitFor(() => beto.bj!.localPlayer.totalBet == 100, reason: 'bet seen by Beto');
+    await waitFor(() => luis.bj!.localPlayer.totalBet == 100, reason: 'bet seen by Luis');
 
     ana.lobby.exitGame();
-    await waitFor(() => beto.bj!.isHost, reason: 'Beto takes the table');
-    expect(beto.bj!.players.any((p) => p.id == '0'), isFalse, reason: 'the host left on purpose');
-    expect(beto.bj!.localPlayer.chipBalance, 1000, reason: 'the bet of the called-off round came back');
-    expect(beto.bj!.phase, BlackjackPhase.betting);
-    // Beto bets at once: the deal must still wait for Carla, who is reconnecting.
-    beto.bj!.placeBet(beto.bj!.localPlayerId, 100);
+    await waitFor(() => luis.bj!.isHost, reason: 'Luis takes the table');
+    expect(luis.bj!.players.any((p) => p.id == '0'), isFalse, reason: 'the host left on purpose');
+    expect(luis.bj!.localPlayer.chipBalance, 1000, reason: 'the bet of the called-off round came back');
+    expect(luis.bj!.phase, BlackjackPhase.betting);
+    // Luis bets at once: the deal must still wait for Carla, who is reconnecting.
+    luis.bj!.placeBet(luis.bj!.localPlayerId, 100);
     await waitFor(() => carla.bj!.players.length == 3 && !carla.lobby.isConnectionLost,
-        reason: 'Carla gets the new table from Beto');
-    await waitFor(() => !beto.bj!.awaySeats.contains(carla.lobby.localPlayerId), reason: 'Carla is back at the table');
-    expect(beto.bj!.phase, BlackjackPhase.betting, reason: 'no deal before Carla is back and bets');
-    // Carla can still play: her bet reaches Beto and the round is dealt to both.
+        reason: 'Carla gets the new table from Luis');
+    await waitFor(() => !luis.bj!.awaySeats.contains(carla.lobby.localPlayerId), reason: 'Carla is back at the table');
+    expect(luis.bj!.phase, BlackjackPhase.betting, reason: 'no deal before Carla is back and bets');
+    // Carla can still play: her bet reaches Luis and the round is dealt to both.
     carla.bj!.placeBet(carla.bj!.localPlayerId, 50);
-    await waitFor(() => beto.bj!.players.firstWhere((p) => p.id == carla.lobby.localPlayerId).totalBet == 50,
+    await waitFor(() => luis.bj!.players.firstWhere((p) => p.id == carla.lobby.localPlayerId).totalBet == 50,
         reason: 'Carla bets on the new host');
-    await waitFor(() => beto.bj!.phase != BlackjackPhase.betting, reason: 'dealt once everybody bet');
-    await waitFor(() => beto.bj!.players.firstWhere((p) => p.id == carla.lobby.localPlayerId).hands.first.cards.length == 2,
+    await waitFor(() => luis.bj!.phase != BlackjackPhase.betting, reason: 'dealt once everybody bet');
+    await waitFor(() => luis.bj!.players.firstWhere((p) => p.id == carla.lobby.localPlayerId).hands.first.cards.length == 2,
         reason: 'Carla gets her two cards');
   }, timeout: const Timeout(Duration(seconds: 90)));
 
@@ -197,7 +197,7 @@ void main() {
 
   test('with only one player left the room still closes (nobody to play with)', () async {
     final host = _Device('Ana', _nextPort++);
-    final client = _Device('Beto', _nextPort++);
+    final client = _Device('Luis', _nextPort++);
     addTearDown(() async {
       await client.crash();
       await host.crash();
@@ -211,12 +211,12 @@ void main() {
     client.lobby
       ..setHost(false)
       ..setMultiplayer(true)
-      ..setPlayerName('Beto');
+      ..setPlayerName('Luis');
     expect(await client.p2p.connectToHost('127.0.0.1', host.p2p.hostPort!), isTrue);
     final ep = '127.0.0.1:${host.p2p.hostPort}';
     await client.p2p.sendMessage(ep, {
       'type': 'JOIN_REQUEST',
-      'playerName': 'Beto',
+      'playerName': 'Luis',
       'password': '',
       'token': client.lobby.playerToken,
       'endpointId': ep,
