@@ -5,6 +5,16 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'logger_service.dart';
 import 'sound_service.dart';
 
+/// Where the tables and the menu are set (pixel-art scenes in assets/images/cantina).
+enum TableTheme {
+  cantina('Cantina mexicana', 'Papel picado, tequila y Talavera'),
+  garito('Garito clandestino', 'Un foco, humo y la puerta cerrada');
+
+  const TableTheme(this.label, this.description);
+  final String label;
+  final String description;
+}
+
 /// Player options shown in the in-table "Opciones" dialog (and partly in Ajustes).
 /// Saved between sessions. Listen to it to react to changes mid-game.
 class GameSettings extends ChangeNotifier {
@@ -15,10 +25,15 @@ class GameSettings extends ChangeNotifier {
   static const _fastKey = 'fast_game';
   static const _oddsKey = 'show_odds';
   static const _awakeKey = 'keep_awake';
+  static const _themeKey = 'table_theme';
 
   bool _fastGame = false;
   bool _showOdds = false;
   bool _keepAwake = true;
+  TableTheme _theme = TableTheme.cantina;
+
+  /// Scene behind the menu and the tables.
+  TableTheme get theme => _theme;
 
   bool get sound => SoundService().enabled;
 
@@ -46,6 +61,8 @@ class GameSettings extends ChangeNotifier {
       _fastGame = p.getBool(_fastKey) ?? false;
       _showOdds = p.getBool(_oddsKey) ?? false;
       _keepAwake = p.getBool(_awakeKey) ?? true;
+      final t = p.getString(_themeKey);
+      _theme = TableTheme.values.firstWhere((v) => v.name == t, orElse: () => TableTheme.cantina);
     } catch (_) {}
     await SoundService().load();
   }
@@ -78,6 +95,15 @@ class GameSettings extends ChangeNotifier {
     notifyListeners();
     applyWakelock(atTable: true);
     await _save(_awakeKey, v);
+  }
+
+  Future<void> setTheme(TableTheme t) async {
+    if (t == _theme) return;
+    _theme = t;
+    notifyListeners();
+    try {
+      await (await SharedPreferences.getInstance()).setString(_themeKey, t.name);
+    } catch (_) {}
   }
 
   /// Tables call this on enter (atTable: true) and on leave (false).

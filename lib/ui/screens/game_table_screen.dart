@@ -11,7 +11,7 @@ import '../../models/game_state.dart';
 import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
-import '../widgets/cantina_background.dart';
+import '../widgets/scene_background.dart';
 import '../widgets/host_address_chip.dart';
 import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
@@ -151,7 +151,7 @@ class _GameTableScreenState extends State<GameTableScreen>
         }
       },
       child: Scaffold(
-      body: CantinaBackground(
+      body: SceneBackground(
         child: SafeArea(
           child: Consumer<GameProvider>(
             builder: (context, game, child) {
@@ -332,14 +332,15 @@ class _GameTableScreenState extends State<GameTableScreen>
 
   /// Stadium-shaped felt with a wooden rail; purely decorative.
   Widget _buildTableFelt(Rect table) {
+    final style = TableFeltStyle.of(GameSettings().theme);
     return Positioned.fromRect(
       rect: table,
       child: IgnorePointer(
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(table.height / 2),
-            color: const Color(0xFF3E2410),
-            border: Border.all(color: const Color(0xFF2A1708), width: 1.5),
+            color: style.rail,
+            border: Border.all(color: style.railEdge, width: 1.5),
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.55), blurRadius: 22 * _s, spreadRadius: 2 * _s),
             ],
@@ -348,10 +349,10 @@ class _GameTableScreenState extends State<GameTableScreen>
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(table.height / 2),
-              gradient: const RadialGradient(
+              gradient: RadialGradient(
                 radius: 0.9,
-                colors: [Color(0xFF168A4E), Color(0xFF0E6B3A), Color(0xFF0A5530)],
-                stops: [0.0, 0.6, 1.0],
+                colors: style.felt,
+                stops: const [0.0, 0.6, 1.0],
               ),
               border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.45), width: 1.2),
             ),

@@ -1,4 +1,4 @@
-"""Pixel-art Mexican cantina backgrounds (no external art, no licences).
+"""Pixel-art backgrounds (Mexican cantina, speakeasy garito) (no external art, no licences).
 
 Drawn pixel by pixel at low resolution with a fixed palette, then shown by Flutter with
 nearest-neighbour scaling (FilterQuality.none) so they stay crisp on any screen.
@@ -42,6 +42,19 @@ P = {
     'pp_pink': (232, 62, 136), 'pp_orange': (244, 128, 36), 'pp_yellow': (246, 206, 52),
     'pp_green': (54, 178, 94), 'pp_blue': (54, 134, 224), 'pp_purple': (144, 76, 198),
     'string': (34, 20, 16), 'black': (24, 14, 12),
+    # garito (speakeasy basement)
+    'brick_dd': (26, 13, 12), 'brick_d': (46, 22, 19), 'brick': (72, 34, 27), 'brick_l': (102, 50, 36),
+    'brick_h': (140, 74, 50), 'brick_hh': (182, 112, 72),
+    'mortar_d': (20, 16, 15), 'mortar': (38, 32, 29), 'mortar_l': (70, 60, 52),
+    'steel_d': (28, 32, 36), 'steel': (52, 58, 64), 'steel_l': (86, 94, 100), 'steel_h': (140, 148, 150),
+    'rust': (108, 50, 24), 'rust_l': (150, 78, 36),
+    'conc_d': (26, 25, 24), 'conc': (44, 42, 39), 'conc_l': (66, 62, 57), 'conc_h': (92, 86, 78),
+    'shade_d': (22, 44, 30), 'shade': (38, 74, 50), 'shade_l': (64, 112, 76),
+    'bulb': (255, 238, 176), 'bulb_c': (255, 252, 230),
+    'cash_d': (44, 78, 40), 'cash': (82, 126, 66), 'cash_l': (138, 176, 106),
+    'paper_d': (128, 108, 74), 'paper': (186, 166, 120), 'paper_l': (222, 206, 160),
+    'smoke': (150, 140, 128),
+    'gold': (212, 175, 55), 'gold_l': (250, 214, 110),
 }
 BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 COLORS = ['pp_pink', 'pp_orange', 'pp_yellow', 'pp_green', 'pp_blue', 'pp_purple']
@@ -515,10 +528,399 @@ def menu_scene():
     vignette(cy_frac=0.45, rx=0.75, ry=0.62, start=0.7)
 
 
+
+# === garito: speakeasy basement under one bare bulb ============================================
+BRICK_BANDS = ['brick_dd', 'brick_d', 'brick', 'brick_l', 'brick_h', 'brick_hh']
+
+
+def light_at(x, y, lamps):
+    """0..1 light from (x, y, reach, strength) lamps; bulbs are point lights."""
+    best = 0.0
+    for lx, ly, reach, k in lamps:
+        d = math.hypot((x - lx) * 0.8, (y - ly) * 1.0)
+        best = max(best, k * max(0.0, 1 - d / reach))
+    return best
+
+
+def brick_wall(y0, y1, lamps, base=0.08):
+    """Old brick with dark mortar; every brick lit in bands by the bulbs, a few odd bricks."""
+    for y in range(y0, y1):
+        row = (y - y0) // 6
+        gy = (y - y0) % 6
+        for x in range(W):
+            off = 7 if row % 2 else 0
+            gx = (x + off) % 14
+            brick_id = ((x + off) // 14) * 31 + row * 17
+            level = (light_at(x, y, lamps) + base) * (len(BRICK_BANDS) - 1)
+            level += ((brick_id * 7) % 5 - 2) * 0.12  # every brick a slightly different tone
+            b = int(max(0, min(len(BRICK_BANDS) - 1, level)))
+            frac = level - b
+            if gy == 5 or gx == 13:
+                c = mix('mortar_d', 'mortar_l', min(1.0, max(0.0, level / 5)))
+            else:
+                c = BRICK_BANDS[b]
+                if b + 1 < len(BRICK_BANDS) and frac > 0.75 and dither(x, y, (frac - 0.75) / 0.25):
+                    c = BRICK_BANDS[b + 1]
+                if gy == 0 and b > 0:
+                    c = BRICK_BANDS[min(b + 1, len(BRICK_BANDS) - 1)]  # lit top edge
+                if gx == 12 or gy == 4:
+                    c = BRICK_BANDS[max(0, b - 1)]  # shadow edge
+                if (brick_id % 23) == 0 and gx < 6 and gy < 3:
+                    c = mix(c, 'mortar', 0.6)  # chipped corner
+            put(x, y, c)
+
+
+def stains(n, y0, y1):
+    """Damp patches running down the wall."""
+    for _ in range(n):
+        x = random.randrange(W)
+        y = random.randrange(y0, y1 - 20)
+        length = random.randint(10, 30)
+        width = random.randint(3, 7)
+        for yy in range(length):
+            w = max(1, int(width * (1 - yy / length)))
+            for xx in range(-w, w + 1):
+                if dither(x + xx, y + yy, 0.45):
+                    put(x + xx, y + yy, mix(px[max(0, min(W - 1, x + xx)), min(H - 1, y + yy)], 'void', 0.3))
+
+
+def concrete_ceiling(ceil):
+    rect(0, 0, W, ceil, 'conc_d')
+    for y in range(ceil):
+        for x in range(W):
+            if dither(x * 3, y * 5, 0.12):
+                put(x, y, 'conc')
+    rect(0, ceil - 1, W, ceil, 'black')
+
+
+def pipe_h(y, x0, x1, thick=4, flange_every=46):
+    tones = ['steel_d', 'steel_l', 'steel_h', 'steel', 'steel_d'][:thick + 1]
+    for x in range(x0, x1):
+        for i, c in enumerate(tones):
+            put(x, y + i, c)
+        if (x - x0) % 23 == 11 and random.random() < 0.5:
+            put(x, y + thick, 'rust')
+    for fx in range(x0 + 10, x1, flange_every):
+        rect(fx, y - 1, fx + 4, y + thick + 2, 'steel')
+        rect(fx, y - 1, fx + 4, y, 'steel_h')
+        put(fx + 1, y + 1, 'steel_h'); put(fx + 2, y + thick, 'steel_d')
+
+
+def pipe_v(x, y0, y1):
+    for y in range(y0, y1):
+        for i, c in enumerate(('steel_d', 'steel_l', 'steel_h', 'steel', 'steel_d')):
+            put(x + i, y, c)
+    for fy in range(y0 + 14, y1, 40):
+        rect(x - 1, fy, x + 6, fy + 3, 'steel')
+        rect(x - 1, fy, x + 6, fy + 1, 'steel_h')
+
+
+def valve(cx, cy):
+    for y in range(-4, 5):
+        for x in range(-4, 5):
+            r = math.hypot(x, y)
+            if 3 <= r <= 4.4 or (r < 4 and (x == 0 or y == 0)):
+                put(cx + x, cy + y, 'red' if x + y < 2 else 'red_d')
+    put(cx, cy, 'steel_h')
+
+
+def hanging_bulb(lx, ly, ceil, shade=True):
+    """Bare bulb, optionally under a green enamel cone shade, on a cord."""
+    for y in range(ceil, ly - (6 if shade else 2)):
+        put(lx, y, 'black')
+    if shade:
+        for y in range(0, 7):
+            half = 2 + int(y * 1.6)
+            for x in range(-half, half + 1):
+                c = 'shade'
+                if x < -half + 2:
+                    c = 'shade_l'
+                if x > half - 2:
+                    c = 'shade_d'
+                put(lx + x, ly - 6 + y, c)
+        rect(lx - 12, ly + 1, lx + 13, ly + 2, 'shade_d')
+        for x in range(-4, 5):  # glowing bulb under the rim
+            for y in range(1, 5):
+                if x * x + (y - 2) ** 2 <= 8:
+                    put(lx + x, ly + y, 'bulb_c' if abs(x) < 2 and y < 4 else 'bulb')
+    else:
+        for x in range(-2, 3):
+            for y in range(-2, 4):
+                if x * x + (y - 1) ** 2 <= 6:
+                    put(lx + x, ly + y, 'bulb_c' if abs(x) < 1 else 'bulb')
+        rect(lx - 1, ly - 3, lx + 2, ly - 1, 'steel')
+
+
+def light_cone(lx, ly, length, spread, strength=0.22):
+    """Dusty light falling from a shaded bulb (dithered, brightens what is behind it)."""
+    for y in range(ly + 2, min(H, ly + length)):
+        t = (y - ly) / length
+        half = 8 + spread * t
+        for x in range(int(lx - half), int(lx + half) + 1):
+            edge = 1 - abs(x - lx) / half
+            a = strength * edge * (1 - t)
+            if a > 0 and dither(x, y, a * 2.2):
+                put(x, y, mix(px[max(0, min(W - 1, x)), y], 'bulb', 0.18))
+
+
+def smoke(y0, y1, cx, width, amount=0.35):
+    """Lazy cigarette smoke curls hanging under the ceiling."""
+    for k in range(5):
+        base_y = y0 + k * (y1 - y0) // 5
+        phase = random.random() * 6
+        for x in range(int(cx - width), int(cx + width)):
+            yy = base_y + int(3 * math.sin(x / 9 + phase))
+            fall = 1 - abs(x - cx) / width
+            for d in range(-1, 2):
+                if dither(x, yy + d, amount * fall * (0.6 if d else 1)):
+                    put(x, yy + d, mix(px[max(0, min(W - 1, x)), max(0, min(H - 1, yy + d))], 'smoke', 0.35))
+
+
+def steel_door(x0, x1, y0, y1):
+    rect(x0 - 3, y0 - 3, x1 + 3, y1, 'mortar_d')
+    rect(x0, y0, x1, y1, 'steel')
+    rect(x0, y0, x0 + 2, y1, 'steel_l')
+    rect(x1 - 2, y0, x1, y1, 'steel_d')
+    for ry in range(y0 + 4, y1 - 2, 9):  # rivets
+        put(x0 + 4, ry, 'steel_h'); put(x1 - 5, ry, 'steel_h')
+    rect(x0 + 2, (y0 + y1) // 2, x1 - 2, (y0 + y1) // 2 + 2, 'steel_d')  # cross plate
+    # sliding peephole with two eyes looking out
+    sy = y0 + 18
+    rect(x0 + 8, sy - 3, x1 - 8, sy + 4, 'steel_d')
+    rect(x0 + 9, sy - 2, x1 - 9, sy + 3, 'black')
+    mid = (x0 + x1) // 2
+    put(mid - 3, sy, 'pp_yellow'); put(mid + 2, sy, 'pp_yellow')
+    # handle, rust streaks
+    rect(x1 - 9, (y0 + y1) // 2 + 6, x1 - 5, (y0 + y1) // 2 + 9, 'steel_h')
+    for _ in range(5):
+        rx = random.randrange(x0 + 3, x1 - 3)
+        for yy in range(random.randrange(y0, y1 - 20), y1 - random.randint(0, 20)):
+            if dither(rx, yy, 0.5):
+                put(rx, yy, 'rust')
+
+
+def crate(x0, y0, w, h):
+    rect(x0, y0, x0 + w, y0 + h, 'wood')
+    for y in range(y0, y0 + h, 4):
+        rect(x0, y, x0 + w, y + 1, 'wood_d')
+    rect(x0, y0, x0 + w, y0 + 1, 'wood_h')
+    rect(x0, y0, x0 + 2, y0 + h, 'wood_l')
+    rect(x0 + w - 2, y0, x0 + w, y0 + h, 'wood_d')
+    # stencilled XXX
+    cx = x0 + w // 2 - 6
+    cy = y0 + h // 2 - 2
+    for k in range(3):
+        for d in range(4):
+            put(cx + k * 4 + d, cy + d, 'paper_d'); put(cx + k * 4 + 3 - d, cy + d, 'paper_d')
+
+
+def barrel(cx, y0, h):
+    for y in range(h):
+        bulge = math.sin(math.pi * y / (h - 1))
+        half = int(7 + 3 * bulge)
+        for x in range(-half, half + 1):
+            c = 'wood'
+            if x < -half + 3:
+                c = 'wood_l'
+            if x > half - 3:
+                c = 'wood_d'
+            if (x + 40) % 4 == 0:
+                c = mix(c, 'wood_d', 0.4)
+            put(cx + x, y0 + y, c)
+        if y in (2, 3, h // 2, h // 2 + 1, h - 4, h - 3):
+            for x in range(-half, half + 1):
+                put(cx + x, y0 + y, 'steel_l' if x < 0 else 'steel_d')
+    rect(cx - 6, y0, cx + 7, y0 + 1, 'wood_h')
+
+
+def safe(x0, y0, w, h):
+    rect(x0, y0, x0 + w, y0 + h, 'steel')
+    rect(x0, y0, x0 + w, y0 + 2, 'steel_h')
+    rect(x0, y0, x0 + 2, y0 + h, 'steel_l')
+    rect(x0 + w - 2, y0, x0 + w, y0 + h, 'steel_d')
+    rect(x0 + 4, y0 + 5, x0 + w - 4, y0 + h - 4, 'steel_d')
+    rect(x0 + 5, y0 + 6, x0 + w - 5, y0 + h - 5, 'steel')
+    cx, cy = x0 + w // 2 - 3, y0 + h // 2
+    for y in range(-5, 6):  # combination dial
+        for x in range(-5, 6):
+            r = math.hypot(x, y)
+            if r <= 5:
+                c = 'gold' if r > 3.5 else ('gold_l' if x + y < 0 else 'steel_d')
+                if r <= 1.2:
+                    c = 'black'
+                put(cx + x, cy + y, c)
+    rect(x0 + w - 9, cy - 1, x0 + w - 6, cy + 6, 'gold')  # handle
+
+
+def cash_stack(x0, y0, n):
+    for k in range(n):
+        y = y0 - (k + 1) * 2
+        rect(x0, y, x0 + 10, y + 2, 'cash')
+        rect(x0, y, x0 + 10, y + 1, 'cash_l')
+        rect(x0 + 4, y, x0 + 6, y + 2, 'paper_l')  # band
+    rect(x0 + 10, y0 - n * 2, x0 + 11, y0, 'cash_d')
+
+
+def whiskey(x, base):
+    bottle(x, base, 'anejo')
+
+
+def wall_clock(cx, cy, r=7):
+    for y in range(-r - 1, r + 2):
+        for x in range(-r - 1, r + 2):
+            d = math.hypot(x, y)
+            if d <= r + 1:
+                c = 'wood_d' if d > r else 'paper_l'
+                if r - 1 < d <= r:
+                    c = 'wood'
+                put(cx + x, cy + y, c)
+    for k in range(12):
+        a = k * math.pi / 6
+        put(cx + int(round((r - 2) * math.cos(a))), cy + int(round((r - 2) * math.sin(a))), 'black')
+    for i in range(r - 2):  # hands at about midnight: a late game
+        put(cx - i // 3, cy - i, 'black')
+    for i in range(r - 3):
+        put(cx + i, cy, 'black')
+    put(cx, cy, 'red')
+
+
+def poster(x0, y0, w, h):
+    """Torn boxing-night poster pinned to the bricks."""
+    rect(x0, y0, x0 + w, y0 + h, 'paper')
+    rect(x0, y0, x0 + w, y0 + 1, 'paper_l')
+    rect(x0 + 2, y0 + 3, x0 + w - 2, y0 + 8, 'red_d')
+    for x in range(x0 + 3, x0 + w - 3, 2):
+        put(x, y0 + 5, 'paper_l')
+    for y in range(y0 + 11, y0 + h - 4, 3):  # lines of text
+        rect(x0 + 3, y, x0 + w - 3 - (y % 5), y + 1, 'paper_d')
+    for y in range(y0 + h - 5, y0 + h):  # torn corner
+        for x in range(x0 + w - (y - (y0 + h - 5)) * 2, x0 + w):
+            put(x, y, 'mortar')
+    put(x0 + 1, y0 + 1, 'red'); put(x0 + w - 2, y0 + 1, 'red')
+
+
+def fedora(cx, cy):
+    rect(cx - 1, cy - 11, cx + 2, cy - 7, 'wood_d')  # hook
+    rect(cx - 10, cy, cx + 11, cy + 2, 'black')
+    rect(cx - 10, cy, cx + 11, cy + 1, 'steel_d')
+    for y in range(-7, 0):
+        half = 6 - (1 if y < -5 else 0)
+        for x in range(-half, half + 1):
+            put(cx + x, cy + y, 'steel_d' if x > 1 else 'steel')
+    rect(cx - 6, cy - 2, cx + 7, cy, 'red_d')
+    put(cx, cy - 7, 'black')
+
+
+def concrete_floor(y0):
+    rect(0, y0 - 3, W, y0, 'conc_d')  # baseboard shadow
+    for y in range(y0, H):
+        depth = (y - y0) / max(1, H - y0)
+        for x in range(W):
+            c = 'conc' if not dither(x, y, 0.25 + depth * 0.2) else 'conc_l'
+            if dither(x * 7, y * 3, 0.05):
+                c = 'conc_d'
+            put(x, y, c)
+    for sx in range(18, W, 58):  # slab joints, leaning outward with depth
+        for y in range(y0, H):
+            put(int(sx + (sx - W / 2) * (y - y0) / 160), y, 'conc_d')
+    for _ in range(4):  # cracks
+        x, y = random.randrange(W), random.randrange(y0 + 2, H)
+        for _s in range(random.randint(6, 14)):
+            put(x, y, 'conc_d')
+            x += random.choice((1, 1, 2))
+            y += random.choice((-1, 0, 1))
+
+
+def dark_vignette(strength=0.22, start=0.45):
+    for y in range(H):
+        for x in range(W):
+            d = math.hypot((x - W / 2) / (W * 0.55), (y - H * 0.45) / (H * 0.7))
+            t = max(0.0, min(1.0, (d - start) / 0.5))
+            if t > 0:
+                steps = int(t * 3 + (0.5 if dither(x, y, (t * 3) % 1) else 0))
+                if steps:
+                    put(x, y, mix(px[x, y], 'void', strength * steps))
+
+
+def garito_table_scene(width):
+    begin(width, 200, 41)
+    ceil, flr = 16, 170
+    lamp = (W // 2, 30)
+    lamps = [(lamp[0], lamp[1], 150, 1.0), (30, 44, 46, 0.55), (R(30), 44, 46, 0.55)]
+    concrete_ceiling(ceil)
+    brick_wall(ceil, flr - 3, lamps)
+    stains(10, ceil + 4, flr - 10)
+    pipe_h(4, 0, W)
+    pipe_h(10, 0, W, flange_every=60)
+    pipe_v(R(64), ceil, flr - 2)
+    valve(R(62) + 2, 92)
+    # left: steel door with a dim bulb over it, barrel beside it, a poster
+    steel_door(10, 50, 66, flr - 3)
+    hanging_bulb(30, 50, ceil, shade=False)
+    barrel(66, flr - 30, 30)
+    poster(62, 38, 18, 26)
+    # right: safe with cash and whiskey on top, crates, a fedora on a hook, a clock
+    safe(R(44), flr - 40, 36, 37)
+    cash_stack(R(40), flr - 40, 4)
+    whiskey(R(26), flr - 40)
+    rect(R(16), flr - 45, R(12), flr - 40, 'clear_d'); rect(R(15), flr - 44, R(13), flr - 41, 'amber_l')
+    crate(R(80), flr - 22, 30, 19)
+    crate(R(76), flr - 39, 24, 17)
+    hanging_bulb(R(30), 50, ceil, shade=False)
+    wall_clock(R(30), 82)
+    fedora(R(90), 56)
+    # the main lamp over the table, its cone of dusty light and the smoke
+    hanging_bulb(lamp[0], lamp[1], ceil)
+    smoke(ceil + 4, ceil + 34, lamp[0], W * 0.4, amount=0.5)
+    concrete_floor(flr)
+    dark_vignette()
+
+
+def garito_menu_scene():
+    begin(200, 444, 43)
+    ceil, flr = 18, 420
+    lamp = (W // 2, 40)  # above the logo
+    lamps = [(lamp[0], lamp[1], 200, 1.0), (24, 300, 60, 0.45), (R(24), 300, 60, 0.45)]
+    concrete_ceiling(ceil)
+    brick_wall(ceil, flr - 3, lamps)
+    stains(14, ceil + 30, flr - 30)
+    pipe_h(4, 0, W)
+    pipe_h(11, 0, W, flange_every=58)
+    pipe_v(8, ceil, flr - 2)
+    valve(10, 190)
+    poster(R(36), 128, 24, 32)
+    wall_clock(28, 140, 8)
+    fedora(R(30), 240)
+    # bar shelf with whiskey above the counter, the counter with a brass rail
+    wall_shelf(20, 92, 316)
+    wall_shelf(R(92), R(20), 316)
+    top = 356
+    rect(0, top, W, top + 4, 'wood_h')
+    rect(0, top + 1, W, top + 3, 'wood_l')
+    rect(0, top + 4, W, top + 6, 'black')
+    rect(0, top + 6, W, flr - 3, 'wood_d')
+    for x in range(4, W, 32):
+        rect(x, top + 10, x + 28, flr - 10, 'wood')
+        rect(x, top + 10, x + 28, top + 11, 'wood_l')
+        rect(x + 27, top + 10, x + 28, flr - 10, 'black')
+    rect(0, flr - 9, W, flr - 7, 'gold')  # brass foot rail
+    rect(0, flr - 9, W, flr - 8, 'gold_l')
+    cash_stack(30, top, 3)
+    whiskey(R(40), top)
+    rect(R(28), top - 5, R(24), top, 'clear_d'); rect(R(27), top - 4, R(25), top - 1, 'amber_l')
+    hanging_bulb(lamp[0], lamp[1], ceil)
+    smoke(ceil + 6, ceil + 50, lamp[0], 90, amount=0.5)
+    concrete_floor(flr)
+    dark_vignette(strength=0.2, start=0.55)
+
+
 SCENES = {
     'cantina_bg.png': lambda: table_scene(444),
     'cantina_bg_16x9.png': lambda: table_scene(356),
     'cantina_menu.png': menu_scene,
+    'garito_bg.png': lambda: garito_table_scene(444),
+    'garito_bg_16x9.png': lambda: garito_table_scene(356),
+    'garito_menu.png': garito_menu_scene,
 }
 
 

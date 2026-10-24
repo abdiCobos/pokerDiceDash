@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/game_provider.dart';
+import '../../services/game_settings.dart';
 import '../../services/logger_service.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import '../../services/poker_bot_ai.dart';
 import '../../services/sound_service.dart';
-import '../widgets/cantina_background.dart';
+import '../widgets/scene_background.dart';
 import '../widgets/app_icon_painter.dart';
 import '../widgets/app_logo.dart';
 import 'game_table_screen.dart';
@@ -694,7 +695,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        body: CantinaBackground(
+        body: SceneBackground(
           shade: 0.12,
           child: SafeArea(
             child: LayoutBuilder(
@@ -918,44 +919,90 @@ class _LobbyScreenState extends State<LobbyScreen> {
   void _showSettings(double s) {
     final nameCtrl = TextEditingController(text: _playerNameController.text);
     var sound = SoundService().enabled;
+    var theme = GameSettings().theme;
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
+          // Safety net for very small screens: scroll instead of overflowing.
+          scrollable: true,
+          insetPadding: EdgeInsets.symmetric(horizontal: 24 * s, vertical: 16 * s),
           backgroundColor: const Color(0xFF07160D),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16 * s),
             side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
           ),
           title: Text('Ajustes', style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 18 * s)),
-          content: SizedBox(
-            width: 360 * s,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  maxLength: 16,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Tu nombre',
-                    labelStyle: TextStyle(color: Colors.white70),
-                    counterStyle: TextStyle(color: Colors.white38),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
-                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFFFFD54F))),
-                  ),
+          content: Builder(builder: (context) {
+            final general = <Widget>[
+              TextField(
+                controller: nameCtrl,
+                maxLength: 16,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Tu nombre',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  counterText: '',
+                  isDense: true,
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFFFFD54F))),
                 ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeThumbColor: const Color(0xFFFFD54F),
-                  title: const Text('Sonido', style: TextStyle(color: Colors.white)),
-                  subtitle: const Text('Cartas, fichas y dados', style: TextStyle(color: Colors.white54)),
-                  value: sound,
-                  onChanged: (v) => setLocal(() => sound = v),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeThumbColor: const Color(0xFFFFD54F),
+                title: const Text('Sonido', style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Cartas, fichas y dados', style: TextStyle(color: Colors.white54)),
+                value: sound,
+                onChanged: (v) => setLocal(() => sound = v),
+              ),
+            ];
+            final ambient = <Widget>[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Ambiente', style: TextStyle(color: Colors.white, fontSize: 15 * s)),
+              ),
+              SizedBox(height: 8 * s),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final t in TableTheme.values) ...[
+                    if (t != TableTheme.values.first) SizedBox(width: 10 * s),
+                    Expanded(
+                      child: _ThemeCard(
+                        theme: t,
+                        selected: t == theme,
+                        scale: s,
+                        onTap: () => setLocal(() => theme = t),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ];
+            final size = MediaQuery.of(context).size;
+            // Landscape phones are short: name and sound on the left, the scenes on the right.
+            if (size.width > size.height) {
+              return SizedBox(
+                width: 640 * s,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: general)),
+                    SizedBox(width: 20 * s),
+                    Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: ambient)),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              );
+            }
+            return SizedBox(
+              width: 360 * s,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [...general, SizedBox(height: 6 * s), ...ambient],
+              ),
+            );
+          }),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
@@ -966,6 +1013,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 final name = nameCtrl.text.trim();
                 setState(() => _playerNameController.text = name);
                 await SoundService().setEnabled(sound);
+                await GameSettings().setTheme(theme);
                 try {
                   await (await SharedPreferences.getInstance()).setString(_playerNamePref, name);
                 } catch (_) {}
@@ -1142,5 +1190,72 @@ class _PillButton extends StatelessWidget {
       ),
     );
     return tooltip == null ? child : Tooltip(message: tooltip!, child: child);
+  }
+}
+
+/// Ajustes: one scene to pick (a crop of its pixel-art backdrop, its name and a hint).
+class _ThemeCard extends StatelessWidget {
+  final TableTheme theme;
+  final bool selected;
+  final double scale;
+  final VoidCallback onTap;
+
+  const _ThemeCard({required this.theme, required this.selected, required this.scale, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    const gold = Color(0xFFFFD54F);
+    return Material(
+      color: Colors.black26,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10 * s),
+        side: BorderSide(color: selected ? gold : Colors.white24, width: selected ? 2 : 1),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: 50 * s,
+              child: Image.asset(
+                'assets/images/cantina/${theme.name}_bg_16x9.png',
+                fit: BoxFit.cover,
+                alignment: const Alignment(0, -0.35),
+                filterQuality: FilterQuality.none,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(8 * s, 6 * s, 8 * s, 8 * s),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          theme.label,
+                          maxLines: 2,
+                          style: TextStyle(color: selected ? gold : Colors.white, fontSize: 12.5 * s, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      if (selected) Icon(Icons.check_circle, color: gold, size: 15 * s),
+                    ],
+                  ),
+                  SizedBox(height: 2 * s),
+                  Text(
+                    theme.description,
+                    maxLines: 2,
+                    style: TextStyle(color: Colors.white54, fontSize: 10.5 * s),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

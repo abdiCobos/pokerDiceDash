@@ -98,15 +98,17 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
   ¡ESPÍA!, ¡CARTA EXTRA!). Spied cards get a purple glow + eye icon; the discarded extra card
   fades and rises before it leaves.
 
-## Cantina background (tables)
-- Poker and Blackjack tables sit on `CantinaBackground` (lib/ui/widgets/cantina_background.dart): a
-  pixel-art Mexican cantina drawn by `tool/pixelart/cantina.py` (no external art). Two widths of the same
-  scene, `cantina_bg.png` (444x200, phones ~20:9) and `cantina_bg_16x9.png` (356x200, PC), plus the portrait
-  menu `cantina_menu.png` (200x444; the lobby uses `CantinaBackground` too, PC menu gets the 16:9 one); always shown
-  with `FilterQuality.none`. Edit the script and regenerate (`python tool/pixelart/cantina.py`, all scenes); never hand-edit PNGs.
-- Keep detail OUTSIDE the table oval (x 10-90 %, y 20-85 %): ceiling band, side shelves, corners.
-  Right-hand objects use `R(x)` (from the right edge). Use `--mask FILE` to preview with the oval on top.
-- Controls over the scene need a dark backdrop (black54 disc / pill) to stay readable.
+## Scene backgrounds (themes)
+- Menu and tables sit on `SceneBackground` (lib/ui/widgets/scene_background.dart), which follows
+  `GameSettings().theme` (`TableTheme`: `cantina`, `garito`; chosen in Ajustes, saved as `table_theme`).
+- Every theme has three pixel-art PNGs in assets/images/cantina/, drawn by `tool/pixelart/cantina.py`
+  (no external art): `<theme>_bg.png` 444x200 (phones ~20:9), `<theme>_bg_16x9.png` 356x200 (PC),
+  `<theme>_menu.png` 200x444 (portrait menu). Shown with `FilterQuality.none`. Edit the script and run it
+  (all scenes); never hand-edit PNGs. test/table_theme_test.dart checks every file exists.
+- Felt and rail per theme: `TableFeltStyle.of(theme)`.
+- Adding a theme: new enum value (label + description), a table and a menu scene in the script, a
+  `TableFeltStyle`. Keep detail OUTSIDE the table oval (x 10-90 %, y 20-85 %); right-hand objects use `R(x)`.
+- Controls over a scene need a dark backdrop (black54 disc / pill) to stay readable.
 
 ## Before finishing a visual change
 Run the `visual-qa` skill and look at the PNGs at 800x360, 640x360 and 1280x720.
