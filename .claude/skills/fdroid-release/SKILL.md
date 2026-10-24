@@ -43,3 +43,6 @@ description: Preparing a Poker Dice Dash release for F-Droid (applicationId, FOS
   It requires `pubspec.lock` in git (`!pubspec.lock` in .gitignore).
 - Full build like the buildserver: `~/fdroid_build.sh` (fresh clone, Flutter srclib tag, rm platforms,
   `flutter build apk --release`); APK must be unsigned and list only the allowed permissions.
+
+- Every build entry needs `ndk: <flutter.ndkVersion>` (Flutter 3.38.9 -> 28.2.13676358, see
+  flutter_tools/gradle/.../FlutterExtension.kt). Local builds auto-download the NDK; the F-Droid buildserver does not.
