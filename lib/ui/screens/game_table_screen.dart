@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'dart:async';
 import '../../services/logger_service.dart';
 import '../../services/sound_service.dart';
-import '../../services/p2p_service.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +11,7 @@ import '../../models/game_state.dart';
 import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
+import '../widgets/host_address_chip.dart';
 import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
 import '../../services/game_settings.dart';
@@ -312,32 +312,7 @@ class _GameTableScreenState extends State<GameTableScreen>
             ],
           ),
           if (widget.isMultiplayer && widget.isHost && game.state.status == GameStatus.waitingPlayers)
-            FutureBuilder<String?>(
-              future: P2PService.getLocalIpAddress(),
-              builder: (context, snapshot) {
-                final ip = snapshot.data ?? '...';
-                final port = game.p2pService.hostPort ?? 0;
-                return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10 * _s, vertical: 4 * _s),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(12 * _s),
-                    border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.wifi, color: Colors.amber, size: 14 * _s),
-                      SizedBox(width: 6 * _s),
-                      Text(
-                        'IP: $ip : $port',
-                        style: TextStyle(color: Colors.amber, fontSize: 11 * _s, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+            HostAddressChip(port: game.p2pService.hostPort, scale: _s),
           if (game.state.mustSwapHands)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:nsd/nsd.dart' as nsd;
+import 'room_address.dart';
 import 'logger_service.dart';
 
 class DiscoveredDevice {
@@ -162,7 +163,13 @@ class P2PService {
     try {
       // Keep the same port for the whole room lifetime so clients can reconnect.
       if (_serverSocket == null) {
-        final server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+        // A fixed port first: then the IP alone is enough to join. Busy -> any free port.
+        ServerSocket server;
+        try {
+          server = await ServerSocket.bind(InternetAddress.anyIPv4, RoomAddress.defaultPort);
+        } on SocketException {
+          server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+        }
         _serverSocket = server;
         AppLogger().log('P2P: Servidor escuchando en puerto ${server.port}');
 

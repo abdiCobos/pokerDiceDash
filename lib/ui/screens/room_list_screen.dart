@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/room_address.dart';
 import '../../services/logger_service.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/blackjack_provider.dart';
@@ -215,10 +218,32 @@ class _RoomListScreenState extends State<RoomListScreen> {
     );
   }
 
-  void _showDirectIpDialog() {
+  static const _lastAddressKey = 'last_room_address';
+
+  Future<void> _showDirectIpDialog() async {
     final s = (MediaQuery.of(context).size.shortestSide / 400).clamp(0.75, 1.35);
-    final ipController = TextEditingController();
-    final portController = TextEditingController();
+    // Last address used, or the default port (most hosts get it).
+    RoomAddress? last;
+    try {
+      last = RoomAddress.parse((await SharedPreferences.getInstance()).getString(_lastAddressKey) ?? '');
+    } catch (_) {}
+    if (!mounted) return;
+    final ipController = TextEditingController(text: last?.host ?? '');
+    final portController = TextEditingController(text: '${last?.port ?? RoomAddress.defaultPort}');
+
+    Future<void> paste() async {
+      final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text ?? '';
+      final address = RoomAddress.parse(text);
+      if (!mounted) return;
+      if (address == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No encontré una IP en lo que copiaste. Copia la IP que muestra la sala.')),
+        );
+        return;
+      }
+      ipController.text = address.host;
+      portController.text = '${address.port}';
+    }
     final nameController = TextEditingController(text: _pendingName ?? '');
     final passController = TextEditingController();
 
@@ -241,7 +266,15 @@ class _RoomListScreenState extends State<RoomListScreen> {
                     Text('Conexión Directa por IP', style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                SizedBox(height: 14 * s),
+                SizedBox(height: 10 * s),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: paste,
+                    icon: Icon(Icons.content_paste, color: Colors.amber, size: 16 * s),
+                    label: Text('Pegar IP copiada', style: TextStyle(color: Colors.amber, fontSize: 12 * s)),
+                  ),
+                ),
                 TextField(
                   controller: ipController,
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
@@ -309,9 +342,12 @@ class _RoomListScreenState extends State<RoomListScreen> {
                         }
                         Navigator.pop(ctx);
                         setState(() => _isConnecting = true);
+                        final p2p = context.read<GameProvider>().p2pService;
+                        SharedPreferences.getInstance()
+                            .then((prefs) => prefs.setString(_lastAddressKey, '$host:$port'))
+                            .catchError((Object _) => false);
                         _pendingName = nameController.text.trim().isEmpty ? 'Jugador' : nameController.text.trim();
                         _pendingPassword = passController.text.trim();
-                        final p2p = context.read<GameProvider>().p2pService;
                         final ok = await p2p.connectToHost(host, port);
                         if (!ok && mounted) {
                           setState(() => _isConnecting = false);

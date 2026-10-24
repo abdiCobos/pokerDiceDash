@@ -5,7 +5,7 @@ import '../../models/blackjack_models.dart';
 import '../../models/card_model.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../providers/game_provider.dart';
-import '../../services/p2p_service.dart';
+import '../widgets/host_address_chip.dart';
 import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
 import '../../services/game_settings.dart';
@@ -1167,28 +1167,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         Text('Esperando jugadores... (${bj.activePlayers.length})',
             style: TextStyle(color: Colors.white70, fontSize: 14 * _s)),
         if (widget.isHost)
-          FutureBuilder<String?>(
-            future: P2PService.getLocalIpAddress().then(
-              (ip) => ip == null ? null : '$ip : ${context.read<GameProvider>().p2pService.hostPort ?? 0}',
-            ),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data != null) {
-                return Container(
-                  margin: EdgeInsets.symmetric(vertical: 6 * _s),
-                  padding: EdgeInsets.symmetric(horizontal: 14 * _s, vertical: 5 * _s),
-                  decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(10 * _s),
-                    border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
-                  ),
-                  child: Text(
-                    'Tu IP para conexión directa: ${snapshot.data}',
-                    style: TextStyle(color: Colors.amber, fontSize: 11 * _s, fontWeight: FontWeight.bold),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 6 * _s),
+            child: HostAddressChip(port: context.read<GameProvider>().p2pService.hostPort, scale: _s),
           ),
         SizedBox(height: 10 * _s),
         if (widget.isHost && bj.activePlayers.isNotEmpty)
