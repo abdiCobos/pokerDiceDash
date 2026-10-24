@@ -11,7 +11,8 @@ plugins {
 android {
     namespace = "io.github.abdicobos.pokerdicedash"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Do not force ndkVersion to avoid requiring NDK clang toolchain in environments (e.g. F-Droid CI) where no native C/C++ code is used.
+    // ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
