@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/game_provider.dart';
 import '../../services/game_settings.dart';
 import '../../services/logger_service.dart';
+import '../../services/room_names.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import '../../services/poker_bot_ai.dart';
@@ -84,7 +85,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   void _showCreateRoomDialog() {
-    _roomNameController.text = 'UAdeO';
+    _roomNameController.text = RoomNames.pick();
     _roomPasswordController.text = '';
 
     showDialog(
