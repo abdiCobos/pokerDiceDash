@@ -15,8 +15,14 @@ class CantinaBackground extends StatelessWidget {
   /// used so the shelves, the nopal and the guitar at the sides are never cropped.
   static const assetWide = 'assets/images/cantina/cantina_bg.png'; // 444x200
   static const asset16x9 = 'assets/images/cantina/cantina_bg_16x9.png'; // 356x200
+  static const assetPortrait = 'assets/images/cantina/cantina_menu.png'; // 200x444, the menu on phones
 
-  static String assetFor(Size size) => size.height > 0 && size.width / size.height >= 2.0 ? assetWide : asset16x9;
+  static String assetFor(Size size) {
+    if (size.height <= 0) return asset16x9;
+    final ratio = size.width / size.height;
+    if (ratio < 1) return assetPortrait;
+    return ratio >= 2.0 ? assetWide : asset16x9;
+  }
 
   @override
   Widget build(BuildContext context) {

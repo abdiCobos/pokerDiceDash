@@ -9,6 +9,7 @@ import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import '../../services/poker_bot_ai.dart';
 import '../../services/sound_service.dart';
+import '../widgets/cantina_background.dart';
 import '../widgets/app_icon_painter.dart';
 import '../widgets/app_logo.dart';
 import 'game_table_screen.dart';
@@ -693,14 +694,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment.center,
-              radius: 0.9,
-              colors: [Color(0xFF0A4D28), Color(0xFF052915)],
-            ),
-          ),
+        body: CantinaBackground(
+          shade: 0.12,
           child: SafeArea(
             child: LayoutBuilder(
               builder: (context, c) {
@@ -837,10 +832,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
           onTap: startDiscovering,
         ),
         SizedBox(height: 10 * s),
-        Text(
-          'Todos los dispositivos deben estar en la misma red Wi-Fi.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white54, fontSize: 11.5 * s),
+        Center(
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 4 * s),
+            decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(10 * s)),
+            child: Text(
+              'Todos los dispositivos deben estar en la misma red Wi-Fi.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 11.5 * s),
+            ),
+          ),
         ),
         SizedBox(height: 12 * s),
         _PillButton(
@@ -1111,7 +1112,8 @@ class _PillButton extends StatelessWidget {
     final s = scale;
     const gold = Color(0xFFD4AF37);
     final child = Material(
-      color: filled ? gold : Colors.transparent,
+      // Outlined pills get a dark fill: the menu sits on the busy cantina background.
+      color: filled ? gold : const Color(0xCC0C0806),
       shape: StadiumBorder(side: BorderSide(color: gold, width: filled ? 0 : 1.5)),
       child: InkWell(
         customBorder: const StadiumBorder(),

@@ -101,8 +101,9 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
 ## Cantina background (tables)
 - Poker and Blackjack tables sit on `CantinaBackground` (lib/ui/widgets/cantina_background.dart): a
   pixel-art Mexican cantina drawn by `tool/pixelart/cantina.py` (no external art). Two widths of the same
-  scene, `cantina_bg.png` (444x200, phones ~20:9) and `cantina_bg_16x9.png` (356x200, PC); always shown
-  with `FilterQuality.none`. Edit the script and regenerate both (`--variant=...`); never hand-edit PNGs.
+  scene, `cantina_bg.png` (444x200, phones ~20:9) and `cantina_bg_16x9.png` (356x200, PC), plus the portrait
+  menu `cantina_menu.png` (200x444; the lobby uses `CantinaBackground` too, PC menu gets the 16:9 one); always shown
+  with `FilterQuality.none`. Edit the script and regenerate (`python tool/pixelart/cantina.py`, all scenes); never hand-edit PNGs.
 - Keep detail OUTSIDE the table oval (x 10-90 %, y 20-85 %): ceiling band, side shelves, corners.
   Right-hand objects use `R(x)` (from the right edge). Use `--mask FILE` to preview with the oval on top.
 - Controls over the scene need a dark backdrop (black54 disc / pill) to stay readable.

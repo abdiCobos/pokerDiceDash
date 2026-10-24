@@ -32,6 +32,10 @@ Future<void> _loadFonts() async {
     if (file.existsSync()) roboto.addFont(Future.value(ByteData.sublistView(file.readAsBytesSync())));
   }
   await roboto.load();
+  // The logo title font (bundled in assets/fonts), otherwise it renders as blocks.
+  final alfa = FontLoader('AlfaSlabOne')
+    ..addFont(Future.value(ByteData.sublistView(File('assets/fonts/AlfaSlabOne-Regular.ttf').readAsBytesSync())));
+  await alfa.load();
   final icons = FontLoader('MaterialIcons')
     ..addFont(Future.value(ByteData.sublistView(File('$fontsDir/materialicons-regular.otf').readAsBytesSync())));
   await icons.load();
