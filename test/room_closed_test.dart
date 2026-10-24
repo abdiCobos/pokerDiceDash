@@ -35,7 +35,7 @@ void main() {
     final client = GameProvider(p2pService: clientP2p)
       ..setHost(false)
       ..setMultiplayer(true)
-      ..setPlayerName('Beto');
+      ..setPlayerName('Luis');
     addTearDown(() async {
       client.exitGame();
       client.dispose();
@@ -48,7 +48,7 @@ void main() {
     final ep = '127.0.0.1:${hostP2p.hostPort}';
     await clientP2p.sendMessage(ep, {
       'type': 'JOIN_REQUEST',
-      'playerName': 'Beto',
+      'playerName': 'Luis',
       'password': '',
       'token': client.playerToken,
       'endpointId': ep,
