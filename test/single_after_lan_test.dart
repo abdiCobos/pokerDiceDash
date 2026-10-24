@@ -42,4 +42,21 @@ void main() {
       expect(g.players.where((p) => !p.isBot && !p.isLocal), isEmpty, reason: 'no human ghost to wait for');
     });
   }
+
+  test('a new LAN room starts clean: no bets or blinds left from the practice table', () async {
+    final p2p = P2PService()..preferredPort = 47556;
+    final g = GameProvider(p2pService: p2p)
+      ..setHost(true)
+      ..setMultiplayer(true)
+      ..setGameMode(GameMode.texasHoldem);
+    addTearDown(() async {
+      g.dispose();
+      await p2p.dispose();
+    });
+    g.assignSeatToClient('10.0.0.2:5000', playerName: 'Carla', token: 'a');
+    g.assignSeatToClient('10.0.0.3:5000', playerName: 'Luis', token: 'b');
+    expect(g.state.status, GameStatus.waitingPlayers);
+    expect([for (final p in g.players) g.getPlayerBet(p.id)], everyElement(0));
+    expect(g.pot, 0);
+  });
 }

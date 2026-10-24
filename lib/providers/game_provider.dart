@@ -446,6 +446,17 @@ class GameProvider extends ChangeNotifier {
     _awayGraceUntil = null;
 
     _players.clear();
+    // Bets and blinds of whatever was on the table before (the app opens a practice table
+    // at start): a LAN waiting room showed a stray "SB 10" on a new player.
+    _totalContributions.clear();
+    _betsThisPhase.clear();
+    _playersActedThisPhase.clear();
+    _currentBet = 0;
+    _raisesThisPhase = 0;
+    _houseBonus = 0;
+    _sbIndex = 0;
+    _bbIndex = 0;
+    _clearResult();
 
     _state = GameState(status: GameStatus.waitingPlayers, phase: PokerPhase.preFlop);
 
@@ -1452,6 +1463,8 @@ class GameProvider extends ChangeNotifier {
         (_players[nextIndex].isFolded ||
 
          _players[nextIndex].isBankrupt ||
+         // Joined mid-hand: no cards yet, plays from the next deal.
+         _players[nextIndex].hand.isEmpty ||
 
          _playersActedThisPhase.contains(_players[nextIndex].id))) {
 
