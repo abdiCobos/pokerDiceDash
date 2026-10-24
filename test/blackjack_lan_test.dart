@@ -45,13 +45,13 @@ Future<(_Side, _Side)> _connect() async {
   client.lobby
     ..setHost(false)
     ..setMultiplayer(true)
-    ..setPlayerName('Beto');
+    ..setPlayerName('Luis');
   final assigned = client.p2p.onMessageReceived.firstWhere((m) => m['type'] == 'ASSIGN_SEAT');
   expect(await client.p2p.connectToHost('127.0.0.1', host.p2p.hostPort!), isTrue);
   final ep = '127.0.0.1:${host.p2p.hostPort}';
   await client.p2p.sendMessage(ep, {
     'type': 'JOIN_REQUEST',
-    'playerName': 'Beto',
+    'playerName': 'Luis',
     'password': '',
     'token': client.lobby.playerToken,
     'endpointId': ep,
@@ -82,7 +82,7 @@ void main() {
 
     // The client sees itself (and the host) at the table.
     await waitFor(() => client.bj.players.length == 3, reason: 'client snapshot');
-    expect(client.bj.localPlayer.name, 'Beto');
+    expect(client.bj.localPlayer.name, 'Luis');
     expect(client.bj.players.where((p) => p.isLocal).length, 1);
 
     host.bj.startMatch();
