@@ -69,6 +69,36 @@ class GameProvider extends ChangeNotifier {
   bool _reconnectBusy = false;
   bool _hasSeat = false; // client: the host confirmed our seat at least once
 
+  // --- Turn clock (LAN poker) -------------------------------------------------
+  // A connected player who does not act (in another app, distracted) would hold the table
+  // forever. After [turnTimeout] the host plays for them: rolls the dice, checks when
+  // nothing is owed, folds otherwise. Every device starts the clock when it sees the turn
+  // change (the host numbers the turns: turnSerial).
+  static Duration turnTimeout = const Duration(seconds: 45); // shortened by tests
+  int _turnSerial = 0;
+  String _turnKey = '';
+  DateTime _turnStartedAt = DateTime.now();
+
+  /// Seconds left for the player whose turn it is (LAN poker only), or null.
+  int? get turnSecondsLeft {
+    if (!_isMultiplayer || _gameMode == GameMode.blackjack || !_matchStarted && _isHost) return null;
+    if (_state.status != GameStatus.betting && _state.status != GameStatus.diceTurn) return null;
+    final ci = _state.currentPlayerIndex;
+    if (ci < 0 || ci >= _players.length || _players[ci].isBot) return null;
+    final left = turnTimeout.inSeconds - DateTime.now().difference(_turnStartedAt).inSeconds;
+    return left < 0 ? 0 : left;
+  }
+
+  /// Host: a new turn starts a new clock (and a new number that clients follow).
+  void _trackTurn() {
+    final key = '${_state.currentPlayerIndex}|${_state.status.name}|${_state.phase.name}|'
+        '${_state.revealedCommunityCount}|$_roundCounter|$_rollCounter';
+    if (key == _turnKey) return;
+    _turnKey = key;
+    _turnSerial++;
+    _turnStartedAt = DateTime.now();
+  }
+
   // --- Host migration (traspaso de anfitrión) ---------------------------------
   // The host keeps every client told who inherits the room (ROSTER): the connected humans
   // in seat order, with the address each would host on. If the host leaves (HOST_LEAVING)
@@ -341,6 +371,12 @@ class GameProvider extends ChangeNotifier {
     final ci = _state.currentPlayerIndex;
     if (ci < 0 || ci >= _players.length) return;
     final p = _players[ci];
+    if (!p.isAway && !p.isBot && !p.isFolded && !_isBetting && !_isChaosSwapping &&
+        DateTime.now().difference(_turnStartedAt) >= turnTimeout) {
+      AppLogger().log('Tiempo agotado: ${p.name} no jugo, se juega por el');
+      _playForIdle(p);
+      return;
+    }
     if (!p.isAway || p.isFolded) return;
     final grace = _awayGraceUntil;
     if (grace != null && DateTime.now().isBefore(grace)) return; // still reconnecting after a handoff
@@ -357,6 +393,20 @@ class GameProvider extends ChangeNotifier {
   }
 
 
+
+  /// Out of time: roll the dice, check when nothing is owed, fold otherwise.
+  void _playForIdle(PlayerModel p) {
+    if (_state.status == GameStatus.diceTurn && _gameMode == GameMode.diceDash) {
+      rollDice();
+    } else if (_state.status == GameStatus.betting) {
+      final toCall = _currentBet - (_betsThisPhase[p.id] ?? 0);
+      if (toCall > 0) {
+        fold(p.id);
+      } else {
+        call(p.id);
+      }
+    }
+  }
 
   void setMultiplayer(bool value) {
 
@@ -2601,6 +2651,7 @@ class GameProvider extends ChangeNotifier {
       'status': _state.status.name,
       'revealedCommunityCount': _state.revealedCommunityCount,
       'turnsCompleted': _state.turnsCompleted,
+      'turnSerial': _turnSerial,
       'rollCounter': _rollCounter,
       'die1': _die1,
       'die2': _die2,
@@ -2656,6 +2707,11 @@ class GameProvider extends ChangeNotifier {
     }
 
     _currentBet = state['currentBet'] as int? ?? _currentBet;
+    final serial = state['turnSerial'] as int?;
+    if (serial != null && serial != _turnSerial) {
+      _turnSerial = serial;
+      _turnStartedAt = DateTime.now();
+    }
 
     _die1 = state['die1'] as int? ?? _die1;
 
@@ -2872,6 +2928,7 @@ class GameProvider extends ChangeNotifier {
   void notifyListeners() {
 
     if (_isDisposed) return;
+    if (_isHost) _trackTurn();
     super.notifyListeners();
 
     if (_isHost) {

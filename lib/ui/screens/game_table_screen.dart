@@ -15,6 +15,7 @@ import '../widgets/scene_background.dart';
 import '../widgets/host_address_chip.dart';
 import '../widgets/connection_banner.dart';
 import '../widgets/room_closed_overlay.dart';
+import '../widgets/turn_clock.dart';
 import '../widgets/card_widget.dart';
 import '../../services/game_settings.dart';
 import '../../services/poker_bot_ai.dart';
@@ -229,6 +230,7 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _buildActionPanel(game),
                       if (_lastBurned != null)
                         _buildBurnedCardAnimation(),
+                      if (widget.isMultiplayer) TurnClock(game: game, scale: _s),
                       if (game.connectionNotice != null)
                         ConnectionBanner(text: game.connectionNotice!, warning: game.isConnectionLost, scale: _s),
                       if (game.resultTitle != null)
