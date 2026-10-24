@@ -60,6 +60,10 @@ class GameProvider extends ChangeNotifier {
   bool get isConnectionLost => _clientConnectionLost;
   bool _reconnectGaveUp = false;
   bool get reconnectGaveUp => _reconnectGaveUp;
+
+  /// Client: the host closed the room on purpose (ROOM_CLOSED). Nothing to reconnect to.
+  bool _roomClosed = false;
+  bool get roomClosed => _roomClosed;
   int _reconnectAttempt = 0;
   bool _reconnectBusy = false;
   bool _hasSeat = false; // client: the host confirmed our seat at least once
@@ -195,7 +199,7 @@ class GameProvider extends ChangeNotifier {
 
   // --- Client auto-reconnect (exponential backoff) ---------------------------
   void _startReconnect() {
-    if (_reconnectTimer != null || _reconnectBusy || _isExiting || _isDisposed) return;
+    if (_roomClosed || _reconnectTimer != null || _reconnectBusy || _isExiting || _isDisposed) return;
     _clientConnectionLost = true;
     _reconnectGaveUp = false;
     _reconnectAttempt = 0;
@@ -304,6 +308,7 @@ class GameProvider extends ChangeNotifier {
 
   void _initDebugMode() {
     _isExiting = false;
+    _roomClosed = false;
     _matchWinnerId = null;
     _epoch++;
     _matchStarted = false;
@@ -1030,6 +1035,16 @@ class GameProvider extends ChangeNotifier {
 
       if (type == 'LEAVE' && _isHost) {
         _handleLeave(message['_senderEndpointId'] as String? ?? '');
+        return;
+      }
+
+      if (type == 'ROOM_CLOSED' && !_isHost) {
+        AppLogger().log('ROOM_CLOSED: el anfitrion cerro la sala');
+        _roomClosed = true;
+        _reconnectTimer?.cancel();
+        _reconnectTimer = null;
+        _clientConnectionLost = false;
+        notifyListeners();
         return;
       }
 
@@ -2862,6 +2877,11 @@ class GameProvider extends ChangeNotifier {
     _clientConnectionLost = false;
     final wasSeated = _hasSeat;
     _hasSeat = false;
+    if (_isMultiplayer && _isHost) {
+      // Clients used to stay connected to a host that no longer played: frozen table.
+      _p2pService.broadcastMessage({'type': 'ROOM_CLOSED'});
+      Future.delayed(const Duration(milliseconds: 300), _p2pService.disconnectAll);
+    }
     if (_isMultiplayer && !_isHost) {
       if (wasSeated) {
         for (final ep in _p2pService.connectedEndpoints) {

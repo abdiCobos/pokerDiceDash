@@ -12,6 +12,7 @@ import '../../models/game_state.dart';
 import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
+import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
 import '../../services/game_settings.dart';
 import '../../services/poker_bot_ai.dart';
@@ -236,7 +237,7 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _buildActionPanel(game),
                       if (_lastBurned != null)
                         _buildBurnedCardAnimation(),
-                      if (game.isConnectionLost)
+                      if (game.isConnectionLost && !game.roomClosed)
                         _ConnectionBanner(gaveUp: game.reconnectGaveUp, scale: _s),
                       if (game.resultTitle != null)
                         _ResultsBanner(
@@ -254,7 +255,20 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _CenteredStatusAlert(message: game.centralMessage!),
                       if (_showPotFlying && game.winnerId != null)
                         _buildPotFlyingAnimation(game),
-                      if (game.matchWinnerId != null)
+                      if (game.roomClosed || (game.isConnectionLost && game.reconnectGaveUp))
+                        Positioned.fill(
+                          child: RoomClosedOverlay(
+                            message: game.roomClosed
+                                ? 'El anfitrión cerró la sala.'
+                                : 'Se perdió la conexión con el anfitrión.',
+                            scale: _s,
+                            onExit: () {
+                              game.exitGame();
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LobbyScreen()));
+                            },
+                          ),
+                        )
+                      else if (game.matchWinnerId != null)
                         Positioned.fill(
                           child: _MatchOverOverlay(
                             winnerName: game.players

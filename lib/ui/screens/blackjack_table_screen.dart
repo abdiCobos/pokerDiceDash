@@ -6,6 +6,7 @@ import '../../models/card_model.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../services/p2p_service.dart';
+import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
 import '../../services/game_settings.dart';
 import '../widgets/table_options.dart';
@@ -131,6 +132,19 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           child: SafeArea(
             child: Consumer<BlackjackProvider>(
               builder: (context, bj, child) {
+                final lobby = widget.isMultiplayer ? context.watch<GameProvider>() : null;
+                final closed = lobby != null && (lobby.roomClosed || (lobby.isConnectionLost && lobby.reconnectGaveUp));
+                if (closed) {
+                  return RoomClosedOverlay(
+                    message: lobby.roomClosed ? 'El anfitrión cerró la sala.' : 'Se perdió la conexión con el anfitrión.',
+                    scale: _s,
+                    onExit: () {
+                      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+                      lobby.exitGame();
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LobbyScreen()));
+                    },
+                  );
+                }
                 if (bj.players.isEmpty) {
                   return const Center(child: CircularProgressIndicator(color: Colors.amber));
                 }
