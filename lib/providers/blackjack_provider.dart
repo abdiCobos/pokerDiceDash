@@ -72,6 +72,16 @@ class BlackjackProvider extends ChangeNotifier {
   int _remoteDeckCount = 0;
   final Set<String> _away = {};
 
+  /// After inheriting the room the others need a few seconds to reconnect: until then
+  /// the deal waits for them as if they were here.
+  static const Duration rejoinGrace = Duration(seconds: 12);
+  DateTime? _rejoinGraceUntil;
+  Timer? _rejoinTimer;
+  bool get _inRejoinGrace {
+    final until = _rejoinGraceUntil;
+    return until != null && DateTime.now().isBefore(until);
+  }
+
   /// Seats that already answered the insurance offer this round (bots and away seats included).
   final Set<String> _insuranceAnswered = {};
 
@@ -245,6 +255,10 @@ class BlackjackProvider extends ChangeNotifier {
     final started = _state.phase != BlackjackPhase.waiting;
     _state = BlackjackState(players: list, deck: _freshDeck(), phase: _state.phase);
     _seatSub = lobby.seatEvents.listen(_onSeatEvent);
+    _rejoinGraceUntil = DateTime.now().add(rejoinGrace);
+    _rejoinTimer = Timer(rejoinGrace, () {
+      if (!_disposed) _maybeDealWhenEveryoneBet(); // whoever is still away does not hold the deal
+    });
     if (started) {
       newRound(); // fresh hands, bets at zero, betting phase
     } else {
@@ -341,7 +355,10 @@ class BlackjackProvider extends ChangeNotifier {
 
   /// Human seats that must bet before the deal (bots bet on their own, away seats are skipped).
   List<BlackjackPlayer> get _expectedBettors =>
-      players.where((p) => !p.isDealer && !p.isBot && !_away.contains(p.id) && p.chipBalance + p.totalBet > 0).toList();
+      players
+          .where((p) =>
+              !p.isDealer && !p.isBot && (!_away.contains(p.id) || _inRejoinGrace) && p.chipBalance + p.totalBet > 0)
+          .toList();
 
   void _maybeDealWhenEveryoneBet() {
     if (!_isHost || _state.phase != BlackjackPhase.betting) return;
@@ -379,6 +396,7 @@ class BlackjackProvider extends ChangeNotifier {
     _messageSub?.cancel();
     _seatSub?.cancel();
     _takeOverSub?.cancel();
+    _rejoinTimer?.cancel();
     _broadcastTimer?.cancel();
     _turnTimer?.cancel();
     _bettingTimer?.cancel();

@@ -692,7 +692,8 @@ class _GameTableScreenState extends State<GameTableScreen>
     final isAllInCall = amountToCall >= activePlayer.chipBalance;
 
     String callLabel;
-    if (currentBet == 0) {
+    if (amountToCall <= 0) {
+      // Nothing to match (also the big blind when nobody raised): it is a check.
       callLabel = 'CHECK';
     } else if (isAllInCall) {
       callLabel = 'ALL-IN (${activePlayer.chipBalance})';

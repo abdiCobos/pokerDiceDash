@@ -169,13 +169,19 @@ void main() {
     expect(beto.bj!.players.any((p) => p.id == '0'), isFalse, reason: 'the host left on purpose');
     expect(beto.bj!.localPlayer.chipBalance, 1000, reason: 'the bet of the called-off round came back');
     expect(beto.bj!.phase, BlackjackPhase.betting);
+    // Beto bets at once: the deal must still wait for Carla, who is reconnecting.
+    beto.bj!.placeBet(beto.bj!.localPlayerId, 100);
     await waitFor(() => carla.bj!.players.length == 3 && !carla.lobby.isConnectionLost,
         reason: 'Carla gets the new table from Beto');
     await waitFor(() => !beto.bj!.awaySeats.contains(carla.lobby.localPlayerId), reason: 'Carla is back at the table');
-    // Carla can still play: her bet reaches Beto.
+    expect(beto.bj!.phase, BlackjackPhase.betting, reason: 'no deal before Carla is back and bets');
+    // Carla can still play: her bet reaches Beto and the round is dealt to both.
     carla.bj!.placeBet(carla.bj!.localPlayerId, 50);
     await waitFor(() => beto.bj!.players.firstWhere((p) => p.id == carla.lobby.localPlayerId).totalBet == 50,
         reason: 'Carla bets on the new host');
+    await waitFor(() => beto.bj!.phase != BlackjackPhase.betting, reason: 'dealt once everybody bet');
+    await waitFor(() => beto.bj!.players.firstWhere((p) => p.id == carla.lobby.localPlayerId).hands.first.cards.length == 2,
+        reason: 'Carla gets her two cards');
   }, timeout: const Timeout(Duration(seconds: 90)));
 
   test('with only one player left the room still closes (nobody to play with)', () async {
