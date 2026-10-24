@@ -184,6 +184,17 @@ void main() {
         reason: 'Carla gets her two cards');
   }, timeout: const Timeout(Duration(seconds: 90)));
 
+  test('blackjack: a player who leaves on purpose frees the seat (not shown as disconnected)', () async {
+    final d = await _room(GameMode.blackjack);
+    final ana = d[0], carla = d[2];
+    await waitFor(() => ana.bj!.players.length == 4, reason: 'everyone at the table');
+    ana.bj!.startMatch();
+    final seat = carla.lobby.localPlayerId;
+    carla.lobby.exitGame(); // back button: LEAVE
+    await waitFor(() => ana.bj!.players.every((p) => p.id != seat), reason: 'seat removed');
+    expect(ana.bj!.awaySeats.contains(seat), isFalse);
+  }, timeout: const Timeout(Duration(seconds: 60)));
+
   test('with only one player left the room still closes (nobody to play with)', () async {
     final host = _Device('Ana', _nextPort++);
     final client = _Device('Beto', _nextPort++);

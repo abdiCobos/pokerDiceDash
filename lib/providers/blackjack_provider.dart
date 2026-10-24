@@ -72,6 +72,9 @@ class BlackjackProvider extends ChangeNotifier {
   int _remoteDeckCount = 0;
   final Set<String> _away = {};
 
+  /// Seats that left on purpose with a bet on the table: removed at the next round.
+  final Set<String> _leaving = {};
+
   /// After inheriting the room the others need a few seconds to reconnect: until then
   /// the deal waits for them as if they were here.
   static const Duration rejoinGrace = Duration(seconds: 12);
@@ -322,8 +325,11 @@ class BlackjackProvider extends ChangeNotifier {
           _state = _state.copyWith(players: [...players]..removeAt(idx));
           _logAndNotify('seatLeft');
         } else {
+          // Their bet is on the table: the round ends for them, then the seat goes.
           _away.add(e.seatId);
+          _leaving.add(e.seatId);
           _logAndNotify('seatLeftMidRound');
+          if (_isTurnOf(e.seatId)) _armTurnTimer(e.seatId);
         }
         _maybeDealWhenEveryoneBet();
     }
@@ -1091,7 +1097,12 @@ class BlackjackProvider extends ChangeNotifier {
     try {
       _roundOutcome = const {};
       _roundNet = const {};
-      var updated = <BlackjackPlayer>[..._state.players];
+      var updated = <BlackjackPlayer>[
+        for (final p in _state.players)
+          if (!_leaving.contains(p.id)) p,
+      ];
+      _away.removeAll(_leaving);
+      _leaving.clear();
       for (var i = 0; i < updated.length; i++) {
         final balance = updated[i].chipBalance <= 0 && !updated[i].isDealer ? 1000 : updated[i].chipBalance;
         updated[i] = updated[i].copyWith(

@@ -212,7 +212,9 @@ class GameProvider extends ChangeNotifier {
       final seatId = _endpointPlayer.remove(endpointId);
       if (seatId == null) return;
       final seatName = _players.where((x) => x.id == seatId).firstOrNull?.name ?? '';
-      _emitSeat(_matchStarted ? SeatEventKind.away : SeatEventKind.left, seatId, seatName, endpointId);
+      // Left on purpose (LEAVE) or before the match: the seat is free. Dropped mid-match: away.
+      final gone = !_matchStarted || _leftSeats.contains(seatId);
+      _emitSeat(gone ? SeatEventKind.left : SeatEventKind.away, seatId, seatName, endpointId);
       if (!_matchStarted) {
         // Still in the waiting room: just free the seat.
         _players.removeWhere((x) => x.id == seatId);
