@@ -1,3 +1,5 @@
+<p align="right"><b>Español</b> · <a href="README.en.md">English</a></p>
+
 <p align="center">
   <img src="fastlane/metadata/android/es-MX/images/featureGraphic.png" alt="Poker Dice Dash" width="100%">
 </p>
