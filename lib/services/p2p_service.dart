@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:nsd/nsd.dart' as nsd;
 import 'room_address.dart';
+import 'background_keeper.dart';
 import 'logger_service.dart';
 
 class DiscoveredDevice {
@@ -184,6 +185,7 @@ class P2PService {
         }
         _serverSocket = server;
         AppLogger().log('P2P: Servidor escuchando en puerto ${server.port}');
+        BackgroundKeeper.start('Tu sala está abierta: la partida sigue aunque uses otras apps');
 
         server.listen(
           (Socket clientSocket) {
@@ -359,6 +361,7 @@ class P2PService {
       lastPort = port;
       _registerSocket(endpointId, socket);
       AppLogger().log('P2P: Conectado exitosamente a $endpointId');
+      BackgroundKeeper.start('Partida en red activa');
       return true;
     } catch (e) {
       AppLogger().log('P2P: Error de conexión a $endpointId: $e');
@@ -504,6 +507,7 @@ class P2PService {
   }
 
   Future<void> disconnectAll() async {
+    BackgroundKeeper.stop();
     await stopAdvertising();
     await stopDiscovery();
     _heartbeatTimer?.cancel();

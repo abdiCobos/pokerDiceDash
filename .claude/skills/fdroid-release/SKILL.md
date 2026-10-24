@@ -18,7 +18,9 @@ description: Preparing a Poker Dice Dash release for F-Droid (applicationId, FOS
 - `fastlane/metadata/android/<lang>/`: title, short/full description, changelog for the new
   versionCode, icon and screenshots (take screenshots with the `visual-qa` skill if needed).
 - Permissions only: INTERNET, ACCESS_NETWORK_STATE, ACCESS_WIFI_STATE,
-  CHANGE_WIFI_MULTICAST_STATE, WAKE_LOCK.
+  CHANGE_WIFI_MULTICAST_STATE, WAKE_LOCK, plus FOREGROUND_SERVICE, FOREGROUND_SERVICE_CONNECTED_DEVICE
+  and POST_NOTIFICATIONS for KeepAliveService (own Kotlin service, no plugin: LAN games keep running
+  while the player uses other apps; started/stopped from P2PService via BackgroundKeeper).
 - Tag (`git tag vX.Y.Z`) only when the user asks; then point the recipe to the tag.
 - No secrets or leftover service configs (`firebase.json`, `google-services.json`).
 
