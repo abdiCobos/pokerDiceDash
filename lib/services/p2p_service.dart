@@ -68,10 +68,16 @@ class P2PService {
 
   P2PService();
 
+  /// Port this device opens when it hosts a room (also the one announced to other players
+  /// in case it inherits a room). Tests give each simulated device its own.
+  int preferredPort = RoomAddress.defaultPort;
+
   /// Adapters that are never the shared Wi-Fi/LAN (PCs often list these first).
   static final RegExp _virtualAdapter = RegExp(
     r'vEthernet|Hyper-V|WSL|VirtualBox|VMware|vmnet|vboxnet|docker|br-|veth|virbr|'
-    r'Tailscale|ZeroTier|Hamachi|WireGuard|wg\d|tun\d|TAP-|^tap\d|utun|VPN|Bluetooth|llw|awdl|Loopback',
+    r'Tailscale|ZeroTier|Hamachi|WireGuard|wg\d|tun\d|TAP-|^tap\d|utun|VPN|Bluetooth|llw|awdl|Loopback|'
+    // Mobile data (Android: MediaTek ccmni, Qualcomm rmnet, clat; iOS pdp_ip): never the Wi-Fi.
+    r'^ccmni|^rmnet|^clat|^pdp_ip|^wwan|^seth_|^v4-',
     caseSensitive: false,
   );
 
@@ -179,7 +185,7 @@ class P2PService {
         // A fixed port first: then the IP alone is enough to join. Busy -> any free port.
         ServerSocket server;
         try {
-          server = await ServerSocket.bind(InternetAddress.anyIPv4, RoomAddress.defaultPort);
+          server = await ServerSocket.bind(InternetAddress.anyIPv4, preferredPort);
         } on SocketException {
           server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
         }

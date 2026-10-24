@@ -80,6 +80,10 @@ void main() {
       expect(P2PService.scoreAddress('vEthernet (Default Switch)', '192.168.0.5'), 0);
       expect(P2PService.scoreAddress('VirtualBox Host-Only Network', '192.168.56.1'), 0);
       expect(P2PService.scoreAddress('Ethernet 3', '192.168.56.1'), lessThan(wifi)); // VirtualBox default range
+      // Android phones also list their mobile-data interface: never offer that address.
+      expect(P2PService.scoreAddress('ccmni1', '211.73.190.113'), 0);
+      expect(P2PService.scoreAddress('rmnet_data0', '10.120.4.7'), 0);
+      expect(P2PService.scoreAddress('wlan0', '192.168.100.8'), greaterThan(0));
       expect(P2PService.scoreAddress('Tailscale', '100.101.102.103'), 0);
       expect(P2PService.scoreAddress('wlan0', '10.0.0.12'), greaterThan(P2PService.scoreAddress('eth0', '172.17.0.1')));
     });

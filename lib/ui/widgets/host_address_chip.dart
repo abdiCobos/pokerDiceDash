@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -6,7 +8,7 @@ import '../../services/room_address.dart';
 
 /// Host waiting room: the room's IP:port with a copy button, so it can be pasted into
 /// WhatsApp (or any chat) and then into "Por IP" on the other devices.
-class HostAddressChip extends StatelessWidget {
+class HostAddressChip extends StatefulWidget {
   final int? port;
   final double scale;
   final String label;
@@ -14,13 +16,41 @@ class HostAddressChip extends StatelessWidget {
   const HostAddressChip({super.key, required this.port, required this.scale, this.label = 'IP de la sala'});
 
   @override
+  State<HostAddressChip> createState() => _HostAddressChipState();
+}
+
+class _HostAddressChipState extends State<HostAddressChip> {
+  String? _ip;
+  Timer? _refresh;
+
+  @override
+  void initState() {
+    super.initState();
+    _lookUp();
+    // Phones change their Wi-Fi address when they reconnect: keep the chip current.
+    _refresh = Timer.periodic(const Duration(seconds: 5), (_) => _lookUp());
+  }
+
+  Future<void> _lookUp() async {
+    final ip = await P2PService.getLocalIpAddress();
+    if (mounted && ip != _ip) setState(() => _ip = ip);
+  }
+
+  @override
+  void dispose() {
+    _refresh?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final s = scale;
-    return FutureBuilder<String?>(
-      future: P2PService.getLocalIpAddress(),
-      builder: (context, snapshot) {
-        final ip = snapshot.data;
-        final address = ip == null || port == null ? null : RoomAddress(ip, port!);
+    final s = widget.scale;
+    final port = widget.port;
+    final label = widget.label;
+    return Builder(
+      builder: (context) {
+        final ip = _ip;
+        final address = ip == null || port == null ? null : RoomAddress(ip, port);
         return Material(
           color: Colors.black54,
           shape: RoundedRectangleBorder(
