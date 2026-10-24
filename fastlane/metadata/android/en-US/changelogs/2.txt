@@ -1,0 +1,6 @@
+Better local multiplayer.
+• The game keeps running while the host or a player uses other apps.
+• Everyone is told when the host closes the room.
+• Rooms are found on more phones (second network discovery).
+• Copy and paste the room address; fixed port 47474.
+• Game sounds no longer pause music from other apps.

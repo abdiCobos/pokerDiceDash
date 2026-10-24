@@ -1,0 +1,6 @@
+Mejoras para jugar en red con amigos.
+• La partida sigue activa aunque el anfitrión o un jugador use otras apps.
+• Si el anfitrión cierra la sala, todos reciben el aviso.
+• Las salas se encuentran en más móviles (segunda búsqueda por la red).
+• Copiar y pegar la IP de la sala; puerto fijo 47474.
+• Los sonidos ya no pausan la música de otras apps.
