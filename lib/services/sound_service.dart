@@ -38,8 +38,19 @@ class SoundService {
     }
   }
 
+  /// Game sounds are short effects: they mix with the user's music (Spotify, etc.) instead of
+  /// taking the audio focus, which made Android pause other apps on every card.
+  static final AudioContext mixContext =
+      AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers).build();
+
+  static bool get _mobile =>
+      !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+
   AudioPlayer _newPlayer() {
     final p = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+    if (_mobile) {
+      p.setAudioContext(mixContext).catchError((Object e) => AppLogger().log('AudioContext: $e'));
+    }
     // Plugin errors also arrive on the event stream, not only as thrown exceptions.
     p.eventStream.listen((_) {}, onError: (Object e) => recordFailure(e));
     return p;

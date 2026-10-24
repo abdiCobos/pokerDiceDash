@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poker_dice_dash/models/blackjack_models.dart';
@@ -104,5 +105,9 @@ void main() {
     sound.cardFlip();
     sound.chipsWin();
     expect(log, isEmpty, reason: 'after the limit the game stays silent instead of retrying');
+  });
+
+  test('game sounds mix with other apps instead of taking the audio focus (Spotify keeps playing)', () {
+    expect(SoundService.mixContext.android.audioFocus, AndroidAudioFocus.none);
   });
 }
