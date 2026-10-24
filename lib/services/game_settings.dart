@@ -8,7 +8,7 @@ import 'sound_service.dart';
 /// Where the tables and the menu are set (pixel-art scenes in assets/images/cantina).
 enum TableTheme {
   cantina('Cantina mexicana', 'Papel picado, tequila y Talavera'),
-  garito('Garito clandestino', 'Un foco, humo y la puerta cerrada');
+  garito('Garito clandestino', 'Casa de mala muerte, mafia y dinero sucio');
 
   const TableTheme(this.label, this.description);
   final String label;
