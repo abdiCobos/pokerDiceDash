@@ -1,6 +1,7 @@
-Better local multiplayer.
-• The game keeps running while the host or a player uses other apps.
-• Everyone is told when the host closes the room.
-• Rooms are found on more phones (second network discovery).
-• Copy and paste the room address; fixed port 47474.
-• Game sounds no longer pause music from other apps.
+• If the host leaves, another player takes over the table and the game goes on.
+• The game keeps running while you use other apps (WhatsApp, Spotify…).
+• 1 minute per turn online: idle players check or fold automatically.
+• Rooms are easier to find; copy and paste the room address.
+• New scenes: Mexican cantina and underground den.
+• Blackjack insurance and a match winner announcement.
+• Fixed: single player froze after an online game.

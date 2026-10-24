@@ -1,6 +1,7 @@
-Mejoras para jugar en red con amigos.
-• La partida sigue activa aunque el anfitrión o un jugador use otras apps.
-• Si el anfitrión cierra la sala, todos reciben el aviso.
-• Las salas se encuentran en más móviles (segunda búsqueda por la red).
-• Copiar y pegar la IP de la sala; puerto fijo 47474.
-• Los sonidos ya no pausan la música de otras apps.
+• Si el anfitrión sale, otro jugador se queda con la mesa y la partida sigue.
+• La partida sigue aunque uses otras apps (WhatsApp, Spotify…).
+• 1 minuto por turno en red: si nadie juega, pasa o se retira solo.
+• Salas más fáciles de encontrar; copiar y pegar la IP.
+• Nuevos ambientes: Cantina mexicana y Garito clandestino.
+• Seguro en Blackjack y anuncio del ganador de la partida.
+• Corregido: jugar solo después de una partida en red se congelaba.
