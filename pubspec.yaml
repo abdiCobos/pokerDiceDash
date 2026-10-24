@@ -66,6 +66,7 @@ flutter:
     - assets/images/cards/
     - assets/images/dice/
     - assets/images/chips/
+    - assets/images/cantina/
     - assets/sounds/
 
   fonts:

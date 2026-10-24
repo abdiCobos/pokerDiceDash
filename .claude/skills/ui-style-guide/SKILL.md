@@ -98,5 +98,14 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
   ¡ESPÍA!, ¡CARTA EXTRA!). Spied cards get a purple glow + eye icon; the discarded extra card
   fades and rises before it leaves.
 
+## Cantina background (tables)
+- Poker and Blackjack tables sit on `CantinaBackground` (lib/ui/widgets/cantina_background.dart): a
+  pixel-art Mexican cantina drawn by `tool/pixelart/cantina.py` (no external art). Two widths of the same
+  scene, `cantina_bg.png` (444x200, phones ~20:9) and `cantina_bg_16x9.png` (356x200, PC); always shown
+  with `FilterQuality.none`. Edit the script and regenerate both (`--variant=...`); never hand-edit PNGs.
+- Keep detail OUTSIDE the table oval (x 10-90 %, y 20-85 %): ceiling band, side shelves, corners.
+  Right-hand objects use `R(x)` (from the right edge). Use `--mask FILE` to preview with the oval on top.
+- Controls over the scene need a dark backdrop (black54 disc / pill) to stay readable.
+
 ## Before finishing a visual change
 Run the `visual-qa` skill and look at the PNGs at 800x360, 640x360 and 1280x720.

@@ -5,6 +5,7 @@ import '../../models/blackjack_models.dart';
 import '../../models/card_model.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../providers/game_provider.dart';
+import '../widgets/cantina_background.dart';
 import '../widgets/host_address_chip.dart';
 import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
@@ -120,15 +121,8 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF052915),
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0.0, -0.3),
-              radius: 1.15,
-              colors: [Color(0xFF0F6838), Color(0xFF0A4D28), Color(0xFF052312)],
-              stops: [0.0, 0.55, 1.0],
-            ),
-          ),
+        body: CantinaBackground(
+          shade: 0.25,
           child: SafeArea(
             child: Consumer<BlackjackProvider>(
               builder: (context, bj, child) {

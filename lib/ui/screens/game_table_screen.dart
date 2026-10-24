@@ -11,6 +11,7 @@ import '../../models/game_state.dart';
 import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
+import '../widgets/cantina_background.dart';
 import '../widgets/host_address_chip.dart';
 import '../widgets/room_closed_overlay.dart';
 import '../widgets/card_widget.dart';
@@ -150,17 +151,7 @@ class _GameTableScreenState extends State<GameTableScreen>
         }
       },
       child: Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.center,
-            radius: 0.9,
-            colors: [
-              Color(0xFF0A4D28),
-              Color(0xFF052915),
-            ],
-          ),
-        ),
+      body: CantinaBackground(
         child: SafeArea(
           child: Consumer<GameProvider>(
             builder: (context, game, child) {
@@ -303,9 +294,14 @@ class _GameTableScreenState extends State<GameTableScreen>
         children: [
           Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.white70, size: 28 * _s),
-                onPressed: () => Navigator.maybePop(context),
+              // Dark disc: the arrow sits over the busy cantina background (papel picado).
+              Material(
+                color: Colors.black54,
+                shape: const CircleBorder(),
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: Colors.white, size: 26 * _s),
+                  onPressed: () => Navigator.maybePop(context),
+                ),
               ),
               SizedBox(width: 4 * _s),
               TableOptionsButton(scale: _s, poker: true, onExit: () => Navigator.maybePop(context)),
