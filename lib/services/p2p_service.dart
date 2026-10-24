@@ -27,6 +27,18 @@ class P2PService {
 
   nsd.Registration? _nsdRegistration;
   nsd.Discovery? _nsdDiscovery;
+
+  // --- UDP beacon: a second, simpler way to find rooms ------------------------
+  // mDNS (nsd) does not work on some phones (several Xiaomi models) nor on Linux. The host
+  // also broadcasts a small datagram every couple of seconds; clients listening on
+  // [beaconPort] add the room to the same list (deduplicated by "ip:port").
+  static const int beaconPort = 47475;
+  static const Duration beaconInterval = Duration(seconds: 2);
+  static const String beaconApp = 'pokerdicedash';
+  RawDatagramSocket? _beaconSender;
+  Timer? _beaconTimer;
+  String? _beaconName;
+  RawDatagramSocket? _beaconListener;
   ServerSocket? _serverSocket;
   final Map<String, Socket> _connectedSockets = {};
   final Map<String, BytesBuilder> _receiveBuffers = {};
@@ -195,6 +207,8 @@ class P2PService {
   /// Re-publishes the mDNS record with a new name WITHOUT touching the TCP
   /// server socket (its port must stay stable). Calls are serialized.
   Future<void> updateServiceName(String name) {
+    _beaconName = name;
+    _startBeacon();
     _nsdQueue = _nsdQueue.then((_) async {
       final server = _serverSocket;
       if (server == null) return;
@@ -215,7 +229,90 @@ class P2PService {
     return _nsdQueue;
   }
 
+  Future<void> _startBeacon() async {
+    if (_beaconSender != null || _serverSocket == null) return;
+    try {
+      final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+      socket.broadcastEnabled = true;
+      _beaconSender = socket;
+      final targets = await _broadcastTargets();
+      _beaconTimer = Timer.periodic(beaconInterval, (_) => _sendBeacon(targets));
+      _sendBeacon(targets);
+    } catch (e) {
+      AppLogger().log('P2P: Aviso - beacon UDP no disponible: $e');
+    }
+  }
+
+  void _sendBeacon(List<InternetAddress> targets) {
+    final socket = _beaconSender;
+    final server = _serverSocket;
+    final name = _beaconName;
+    if (socket == null || server == null || name == null) return;
+    final data = utf8.encode(jsonEncode({'app': beaconApp, 'v': 1, 'name': name, 'port': server.port}));
+    for (final t in targets) {
+      try {
+        socket.send(data, t, beaconPort);
+      } catch (_) {}
+    }
+  }
+
+  /// 255.255.255.255 plus the /24 broadcast of every real LAN interface (some routers and
+  /// phones drop the limited broadcast but deliver the subnet one).
+  static Future<List<InternetAddress>> _broadcastTargets() async {
+    final targets = <String>{'255.255.255.255'};
+    try {
+      for (final iface in await NetworkInterface.list(type: InternetAddressType.IPv4)) {
+        if (_virtualAdapter.hasMatch(iface.name)) continue;
+        for (final a in iface.addresses) {
+          if (a.isLoopback) continue;
+          final parts = a.address.split('.');
+          if (parts.length == 4) targets.add('${parts[0]}.${parts[1]}.${parts[2]}.255');
+        }
+      }
+    } catch (_) {}
+    return [for (final t in targets) InternetAddress(t)];
+  }
+
+  void _stopBeacon() {
+    _beaconTimer?.cancel();
+    _beaconTimer = null;
+    _beaconSender?.close();
+    _beaconSender = null;
+  }
+
+  /// Parses a beacon datagram; null for anything that is not one of ours.
+  static DiscoveredDevice? parseBeacon(List<int> data, String senderIp) {
+    try {
+      final m = jsonDecode(utf8.decode(data));
+      if (m is! Map || m['app'] != beaconApp) return null;
+      final name = m['name'];
+      final port = m['port'];
+      if (name is! String || port is! int || port <= 0 || port > 65535) return null;
+      return DiscoveredDevice(endpointId: '$senderIp:$port', endpointName: name, host: senderIp, port: port);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _startBeaconListener() async {
+    if (_beaconListener != null) return;
+    try {
+      final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, beaconPort, reuseAddress: true);
+      _beaconListener = socket;
+      socket.listen((event) {
+        if (event != RawSocketEvent.read) return;
+        final dg = socket.receive();
+        if (dg == null) return;
+        final device = parseBeacon(dg.data, dg.address.address);
+        if (device != null) _emit(_devicesController, device);
+      });
+    } catch (e) {
+      AppLogger().log('P2P: Aviso - no se pudo escuchar el beacon UDP: $e');
+    }
+  }
+
   Future<void> startDiscovery(String deviceName) async {
+    await _startBeaconListener();
     try {
       // Ask for IPv4 addresses: a ".local" hostname from a PC often does not
       // resolve on Android, and IPv6 link-local needs a scope id.
@@ -386,6 +483,7 @@ class P2PService {
       } catch (_) {}
       _nsdRegistration = null;
     }
+    _stopBeacon();
     await _serverSocket?.close();
     _serverSocket = null;
     if (_connectedSockets.isEmpty) {
@@ -395,6 +493,8 @@ class P2PService {
   }
 
   Future<void> stopDiscovery() async {
+    _beaconListener?.close();
+    _beaconListener = null;
     if (_nsdDiscovery != null) {
       try {
         await nsd.stopDiscovery(_nsdDiscovery!);
