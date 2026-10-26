@@ -15,7 +15,9 @@ class SceneBackground extends StatelessWidget {
 
   /// Every theme is drawn three times: phones are about 20:9, PCs and tablets 16:9, and the
   /// menu on phones is portrait. The closest one is used so nothing at the sides is cropped.
-  static String assetFor(TableTheme theme, Size size) {
+  /// Null for [TableTheme.clasico]: plain green, no picture.
+  static String? assetFor(TableTheme theme, Size size) {
+    if (theme == TableTheme.clasico) return null;
     final base = 'assets/images/cantina/${theme.name}';
     if (size.height <= 0) return '${base}_bg_16x9.png';
     final ratio = size.width / size.height;
@@ -23,25 +25,40 @@ class SceneBackground extends StatelessWidget {
     return ratio >= 2.0 ? '${base}_bg.png' : '${base}_bg_16x9.png';
   }
 
+  /// Background of the first version (menu and tables).
+  static const classicGradient = RadialGradient(
+    center: Alignment.center,
+    radius: 0.9,
+    colors: [Color(0xFF0A4D28), Color(0xFF052915)],
+  );
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const ColoredBox(color: Color(0xFF100809)),
         ListenableBuilder(
           listenable: GameSettings(),
-          builder: (context, _) => LayoutBuilder(
-            builder: (context, c) => Image.asset(
-              assetFor(GameSettings().theme, c.biggest),
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.none,
-              isAntiAlias: false,
-              gaplessPlayback: true,
-            ),
-          ),
+          builder: (context, _) => LayoutBuilder(builder: (context, c) {
+            final asset = assetFor(GameSettings().theme, c.biggest);
+            // Clásico: the green radial felt of the first version, nothing drawn on top.
+            if (asset == null) return const DecoratedBox(decoration: BoxDecoration(gradient: classicGradient));
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                const ColoredBox(color: Color(0xFF100809)),
+                Image.asset(
+                  asset,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.none,
+                  isAntiAlias: false,
+                  gaplessPlayback: true,
+                ),
+                if (shade > 0) ColoredBox(color: Colors.black.withValues(alpha: shade)),
+              ],
+            );
+          }),
         ),
-        if (shade > 0) ColoredBox(color: Colors.black.withValues(alpha: shade)),
         child,
       ],
     );
@@ -56,7 +73,7 @@ class TableFeltStyle {
   const TableFeltStyle(this.felt, this.rail, this.railEdge);
 
   static TableFeltStyle of(TableTheme theme) => switch (theme) {
-        TableTheme.cantina => const TableFeltStyle(
+        TableTheme.clasico || TableTheme.cantina => const TableFeltStyle(
             [Color(0xFF168A4E), Color(0xFF0E6B3A), Color(0xFF0A5530)], Color(0xFF3E2410), Color(0xFF2A1708)),
         // Worn, darker felt under a single bulb; black-lacquered rail.
         TableTheme.garito => const TableFeltStyle(

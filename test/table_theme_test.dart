@@ -10,9 +10,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('every theme has its three scenes in the assets', () {
-    for (final t in TableTheme.values) {
+    for (final t in TableTheme.values.where((t) => t != TableTheme.clasico)) {
       for (final size in const [Size(873, 393), Size(1280, 720), Size(393, 873)]) {
-        final asset = SceneBackground.assetFor(t, size);
+        final asset = SceneBackground.assetFor(t, size)!;
         expect(File(asset).existsSync(), isTrue, reason: '$asset is missing (run tool/pixelart/cantina.py)');
       }
     }
@@ -22,6 +22,7 @@ void main() {
     expect(SceneBackground.assetFor(TableTheme.garito, const Size(873, 393)), endsWith('garito_bg.png'));
     expect(SceneBackground.assetFor(TableTheme.garito, const Size(1280, 720)), endsWith('garito_bg_16x9.png'));
     expect(SceneBackground.assetFor(TableTheme.garito, const Size(393, 873)), endsWith('garito_menu.png'));
+    expect(SceneBackground.assetFor(TableTheme.clasico, const Size(873, 393)), isNull, reason: 'clásico: plain green');
   });
 
   test('the chosen theme is saved and comes back on the next start', () async {

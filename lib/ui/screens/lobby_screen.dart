@@ -1341,12 +1341,27 @@ class _ThemeCard extends StatelessWidget {
           children: [
             SizedBox(
               height: 50 * s,
-              child: Image.asset(
-                'assets/images/cantina/${theme.name}_bg_16x9.png',
-                fit: BoxFit.cover,
-                alignment: const Alignment(0, -0.35),
-                filterQuality: FilterQuality.none,
-              ),
+              child: theme == TableTheme.clasico
+                  ? DecoratedBox(
+                      decoration: const BoxDecoration(gradient: SceneBackground.classicGradient),
+                      child: Center(
+                        child: Container(
+                          width: 64 * s,
+                          height: 30 * s,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF168A4E),
+                            borderRadius: BorderRadius.circular(15 * s),
+                            border: Border.all(color: const Color(0xFF3E2410), width: 3 * s),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Image.asset(
+                      'assets/images/cantina/${theme.name}_bg_16x9.png',
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0, -0.35),
+                      filterQuality: FilterQuality.none,
+                    ),
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(8 * s, 6 * s, 8 * s, 8 * s),

@@ -5,10 +5,12 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'logger_service.dart';
 import 'sound_service.dart';
 
-/// Where the tables and the menu are set (pixel-art scenes in assets/images/cantina).
+/// Where the tables and the menu are set: the plain green felt of the first version, or a
+/// pixel-art scene (assets/images/cantina).
 enum TableTheme {
-  cantina('Cantina mexicana', 'Papel picado, tequila y Talavera'),
-  garito('Garito clandestino', 'Casa de mala muerte, mafia y dinero sucio');
+  clasico('Clásico', 'Verde y simple'),
+  cantina('Cantina mexicana', 'Papel picado y tequila'),
+  garito('Garito clandestino', 'Mafia y dinero sucio');
 
   const TableTheme(this.label, this.description);
   final String label;
@@ -32,7 +34,7 @@ class GameSettings extends ChangeNotifier {
   bool _keepAwake = true;
   TableTheme _theme = TableTheme.cantina;
 
-  /// Scene behind the menu and the tables.
+  /// Scene behind the menu and the tables (cantina unless the player picked another).
   TableTheme get theme => _theme;
 
   bool get sound => SoundService().enabled;
