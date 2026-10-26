@@ -99,6 +99,16 @@ flutter run
 - **Windows (ZIP e instalador):** `powershell -ExecutionPolicy Bypass -File windows/packaging/build_release.ps1` (el instalador requiere [Inno Setup 6](https://jrsoftware.org/isinfo.php))
 - **Pruebas:** `flutter test`
 
+## Para desarrolladores: el motor por separado
+
+Las reglas de Texas Hold'em y Blackjack del juego también están disponibles como paquete independiente de Dart, **[card_table_engine](https://pub.dev/packages/card_table_engine)**, para que cualquiera pueda usarlas en sus propios juegos sin empezar de cero: evaluador de manos, botes paralelos, mesa completa de Texas Hold'em, mesa de Blackjack y bots. Es Dart puro (funciona en Flutter, servidores y consola) y tiene licencia **MIT**.
+
+```sh
+dart pub add card_table_engine
+```
+
+Código y documentación: [github.com/abdiCobos/card_table_engine](https://github.com/abdiCobos/card_table_engine)
+
 ## Licencia
 
 Software libre bajo **GPL-3.0-or-later**. Ver [LICENSE](LICENSE).
