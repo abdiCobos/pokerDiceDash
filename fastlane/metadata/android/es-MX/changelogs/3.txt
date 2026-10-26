@@ -1,0 +1,4 @@
+• El juego ahora también está en inglés: sigue el idioma del teléfono o elígelo en Ajustes. En red, cada jugador ve la mesa en su idioma.
+• Nuevo ambiente Clásico: la mesa verde y simple de la primera versión.
+• Aviso dentro del juego cuando sale una versión nueva (se apaga en Ajustes).
+• Crear sala se ve completo en móviles en horizontal.

@@ -15,7 +15,7 @@
   <a href="LICENSE"><img alt="GPL-3.0 license" src="https://img.shields.io/badge/license-GPL--3.0-blue"></a>
 </p>
 
-> The game's interface is in Spanish.
+> In English and Spanish: it follows your device language, or pick one in Settings.
 
 ## Screenshots
 
@@ -38,7 +38,7 @@
 
 ### Pick the scene
 
-In **Ajustes → Ambiente** you choose where the game takes place: a **Mexican cantina** with papel picado, tequila and talavera tiles, or a seedy **underground den** run by the mob. The menu and every table change with it.
+In **Settings → Scene** you choose where the game takes place: the **Classic** plain green table of the first version, a **Mexican cantina** with papel picado, tequila and talavera tiles, or a seedy **underground den** run by the mob. The menu and every table change with it.
 
 <table>
   <tr>

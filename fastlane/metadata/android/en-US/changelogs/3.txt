@@ -1,0 +1,4 @@
+• The game is now in English too: it follows your device language, or pick one in Settings. Online, each player sees the table in their own language.
+• New Classic scene: the plain green table of the first version.
+• In-game notice when a new version is out (switch it off in Settings).
+• Create room fits on phones held sideways.

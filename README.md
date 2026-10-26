@@ -15,6 +15,8 @@
   <a href="LICENSE"><img alt="Licencia GPL-3.0" src="https://img.shields.io/badge/licencia-GPL--3.0-blue"></a>
 </p>
 
+> En español e inglés: sigue el idioma de tu teléfono o lo eliges en Ajustes.
+
 ## Capturas
 
 <table>
@@ -36,7 +38,7 @@
 
 ### Elige el ambiente
 
-En **Ajustes → Ambiente** cambias el lugar donde se juega: una **Cantina mexicana** con papel picado, tequila y talavera, o un **Garito clandestino** de mala muerte, con mafia y dinero sucio. El menú y todas las mesas cambian con él.
+En **Ajustes → Ambiente** cambias el lugar donde se juega: la mesa verde **Clásica** de la primera versión, una **Cantina mexicana** con papel picado, tequila y talavera, o un **Garito clandestino** de mala muerte, con mafia y dinero sucio. El menú y todas las mesas cambian con él.
 
 <table>
   <tr>
