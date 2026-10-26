@@ -1089,21 +1089,24 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 child: Text(context.t.scene, style: TextStyle(color: Colors.white, fontSize: 15 * s)),
               ),
               SizedBox(height: 8 * s),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final t in TableTheme.values) ...[
-                    if (t != TableTheme.values.first) SizedBox(width: 10 * s),
-                    Expanded(
-                      child: _ThemeCard(
-                        theme: t,
-                        selected: t == theme,
-                        scale: s,
-                        onTap: () => setLocal(() => theme = t),
+              // Same height for every card, even when a name fits on one line.
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final t in TableTheme.values) ...[
+                      if (t != TableTheme.values.first) SizedBox(width: 10 * s),
+                      Expanded(
+                        child: _ThemeCard(
+                          theme: t,
+                          selected: t == theme,
+                          scale: s,
+                          onTap: () => setLocal(() => theme = t),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ];
             final languagePicker = <Widget>[
