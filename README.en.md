@@ -36,6 +36,17 @@
   <img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/6_lan.png" alt="LAN play" width="24%">
 </p>
 
+### Pick the scene
+
+In **Ajustes → Ambiente** you choose where the game takes place: a **Mexican cantina** with papel picado, tequila and talavera tiles, or a seedy **underground den** run by the mob. The menu and every table change with it.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/ajustes_ambiente.png" alt="Settings: pick the scene"><p align="center">Settings: pick the scene</p></td>
+    <td width="50%"><img src="docs/screenshots/texas_garito.png" alt="Texas Hold'em table in the underground den"><p align="center">Texas Hold'em in the underground den</p></td>
+  </tr>
+</table>
+
 ## Download
 
 | Platform | File |

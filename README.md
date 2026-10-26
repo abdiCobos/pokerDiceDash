@@ -34,6 +34,17 @@
   <img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/6_lan.png" alt="Jugar en red" width="24%">
 </p>
 
+### Elige el ambiente
+
+En **Ajustes → Ambiente** cambias el lugar donde se juega: una **Cantina mexicana** con papel picado, tequila y talavera, o un **Garito clandestino** de mala muerte, con mafia y dinero sucio. El menú y todas las mesas cambian con él.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/ajustes_ambiente.png" alt="Ajustes: elegir el ambiente"><p align="center">Ajustes: elige el ambiente</p></td>
+    <td width="50%"><img src="docs/screenshots/texas_garito.png" alt="Mesa de Texas Hold'em en el Garito clandestino"><p align="center">Texas Hold'em en el Garito clandestino</p></td>
+  </tr>
+</table>
+
 ## Descargar
 
 | Plataforma | Archivo |
