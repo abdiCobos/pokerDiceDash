@@ -1,6 +1,6 @@
 ---
 name: ui-style-guide
-description: Visual language of Poker Dice Dash (casino felt palette, oval table, seats, badges, buttons, Spanish UI copy, animation timing). Use whenever creating or restyling any screen, widget, dialog or animation so the game stays consistent.
+description: Visual language of Poker Dice Dash (casino felt palette, oval table, seats, badges, buttons, Spanish/English UI copy, animation timing). Use whenever creating or restyling any screen, widget, dialog or animation so the game stays consistent.
 ---
 
 # Poker Dice Dash UI style guide
@@ -59,11 +59,20 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
 - **Watermark / rules text**: amber @0.18-0.22, letterSpacing 2. Never place it where a
   translucent panel sits on top of it (it shows through). Put it beside panels instead.
 
-## Copy (Spanish, Spain/LatAm neutral)
-- UI text is Spanish. Poker action words stay in English caps as players know them:
-  FOLD, CALL, CHECK, RAISE, ALL-IN. Blackjack uses Spanish: PEDIR, PLANTAR, DOBLAR, DIVIDIR.
-- Status lines: "Turno de {name}... pensando jugada", "Tu turno", "Barajando...".
+## Copy (Spanish + English)
+- NEVER write user-facing text as a literal. Add it to `tool/l10n_strings.py` (key -> (es, en)),
+  run `python tool/l10n_strings.py && flutter gen-l10n`, then use `context.t.key` (`lib/l10n/l10n.dart`).
+  Placeholders are Strings, in order of appearance in the Spanish text.
+- The language is the device's (Spanish for `es`, English otherwise) or the one picked in Ajustes
+  (`GameSettings().language`). Spanish stays neutral (Spain/LatAm).
+- Providers never build sentences: they expose codes (`TableMessage`, `HostNotice`, `resultRank`,
+  Blackjack outcome codes 'GANA'...) and the screens word them (`AppTexts` in l10n.dart), so on
+  the LAN each player reads their own language. Keep sending the old Spanish `title` in the poker
+  result for v1.1.0 clients.
+- Poker action words stay English caps in both languages: FOLD, CALL, CHECK, RAISE, ALL-IN.
+  Blackjack: PEDIR/PLANTAR/DOBLAR/DIVIDIR (es), HIT/STAND/DOUBLE/SPLIT (en).
 - Money shown as `$900` in Blackjack, plain chip count in poker.
+- Check both languages with the visual-qa harness (`--dart-define=LANG=en`).
 
 ## Cards
 - Face-up cards are the PNGs in `assets/images/cards/`, drawn to FILL the card box.

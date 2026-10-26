@@ -1057,6 +1057,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
+                dense: true,
+                visualDensity: VisualDensity.compact,
                 activeThumbColor: const Color(0xFFFFD54F),
                 title: Text(context.t.sound, style: TextStyle(color: Colors.white)),
                 subtitle: Text(context.t.soundSubtitle, style: TextStyle(color: Colors.white54)),
@@ -1066,47 +1068,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
               if (UpdateChecker.availableInBuild)
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
                   activeThumbColor: const Color(0xFFFFD54F),
                   title: Text(context.t.updateCheck, style: TextStyle(color: Colors.white)),
                   subtitle: Text(context.t.updateCheckSubtitle, style: TextStyle(color: Colors.white54)),
                   value: updates,
                   onChanged: (v) => setLocal(() => updates = v),
                 ),
-              SizedBox(height: 4 * s),
-              Row(
-                children: [
-                  Text(context.t.language, style: TextStyle(color: Colors.white, fontSize: 15 * s)),
-                  SizedBox(width: 12 * s),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 6 * s,
-                      runSpacing: 6 * s,
-                      children: [
-                        for (final l in AppLanguage.values)
-                          ChoiceChip(
-                            label: Text(switch (l) {
-                              AppLanguage.system => context.t.languageSystem,
-                              // Each language in its own words, so anyone can find theirs.
-                              AppLanguage.es => 'Español',
-                              AppLanguage.en => 'English',
-                            }),
-                            selected: language == l,
-                            onSelected: (_) => setLocal(() => language = l),
-                            selectedColor: const Color(0xFFD4AF37),
-                            backgroundColor: Colors.black26,
-                            labelStyle: TextStyle(
-                              color: language == l ? const Color(0xFF412402) : Colors.white,
-                              fontSize: 12 * s,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            showCheckmark: false,
-                            side: const BorderSide(color: Color(0xFFD4AF37)),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
             ];
             final ambient = <Widget>[
               Align(
@@ -1131,6 +1100,50 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 ],
               ),
             ];
+            final languagePicker = <Widget>[
+              SizedBox(height: 10 * s),
+              Row(
+                children: [
+                  Text(context.t.language, style: TextStyle(color: Colors.white, fontSize: 15 * s)),
+                  SizedBox(width: 10 * s),
+                  for (final l in AppLanguage.values) ...[
+                    if (l != AppLanguage.values.first) SizedBox(width: 8 * s),
+                    Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20 * s),
+                        onTap: () => setLocal(() => language = l),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: EdgeInsets.symmetric(vertical: 7 * s),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: language == l ? const Color(0xFFD4AF37) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20 * s),
+                            border: Border.all(color: const Color(0xFFD4AF37), width: 1.2),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              switch (l) {
+                                AppLanguage.system => context.t.languageSystem,
+                                // Each language in its own words, so anyone can find theirs.
+                                AppLanguage.es => 'Español',
+                                AppLanguage.en => 'English',
+                              },
+                              style: TextStyle(
+                                color: language == l ? const Color(0xFF412402) : const Color(0xFFFFD54F),
+                                fontSize: 12.5 * s,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ];
             final size = MediaQuery.of(context).size;
             // Landscape phones are short: name and sound on the left, the scenes on the right.
             if (size.width > size.height) {
@@ -1139,7 +1152,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: general)),
+                    Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [...general, ...languagePicker])),
                     SizedBox(width: 20 * s),
                     Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: ambient)),
                   ],
@@ -1150,7 +1163,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
               width: 360 * s,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: [...general, SizedBox(height: 6 * s), ...ambient],
+                children: [...general, SizedBox(height: 6 * s), ...ambient, ...languagePicker],
               ),
             );
           }),
