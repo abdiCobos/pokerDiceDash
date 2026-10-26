@@ -53,13 +53,21 @@ class AppLogo extends StatelessWidget {
         _Title(text: 'POKER DICE DASH', fontSize: size * 0.17),
         if (showTagline) ...[
           SizedBox(height: size * 0.03),
-          Text(
-            'CASINO DE BOLSILLO',
-            style: TextStyle(
-              color: const Color(0xFFD4AF37),
-              fontSize: size * 0.065,
-              fontWeight: FontWeight.w600,
-              letterSpacing: size * 0.025,
+          // On a dark plate: over the scenes it can land on the tiles or the bar.
+          Container(
+            padding: EdgeInsets.fromLTRB(size * 0.05, size * 0.012, size * 0.05 - size * 0.025, size * 0.012),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(size * 0.05),
+            ),
+            child: Text(
+              'CASINO DE BOLSILLO',
+              style: TextStyle(
+                color: const Color(0xFFD4AF37),
+                fontSize: size * 0.065,
+                fontWeight: FontWeight.w600,
+                letterSpacing: size * 0.025,
+              ),
             ),
           ),
         ],

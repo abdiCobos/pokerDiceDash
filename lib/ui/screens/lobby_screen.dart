@@ -168,103 +168,145 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
               ),
               // On PC the dialog would otherwise stretch across the whole window.
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 520 * s),
-                child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.all(20 * s),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Crear Sala',
-                        style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 16 * s),
-                      TextField(
-                        controller: _playerNameController,
-                        style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                        textInputAction: TextInputAction.next,
-                        decoration: InputDecoration(
-                          labelText: 'Tu nombre',
-                          labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
-                            borderRadius: BorderRadius.circular(8 * s),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.amber),
-                            borderRadius: BorderRadius.circular(8 * s),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 12 * s),
-                      _buildModeSelector(s, setDialogState),
-                      SizedBox(height: 12 * s),
-                      TextField(
-                        controller: _roomNameController,
-                        style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                        textInputAction: TextInputAction.next,
-                        decoration: InputDecoration(
-                          labelText: 'Nombre de la sala',
-                          labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
-                            borderRadius: BorderRadius.circular(8 * s),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.amber),
-                            borderRadius: BorderRadius.circular(8 * s),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 12 * s),
-                      TextField(
-                        controller: _roomPasswordController,
-                        obscureText: true,
-                        style: TextStyle(color: Colors.white, fontSize: 14 * s),
-                        textInputAction: TextInputAction.done,
-                        decoration: InputDecoration(
-                          labelText: 'Contraseña (opcional)',
-                          labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
-                            borderRadius: BorderRadius.circular(8 * s),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.amber),
-                            borderRadius: BorderRadius.circular(8 * s),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 20 * s),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+              child: Builder(builder: (_) {
+                final nameField = TextField(
+                  controller: _playerNameController,
+                  style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: 'Tu nombre',
+                    labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
+                      borderRadius: BorderRadius.circular(8 * s),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.amber),
+                      borderRadius: BorderRadius.circular(8 * s),
+                    ),
+                  ),
+                );
+                final roomField = TextField(
+                  controller: _roomNameController,
+                  style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: 'Nombre de la sala',
+                    labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
+                      borderRadius: BorderRadius.circular(8 * s),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.amber),
+                      borderRadius: BorderRadius.circular(8 * s),
+                    ),
+                  ),
+                );
+                final passwordField = TextField(
+                  controller: _roomPasswordController,
+                  obscureText: true,
+                  style: TextStyle(color: Colors.white, fontSize: 14 * s),
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña (opcional)',
+                    labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
+                      borderRadius: BorderRadius.circular(8 * s),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.amber),
+                      borderRadius: BorderRadius.circular(8 * s),
+                    ),
+                  ),
+                );
+                final buttons = Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogCtx),
+                      child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                    ),
+                    SizedBox(width: 8 * s),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(dialogCtx);
+                          _startHostingInternal(
+                            _roomNameController.text.trim().isEmpty
+                                ? '${Platform.localHostname}-Poker'
+                                : _roomNameController.text.trim(),
+                            _roomPasswordController.text.trim(),
+                          );
+                      },
+                      child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                    ),
+                  ],
+                );
+                final title = Text(
+                  'Crear Sala',
+                  style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold),
+                );
+                final screen = MediaQuery.of(dialogCtx).size;
+                // Phones on their side are short: two columns so "Crear" shows without scrolling.
+                if (screen.width > screen.height && screen.height < 560) {
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 760 * s),
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(20 * s, 14 * s, 20 * s, 8 * s),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(dialogCtx),
-                            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                          title,
+                          SizedBox(height: 12 * s),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [nameField, SizedBox(height: 10 * s), _buildModeSelector(s, setDialogState)],
+                                ),
+                              ),
+                              SizedBox(width: 16 * s),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [roomField, SizedBox(height: 10 * s), passwordField],
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 8 * s),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(dialogCtx);
-                                _startHostingInternal(
-                                  _roomNameController.text.trim().isEmpty
-                                      ? '${Platform.localHostname}-Poker'
-                                      : _roomNameController.text.trim(),
-                                  _roomPasswordController.text.trim(),
-                                );
-                            },
-                            child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
-                          ),
+                          SizedBox(height: 6 * s),
+                          buttons,
                         ],
                       ),
-                    ],
+                    ),
+                  );
+                }
+                return ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 520 * s),
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(20 * s),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        title,
+                        SizedBox(height: 16 * s),
+                        nameField,
+                        SizedBox(height: 12 * s),
+                        _buildModeSelector(s, setDialogState),
+                        SizedBox(height: 12 * s),
+                        roomField,
+                        SizedBox(height: 12 * s),
+                        passwordField,
+                        SizedBox(height: 20 * s),
+                        buttons,
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              ),
+                );
+              }),
             );
           },
         );
