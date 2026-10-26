@@ -1027,12 +1027,18 @@ class _LobbyScreenState extends State<LobbyScreen> {
     var language = GameSettings().language;
     var updates = await UpdateChecker.isEnabled();
     if (!mounted) return;
+    final screen = MediaQuery.of(context).size;
+    final landscape = screen.width > screen.height;
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
+      // The dialog is laid out for the design's text size: a bigger system font would push
+      // the language row and the scene names out of it.
+      builder: (ctx) => MediaQuery.withClampedTextScaling(
+        maxScaleFactor: 1.0,
+        child: StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          // Safety net for very small screens: scroll instead of overflowing.
-          scrollable: true,
+          // Landscape phones are short: the content shrinks to fit. Portrait scrolls if needed.
+          scrollable: !landscape,
           insetPadding: EdgeInsets.symmetric(horizontal: 24 * s, vertical: 16 * s),
           backgroundColor: const Color(0xFF07160D),
           shape: RoundedRectangleBorder(
@@ -1147,15 +1153,18 @@ class _LobbyScreenState extends State<LobbyScreen> {
             final size = MediaQuery.of(context).size;
             // Landscape phones are short: name and sound on the left, the scenes on the right.
             if (size.width > size.height) {
-              return SizedBox(
-                width: 640 * s,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [...general, ...languagePicker])),
-                    SizedBox(width: 20 * s),
-                    Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: ambient)),
-                  ],
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SizedBox(
+                  width: 640 * s,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [...general, ...languagePicker])),
+                      SizedBox(width: 20 * s),
+                      Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: ambient)),
+                    ],
+                  ),
                 ),
               );
             }
@@ -1189,6 +1198,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1384,46 +1394,52 @@ class _ThemeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              height: 50 * s,
-              child: theme == TableTheme.clasico
-                  ? DecoratedBox(
-                      decoration: const BoxDecoration(gradient: SceneBackground.classicGradient),
-                      child: Center(
-                        child: Container(
-                          width: 64 * s,
-                          height: 30 * s,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF168A4E),
-                            borderRadius: BorderRadius.circular(15 * s),
-                            border: Border.all(color: const Color(0xFF3E2410), width: 3 * s),
+            Stack(
+              children: [
+                SizedBox(
+                  height: 50 * s,
+                  child: theme == TableTheme.clasico
+                      ? DecoratedBox(
+                          decoration: const BoxDecoration(gradient: SceneBackground.classicGradient),
+                          child: Center(
+                            child: Container(
+                              width: 64 * s,
+                              height: 30 * s,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF168A4E),
+                                borderRadius: BorderRadius.circular(15 * s),
+                                border: Border.all(color: const Color(0xFF3E2410), width: 3 * s),
+                              ),
+                            ),
                           ),
+                        )
+                      : Image.asset(
+                          'assets/images/cantina/${theme.name}_bg_16x9.png',
+                          fit: BoxFit.cover,
+                          alignment: const Alignment(0, -0.35),
+                          filterQuality: FilterQuality.none,
                         ),
-                      ),
-                    )
-                  : Image.asset(
-                      'assets/images/cantina/${theme.name}_bg_16x9.png',
-                      fit: BoxFit.cover,
-                      alignment: const Alignment(0, -0.35),
-                      filterQuality: FilterQuality.none,
+                ),
+                if (selected)
+                  Positioned(
+                    top: 4 * s,
+                    right: 4 * s,
+                    child: Container(
+                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                      child: Icon(Icons.check_circle, color: gold, size: 16 * s),
                     ),
+                  ),
+              ],
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(8 * s, 6 * s, 8 * s, 8 * s),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          context.t.themeName(theme),
-                          maxLines: 2,
-                          style: TextStyle(color: selected ? gold : Colors.white, fontSize: 12.5 * s, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      if (selected) Icon(Icons.check_circle, color: gold, size: 15 * s),
-                    ],
+                  Text(
+                    context.t.themeName(theme),
+                    maxLines: 2,
+                    style: TextStyle(color: selected ? gold : Colors.white, fontSize: 12.5 * s, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 2 * s),
                   Text(
