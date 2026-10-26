@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Casino de bolsillo:</b> póker con dados, Texas Hold'em y Blackjack.<br>
-  Juega contra bots o con tus amigos en la misma red Wi-Fi. Sin cuentas, sin anuncios y sin internet.
+  Juega contra bots o con tus amigos en la misma red Wi-Fi. Sin cuentas, sin anuncios y sin servidores: solo se conecta a internet para avisarte de versiones nuevas (se apaga en Ajustes).
 </p>
 
 <p align="center">

@@ -25,7 +25,7 @@ Builds:
       - linux/
       - web/
     prebuild: $$flutter$$/bin/flutter config --no-analytics
-    build: $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-arm
+    build: $$flutter$$/bin/flutter build apk --release --split-per-abi --dart-define=UPDATE_CHECK=false --target-platform=android-arm
     ndk: 28.2.13676358
 
   - versionName: 1.0.0
@@ -41,7 +41,7 @@ Builds:
       - linux/
       - web/
     prebuild: $$flutter$$/bin/flutter config --no-analytics
-    build: $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-arm64
+    build: $$flutter$$/bin/flutter build apk --release --split-per-abi --dart-define=UPDATE_CHECK=false --target-platform=android-arm64
     ndk: 28.2.13676358
 
   - versionName: 1.0.0
@@ -57,7 +57,7 @@ Builds:
       - linux/
       - web/
     prebuild: $$flutter$$/bin/flutter config --no-analytics
-    build: $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-x64
+    build: $$flutter$$/bin/flutter build apk --release --split-per-abi --dart-define=UPDATE_CHECK=false --target-platform=android-x64
     ndk: 28.2.13676358
 
 AutoUpdateMode: Version

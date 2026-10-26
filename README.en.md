@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>A pocket casino:</b> poker with dice, Texas Hold'em and Blackjack.<br>
-  Play against bots or with your friends on the same Wi-Fi network. No accounts, no ads, no internet.
+  Play against bots or with your friends on the same Wi-Fi network. No accounts, no ads, no servers: it only goes online to tell you about new versions (switch it off in Ajustes).
 </p>
 
 <p align="center">

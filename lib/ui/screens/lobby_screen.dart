@@ -7,6 +7,10 @@ import '../../providers/game_provider.dart';
 import '../../services/game_settings.dart';
 import '../../services/logger_service.dart';
 import '../../services/room_names.dart';
+import '../../services/update_checker.dart';
+import '../../app_version.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import '../../providers/blackjack_provider.dart';
 import '../../models/game_state.dart';
 import '../../services/poker_bot_ai.dart';
@@ -48,6 +52,68 @@ class _LobbyScreenState extends State<LobbyScreen> {
     _loadPlayerName();
     _askPermissions();
     _requestHardwarePermissions();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
+  }
+
+  /// Once per app start (and at most once a day): is there a newer release on GitHub?
+  static bool _updateAsked = false;
+
+  Future<void> _checkForUpdate() async {
+    if (_updateAsked) return;
+    _updateAsked = true;
+    final update = await UpdateChecker.check();
+    if (update == null || !mounted) return;
+    final s = (MediaQuery.of(context).size.shortestSide / 400).clamp(0.75, 1.35).toDouble();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF07160D),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16 * s),
+          side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.system_update, color: const Color(0xFFFFD54F), size: 22 * s),
+            SizedBox(width: 8 * s),
+            Expanded(
+              child: Text('Hay una versión nueva',
+                  style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 18 * s)),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 380 * s,
+          child: Text(
+            'Ya salió la versión ${update.version} (tienes la $appVersion). '
+            'Descárgala en GitHub e instálala encima: no pierdes tus fichas ni tus ajustes.\n\n'
+            'Para jugar en red, todos deben tener la misma versión.',
+            style: TextStyle(color: Colors.white, fontSize: 14 * s, height: 1.35),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Ahora no', style: TextStyle(color: Colors.white54, fontSize: 14 * s)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final ok = await launchUrl(update.page, mode: LaunchMode.externalApplication).catchError((_) => false);
+              if (!ok && mounted) {
+                await Clipboard.setData(ClipboardData(text: update.page.toString()));
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No se pudo abrir el navegador: el enlace quedó copiado.')),
+                );
+              }
+            },
+            child: Text('Descargar',
+                style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 14 * s)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -917,10 +983,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
     );
   }
 
-  void _showSettings(double s) {
+  Future<void> _showSettings(double s) async {
     final nameCtrl = TextEditingController(text: _playerNameController.text);
     var sound = SoundService().enabled;
     var theme = GameSettings().theme;
+    var updates = await UpdateChecker.isEnabled();
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -957,6 +1025,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 value: sound,
                 onChanged: (v) => setLocal(() => sound = v),
               ),
+              if (UpdateChecker.availableInBuild)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeThumbColor: const Color(0xFFFFD54F),
+                  title: const Text('Avisar de versiones nuevas', style: TextStyle(color: Colors.white)),
+                  subtitle: const Text('Revisa GitHub una vez al día', style: TextStyle(color: Colors.white54)),
+                  value: updates,
+                  onChanged: (v) => setLocal(() => updates = v),
+                ),
             ];
             final ambient = <Widget>[
               Align(
@@ -1015,6 +1092,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 setState(() => _playerNameController.text = name);
                 await SoundService().setEnabled(sound);
                 await GameSettings().setTheme(theme);
+                await UpdateChecker.setEnabled(updates);
                 try {
                   await (await SharedPreferences.getInstance()).setString(_playerNamePref, name);
                 } catch (_) {}
