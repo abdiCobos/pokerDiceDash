@@ -7,15 +7,11 @@ import 'sound_service.dart';
 
 /// Where the tables and the menu are set: the plain green felt of the first version, or a
 /// pixel-art scene (assets/images/cantina).
-enum TableTheme {
-  clasico('Clásico', 'Verde y simple'),
-  cantina('Cantina mexicana', 'Papel picado y tequila'),
-  garito('Garito clandestino', 'Mafia y dinero sucio');
+/// Names and descriptions are in the translations (AppTexts.themeName).
+enum TableTheme { clasico, cantina, garito }
 
-  const TableTheme(this.label, this.description);
-  final String label;
-  final String description;
-}
+/// Language of the game: the device's (Spanish or English), or one picked in Ajustes.
+enum AppLanguage { system, es, en }
 
 /// Player options shown in the in-table "Opciones" dialog (and partly in Ajustes).
 /// Saved between sessions. Listen to it to react to changes mid-game.
@@ -28,11 +24,15 @@ class GameSettings extends ChangeNotifier {
   static const _oddsKey = 'show_odds';
   static const _awakeKey = 'keep_awake';
   static const _themeKey = 'table_theme';
+  static const _languageKey = 'language';
 
   bool _fastGame = false;
   bool _showOdds = false;
   bool _keepAwake = true;
   TableTheme _theme = TableTheme.cantina;
+  AppLanguage _language = AppLanguage.system;
+
+  AppLanguage get language => _language;
 
   /// Scene behind the menu and the tables (cantina unless the player picked another).
   TableTheme get theme => _theme;
@@ -65,6 +65,8 @@ class GameSettings extends ChangeNotifier {
       _keepAwake = p.getBool(_awakeKey) ?? true;
       final t = p.getString(_themeKey);
       _theme = TableTheme.values.firstWhere((v) => v.name == t, orElse: () => TableTheme.cantina);
+      final l = p.getString(_languageKey);
+      _language = AppLanguage.values.firstWhere((v) => v.name == l, orElse: () => AppLanguage.system);
     } catch (_) {}
     await SoundService().load();
   }
@@ -105,6 +107,15 @@ class GameSettings extends ChangeNotifier {
     notifyListeners();
     try {
       await (await SharedPreferences.getInstance()).setString(_themeKey, t.name);
+    } catch (_) {}
+  }
+
+  Future<void> setLanguage(AppLanguage l) async {
+    if (l == _language) return;
+    _language = l;
+    notifyListeners();
+    try {
+      await (await SharedPreferences.getInstance()).setString(_languageKey, l.name);
     } catch (_) {}
   }
 

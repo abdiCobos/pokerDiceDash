@@ -12,6 +12,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:poker_dice_dash/l10n/app_localizations.dart';
 import 'package:poker_dice_dash/models/game_state.dart';
 import 'package:poker_dice_dash/providers/blackjack_provider.dart';
 import 'package:poker_dice_dash/providers/game_provider.dart';
@@ -54,6 +55,10 @@ Widget _app(GlobalKey key, Widget child) => RepaintBoundary(
       key: key,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        // --dart-define=LANG=en renders the English screens.
+        locale: Locale(const String.fromEnvironment('LANG', defaultValue: 'es')),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: ThemeData(fontFamily: 'Roboto'),
         home: child,
       ),

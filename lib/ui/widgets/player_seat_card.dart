@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/card_model.dart';
 import 'card_widget.dart';
+import '../../l10n/l10n.dart';
 
 enum PlayerSeatStatus {
   active,
@@ -239,7 +240,7 @@ class PlayerSeatCard extends StatelessWidget {
                     ),
                   if (!isCompact && currentBet != null)
                     Text(
-                      'Apuesta: \$$currentBet',
+                      context.t.betAmount('$currentBet'),
                       style: TextStyle(color: Colors.amber, fontSize: 12 * scaleFactor),
                     ),
                 ],

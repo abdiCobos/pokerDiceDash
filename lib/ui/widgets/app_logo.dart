@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_icon_painter.dart';
+import '../../l10n/l10n.dart';
 
 /// Menu logo drawn in code: the app icon's artwork on a round felt emblem
 /// with a wooden rail, plus the title in the bundled casino font.
@@ -61,7 +62,7 @@ class AppLogo extends StatelessWidget {
               borderRadius: BorderRadius.circular(size * 0.05),
             ),
             child: Text(
-              'CASINO DE BOLSILLO',
+              context.t.tagline,
               style: TextStyle(
                 color: const Color(0xFFD4AF37),
                 fontSize: size * 0.065,

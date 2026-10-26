@@ -22,6 +22,7 @@ import '../../services/poker_bot_ai.dart';
 import '../widgets/table_options.dart';
 import '../widgets/betting_chip_widget.dart';
 import 'lobby_screen.dart';
+import '../../l10n/l10n.dart';
 
 class GameTableScreen extends StatefulWidget {
   final bool isMultiplayer;
@@ -128,16 +129,16 @@ class _GameTableScreenState extends State<GameTableScreen>
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: const Color(0xFF1A1A2E),
-            title: const Text('¿Abandonar partida?', style: TextStyle(color: Colors.amber)),
-            content: const Text('¿Estás seguro que quieres salir de la partida?', style: TextStyle(color: Colors.white)),
+            title: Text(context.t.leaveGameTitle, style: TextStyle(color: Colors.amber)),
+            content: Text(context.t.leaveGameBody, style: TextStyle(color: Colors.white)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+                child: Text(context.t.cancel, style: TextStyle(color: Colors.white54)),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Salir', style: TextStyle(color: Colors.red)),
+                child: Text(context.t.exit, style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -232,7 +233,7 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _buildBurnedCardAnimation(),
                       if (widget.isMultiplayer) TurnClock(game: game, scale: _s),
                       if (game.connectionNotice != null)
-                        ConnectionBanner(text: game.connectionNotice!, warning: game.isConnectionLost, scale: _s),
+                        ConnectionBanner(text: context.t.hostNotice(game.connectionNotice!), warning: game.isConnectionLost, scale: _s),
                       if (game.resultTitle != null)
                         _ResultsBanner(
                           key: ValueKey('result_${game.roundCounter}_${game.resultWinnerIds.join(',')}'),
@@ -240,21 +241,22 @@ class _GameTableScreenState extends State<GameTableScreen>
                             for (final id in game.resultWinnerIds)
                               game.players.firstWhere((p) => p.id == id, orElse: () => PlayerModel(id: id, name: '?')).name,
                           ],
-                          title: game.resultTitle!,
+                          title: game.resultRank == null ? '' : context.t.handName(game.resultRank!),
+                          byFold: game.resultByFold,
                           amount: game.resultAmount,
                           localWon: game.resultWinnerIds.contains(game.localPlayerId),
                           scale: _s,
                         )
                       else if (game.centralMessage != null)
-                        _CenteredStatusAlert(message: game.centralMessage!),
+                        _CenteredStatusAlert(message: context.t.tableMessage(game.centralMessage!)),
                       if (_showPotFlying && game.winnerId != null)
                         _buildPotFlyingAnimation(game),
                       if (game.roomClosed || (game.isConnectionLost && game.reconnectGaveUp))
                         Positioned.fill(
                           child: RoomClosedOverlay(
                             message: game.roomClosed
-                                ? 'El anfitrión cerró la sala.'
-                                : 'Se perdió la conexión con el anfitrión.',
+                                ? context.t.roomClosedByHost
+                                : context.t.connectionLostHost,
                             scale: _s,
                             onExit: () {
                               game.exitGame();
@@ -319,8 +321,8 @@ class _GameTableScreenState extends State<GameTableScreen>
                 color: Colors.redAccent,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                'INTERCAMBIO!',
+              child: Text(
+                context.t.diceSwap,
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -638,7 +640,7 @@ class _GameTableScreenState extends State<GameTableScreen>
                 backgroundColor: canRoll ? const Color(0xFFFFA726) : Colors.grey.shade700,
                 foregroundColor: Colors.black,
                 icon: const Icon(Icons.casino),
-                label: const Text('Lanzar Dados', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(context.t.rollDice, style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -657,7 +659,7 @@ class _GameTableScreenState extends State<GameTableScreen>
                 borderRadius: BorderRadius.circular(10 * _s),
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 16 * _s, vertical: 8 * _s),
-                  child: Text('Iniciar Partida',
+                  child: Text(context.t.startGame,
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12 * _s)),
                 ),
               ),
@@ -710,7 +712,7 @@ class _GameTableScreenState extends State<GameTableScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Actuando como: ${activePlayer.name}',
+            context.t.actingAs(activePlayer.name),
             style: TextStyle(color: Colors.amber, fontSize: 12 * _s),
           ),
           SizedBox(height: 4 * _s),
@@ -720,7 +722,7 @@ class _GameTableScreenState extends State<GameTableScreen>
                 ? [
                     Text('ALL-IN', style: TextStyle(color: Colors.orange, fontSize: 11 * _s, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
-                    _ActionButton(label: 'CONTINUAR', color: Colors.orange, enabled: !blocked, onTap: !blocked ? () => game.call(activePlayer.id) : null),
+                    _ActionButton(label: context.t.continueAction, color: Colors.orange, enabled: !blocked, onTap: !blocked ? () => game.call(activePlayer.id) : null),
                   ]
                 : [
               _ActionButton(
@@ -980,7 +982,7 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Subir apuesta', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 15 * s)),
+                      Text(context.t.raiseTitle, style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 15 * s)),
                       SizedBox(height: 6 * s),
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -991,8 +993,8 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                           SizedBox(width: 12 * s),
                           Text(
                             amountToCall > 0
-                                ? 'Igualas $amountToCall · Total ${amountToCall + raiseAmount}'
-                                : 'Total ${amountToCall + raiseAmount}',
+                                ? context.t.raiseCallTotal('$amountToCall', '${amountToCall + raiseAmount}')
+                                : context.t.raiseTotal('${amountToCall + raiseAmount}'),
                             style: TextStyle(color: Colors.orange, fontSize: 13 * s, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -1023,7 +1025,7 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                         children: [
                           TextButton(
                             onPressed: () => Navigator.pop(dialogContext),
-                            child: Text('Cancelar', style: TextStyle(color: Colors.white60, fontSize: 13 * s)),
+                            child: Text(context.t.cancel, style: TextStyle(color: Colors.white60, fontSize: 13 * s)),
                           ),
                           SizedBox(width: 24 * s),
                           ElevatedButton(
@@ -1040,7 +1042,7 @@ void _showRaiseDialog(BuildContext context, GameProvider game, String playerId) 
                               disabledForegroundColor: Colors.white38,
                               padding: EdgeInsets.symmetric(horizontal: 22 * s, vertical: 10 * s),
                             ),
-                            child: Text('Confirmar', style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
+                            child: Text(context.t.confirm, style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
                           ),
                         ],
                       ),
@@ -1226,13 +1228,13 @@ class _MatchOverOverlay extends StatelessWidget {
                 Icon(Icons.emoji_events, color: const Color(0xFFFFD54F), size: 44 * s),
                 SizedBox(height: 6 * s),
                 Text(
-                  localWon ? '¡Ganaste la partida!' : '¡$winnerName gana la partida!',
+                  localWon ? context.t.matchWonLocal : context.t.matchWonBy(winnerName),
                   textAlign: TextAlign.center,
                   style: TextStyle(color: const Color(0xFFFFD54F), fontSize: 20 * s, fontWeight: FontWeight.w900),
                 ),
                 SizedBox(height: 4 * s),
                 Text(
-                  localWon ? 'Te quedaste con todas las fichas de la mesa.' : 'Se quedó con todas las fichas de la mesa.',
+                  localWon ? context.t.matchWonLocalBody : context.t.matchWonByBody,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70, fontSize: 12 * s),
                 ),
@@ -1241,7 +1243,7 @@ class _MatchOverOverlay extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.only(bottom: 10 * s),
                     child: Text(
-                      'Esperando a que el anfitrión empiece otra partida...',
+                      context.t.waitingHostRestart,
                       style: TextStyle(color: Colors.white54, fontSize: 11 * s),
                     ),
                   ),
@@ -1255,14 +1257,14 @@ class _MatchOverOverlay extends StatelessWidget {
                         side: const BorderSide(color: Colors.white38),
                         padding: EdgeInsets.symmetric(horizontal: 18 * s, vertical: 10 * s),
                       ),
-                      child: Text('Salir', style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
+                      child: Text(context.t.exit, style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
                     ),
                     if (canRestart) ...[
                       SizedBox(width: 10 * s),
                       ElevatedButton.icon(
                         onPressed: onRestart,
                         icon: Icon(Icons.replay, size: 16 * s),
-                        label: Text('Jugar otra vez', style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
+                        label: Text(context.t.playAgain, style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
                           foregroundColor: Colors.white,
@@ -1283,7 +1285,10 @@ class _MatchOverOverlay extends StatelessWidget {
 
 class _ResultsBanner extends StatefulWidget {
   final List<String> names;
+
+  /// Winning hand, in the player's language ('' when everyone else folded).
   final String title;
+  final bool byFold;
   final int amount;
   final bool localWon;
   final double scale;
@@ -1292,6 +1297,7 @@ class _ResultsBanner extends StatefulWidget {
     super.key,
     required this.names,
     required this.title,
+    required this.byFold,
     required this.amount,
     required this.localWon,
     required this.scale,
@@ -1317,11 +1323,12 @@ class _ResultsBannerState extends State<_ResultsBanner> with SingleTickerProvide
   Widget build(BuildContext context) {
     final s = widget.scale;
     final tie = widget.names.length > 1;
-    final headline = tie ? '¡Empate!' : (widget.localWon ? '¡Ganaste!' : '¡${widget.names.first} gana!');
+    final t = context.t;
+    final headline = tie ? t.resultTie : (widget.localWon ? t.resultYouWon : t.resultWins(widget.names.first));
     final subtitle = tie
-        ? '${widget.names.join(' y ')} · ${widget.title}'
-        : (widget.localWon ? 'Con ${widget.title}' : widget.title == 'por abandono' ? 'Los demás se retiraron' : 'Con ${widget.title}');
-    final amount = tie ? '+${widget.amount} c/u' : '+${widget.amount}';
+        ? '${widget.names.join(t.andJoin)} · ${widget.title}'
+        : (widget.byFold ? t.resultOthersFolded : t.resultWith(widget.title));
+    final amount = tie ? t.amountEach('${widget.amount}') : '+${widget.amount}';
     final accent = widget.localWon ? const Color(0xFFFFD54F) : const Color(0xFFD4AF37);
 
     return IgnorePointer(
@@ -1536,7 +1543,7 @@ class _PotTextState extends State<_PotText>
             ),
             SizedBox(width: 5 * widget.scale),
             Text(
-              'BOTE',
+              context.t.pot,
               style: TextStyle(color: Colors.white70, fontSize: 9 * widget.scale, fontWeight: FontWeight.w600, letterSpacing: 1.5),
             ),
             SizedBox(width: 5 * widget.scale),
@@ -1870,7 +1877,7 @@ class _OddsPill extends StatelessWidget {
         final pct = (_equity(game, me) * 100).round();
         final color = pct >= 50 ? Colors.greenAccent : (pct >= 25 ? Colors.amber : Colors.redAccent);
         return Tooltip(
-          message: 'Probabilidad de ganar la mano',
+          message: context.t.winOdds,
           child: Container(
             margin: EdgeInsets.only(left: 6 * scale),
             padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 1 * scale),
@@ -1945,11 +1952,11 @@ class _RollingDiceState extends State<_RollingDice> with SingleTickerProviderSta
   }
 
   (String, Color)? get _label => switch (widget.event) {
-        DiceEvent.luckySeven => ('¡SUERTE! +30%', const Color(0xFFFFD54F)),
-        DiceEvent.swap => ('¡INTERCAMBIO!', Colors.redAccent),
-        DiceEvent.allIn => ('¡ALL-IN!', Colors.deepOrangeAccent),
-        DiceEvent.spy => ('¡ESPÍA!', Colors.purpleAccent),
-        DiceEvent.extraCard => ('¡CARTA EXTRA!', Colors.tealAccent),
+        DiceEvent.luckySeven => (context.t.diceLucky, const Color(0xFFFFD54F)),
+        DiceEvent.swap => (context.t.diceSwap, Colors.redAccent),
+        DiceEvent.allIn => (context.t.diceAllIn, Colors.deepOrangeAccent),
+        DiceEvent.spy => (context.t.diceSpy, Colors.purpleAccent),
+        DiceEvent.extraCard => (context.t.diceExtraCard, Colors.tealAccent),
         DiceEvent.none => null,
       };
 
@@ -2101,7 +2108,7 @@ class _ChaosOverlay extends StatelessWidget {
                       ),
                       SizedBox(height: 14 * s),
                       Text(
-                        '¡CAOS!',
+                        context.t.chaosTitle,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 38 * s,
@@ -2117,7 +2124,7 @@ class _ChaosOverlay extends StatelessWidget {
                       ),
                       SizedBox(height: 7 * s),
                       Text(
-                        'Intercambio de manos activado',
+                        context.t.chaosSubtitle,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16 * s,
@@ -2298,7 +2305,7 @@ class _PlayerSeat extends StatelessWidget {
                             borderRadius: BorderRadius.circular(5 * s),
                           ),
                           child: Text(
-                            'RECOMPRAR',
+                            context.t.rebuy,
                             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 8 * s),
                           ),
                         ),
@@ -2418,7 +2425,7 @@ class _PlayerSeat extends StatelessWidget {
                       boxShadow: [BoxShadow(color: Colors.amber.withValues(alpha: 0.6), blurRadius: 8 * s)],
                     ),
                     child: Text(
-                      'GANADOR +$winAmount',
+                      context.t.winnerBadge('$winAmount'),
                       style: TextStyle(color: Colors.black, fontSize: 8 * s, fontWeight: FontWeight.w900),
                     ),
                   ),

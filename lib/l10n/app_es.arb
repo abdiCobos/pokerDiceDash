@@ -1,0 +1,518 @@
+{
+  "@@locale": "es",
+  "cancel": "Cancelar",
+  "exit": "Salir",
+  "play": "Jugar",
+  "yourName": "Tu nombre",
+  "gotIt": "Entendido",
+  "back": "Volver",
+  "save": "Guardar",
+  "create": "Crear",
+  "enter": "Entrar",
+  "connect": "Conectar",
+  "close": "Cerrar",
+  "confirm": "Confirmar",
+  "password": "Contraseña",
+  "passwordOptional": "Contraseña (opcional)",
+  "defaultPlayerName": "Jugador",
+  "defaultLocalName": "Yo",
+  "defaultHostName": "Host",
+  "andJoin": " y ",
+  "tagline": "CASINO DE BOLSILLO",
+  "modeDiceDashSubtitle": "Póker con dados y caos",
+  "modeTexasSubtitle": "El póker clásico",
+  "modeBlackjackSubtitle": "Gánale al crupier",
+  "playLan": "Jugar en red",
+  "howToPlay": "Cómo jugar",
+  "settings": "Ajustes",
+  "quitAppTitle": "¿Salir del juego?",
+  "quitAppBody": "¿Estás seguro que quieres salir de la aplicación?",
+  "createRoom": "Crear sala",
+  "createRoomSubtitle": "Los demás se unen a tu partida",
+  "waitingEllipsis": "Esperando...",
+  "joinRoom": "Unirse a sala",
+  "joinRoomSubtitle": "Busca partidas en tu Wi-Fi o entra por IP",
+  "sameWifiNote": "Todos los dispositivos deben estar en la misma red Wi-Fi.",
+  "setupGame": "Configurar Partida",
+  "setupMode": "Configurar {mode}",
+  "@setupMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "botCount": "Cantidad de bots",
+  "botCountRange": "Cantidad de bots (1 - 6)",
+  "botDifficulty": "Dificultad de los bots",
+  "difficultyEasy": "Fácil",
+  "difficultyNormal": "Normal",
+  "difficultyHard": "Difícil",
+  "difficultyEasyHint": "Juegan a lo loco y cometen errores.",
+  "difficultyNormalHint": "Juegan con cabeza, con algún error de vez en cuando.",
+  "difficultyHardHint": "Juegan casi perfecto: cuidado con sus apuestas.",
+  "createRoomTitle": "Crear Sala",
+  "gameMode": "Modo de juego",
+  "roomName": "Nombre de la sala",
+  "howTexas1": "Recibes 2 cartas; en la mesa salen 5 comunitarias (flop, turn y river).",
+  "howTexas2": "En cada ronda puedes retirarte (FOLD), igualar (CALL/CHECK) o subir (RAISE).",
+  "howTexas3": "Gana la mejor jugada de 5 cartas entre tus 2 y las 5 de la mesa.",
+  "howDice1": "Como Texas Hold'em, pero antes de cada acción lanzas 2 dados.",
+  "howDice2": "Suma 7: el bote crece un 30 %.",
+  "howDice3": "Doble 1: ¡INTERCAMBIO! Las manos de todos se mezclan y se reparten de nuevo.",
+  "howDice4": "Doble 6: ¡ALL-IN! · Doble 3: espías una carta · 6 y 1: carta extra.",
+  "howBj1": "Apuesta y acércate a 21 sin pasarte. El As vale 1 u 11.",
+  "howBj2": "PEDIR toma carta, PLANTAR se queda, DOBLAR duplica la apuesta con una carta más, DIVIDIR separa una pareja.",
+  "howBj3": "Blackjack paga 3 a 2, el crupier se planta en 17 y 5 cartas sin pasarte (5-Card Charlie) ganan.",
+  "sound": "Sonido",
+  "soundSubtitle": "Cartas, fichas y dados",
+  "updateCheck": "Avisar de versiones nuevas",
+  "updateCheckSubtitle": "Revisa GitHub una vez al día",
+  "scene": "Ambiente",
+  "language": "Idioma",
+  "languageSystem": "Automático",
+  "themeClasico": "Clásico",
+  "themeClasicoDesc": "Verde y simple",
+  "themeCantina": "Cantina mexicana",
+  "themeCantinaDesc": "Papel picado y tequila",
+  "themeGarito": "Garito clandestino",
+  "themeGaritoDesc": "Mafia y dinero sucio",
+  "updateTitle": "Hay una versión nueva",
+  "updateBody": "Ya salió la versión {newVersion} (tienes la {current}). Descárgala en GitHub e instálala encima: no pierdes tus fichas ni tus ajustes.\n\nPara jugar en red, todos deben tener la misma versión.",
+  "@updateBody": {
+    "placeholders": {
+      "newVersion": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "notNow": "Ahora no",
+  "download": "Descargar",
+  "browserFailed": "No se pudo abrir el navegador: el enlace quedó copiado.",
+  "leaveGameTitle": "¿Abandonar partida?",
+  "leaveGameBody": "¿Estás seguro que quieres salir de la partida?",
+  "leaveTableBody": "¿Estás seguro que quieres salir de la mesa?",
+  "roomClosedByHost": "El anfitrión cerró la sala.",
+  "connectionLostHost": "Se perdió la conexión con el anfitrión.",
+  "rollDice": "Lanzar Dados",
+  "startGame": "Iniciar Partida",
+  "actingAs": "Actuando como: {name}",
+  "@actingAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "continueAction": "CONTINUAR",
+  "raiseTitle": "Subir apuesta",
+  "raiseCallTotal": "Igualas {call} · Total {total}",
+  "@raiseCallTotal": {
+    "placeholders": {
+      "call": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "raiseTotal": "Total {total}",
+  "@raiseTotal": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "matchWonLocal": "¡Ganaste la partida!",
+  "matchWonBy": "¡{name} gana la partida!",
+  "@matchWonBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "matchWonLocalBody": "Te quedaste con todas las fichas de la mesa.",
+  "matchWonByBody": "Se quedó con todas las fichas de la mesa.",
+  "waitingHostRestart": "Esperando a que el anfitrión empiece otra partida...",
+  "playAgain": "Jugar otra vez",
+  "resultTie": "¡Empate!",
+  "resultYouWon": "¡Ganaste!",
+  "resultWins": "¡{name} gana!",
+  "@resultWins": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "resultWith": "Con {hand}",
+  "@resultWith": {
+    "placeholders": {
+      "hand": {
+        "type": "String"
+      }
+    }
+  },
+  "resultOthersFolded": "Los demás se retiraron",
+  "amountEach": "+{amount} c/u",
+  "@amountEach": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "pot": "BOTE",
+  "winOdds": "Probabilidad de ganar la mano",
+  "diceLucky": "¡SUERTE! +30%",
+  "diceSwap": "¡INTERCAMBIO!",
+  "diceAllIn": "¡ALL-IN!",
+  "diceSpy": "¡ESPÍA!",
+  "diceExtraCard": "¡CARTA EXTRA!",
+  "chaosTitle": "¡CAOS!",
+  "chaosSubtitle": "Intercambio de manos activado",
+  "rebuy": "RECOMPRAR",
+  "winnerBadge": "GANADOR +{amount}",
+  "@winnerBadge": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "betAmount": "Apuesta: ${amount}",
+  "@betAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "msgLuckySeven": "Dados de la suerte. El Pot aumenta un 30%",
+  "msgDoubleSix": "¡Doble 6! {name} va ALL-IN",
+  "@msgDoubleSix": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSpy": "¡Espía! {name} ve una carta de {target}",
+  "@msgSpy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "msgExtraCard": "¡Carta extra! {name} se queda con sus dos mejores cartas",
+  "@msgExtraCard": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "msgWinsByFold": "¡{name} gana por abandono!",
+  "@msgWinsByFold": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSplitPot": "¡Empate! Bote dividido con {hand}",
+  "@msgSplitPot": {
+    "placeholders": {
+      "hand": {
+        "type": "String"
+      }
+    }
+  },
+  "msgWinsWith": "¡{name} gana con {hand}!",
+  "@msgWinsWith": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "hand": {
+        "type": "String"
+      }
+    }
+  },
+  "msgNoWinner": "¡Showdown! No hay ganador",
+  "msgChaos": "¡MODO CAOS! Intercambio de cartas",
+  "handHighCard": "Carta Alta",
+  "handOnePair": "Par",
+  "handTwoPair": "Doble Par",
+  "handThreeOfAKind": "Trío",
+  "handStraight": "Escalera",
+  "handFlush": "Color",
+  "handFullHouse": "Full House",
+  "handFourOfAKind": "Póker",
+  "handStraightFlush": "Escalera de Color",
+  "handRoyalFlush": "Escalera Real",
+  "noticeHeirTakingOver": "El anfitrión salió. {name} se queda con la mesa…",
+  "@noticeHeirTakingOver": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeReconnecting": "Conexión perdida, reconectando…",
+  "noticeNewHost": "Ahora el anfitrión es {name}",
+  "@noticeNewHost": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeYouAreHost": "El anfitrión salió: ahora tú tienes la mesa",
+  "turnClockMine": "Te quedan {seconds} s para jugar",
+  "@turnClockMine": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "turnClockOther": "{name} tiene {seconds} s",
+  "@turnClockOther": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "rulesPays": "BLACKJACK PAGA 3 A 2",
+  "rulesDealer": "CRUPIER SE PLANTA EN 17  •  5-CARD CHARLIE",
+  "shoeCount": "Mazo: {count}",
+  "@shoeCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "dealer": "CRUPIER",
+  "handShort": "M{number}",
+  "@handShort": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "ready": "Listo",
+  "bettingEllipsis": "Apostando...",
+  "outcomeBlackjack": "BLACKJACK",
+  "outcomeCharlie": "CHARLIE",
+  "outcomeWin": "GANA",
+  "outcomePush": "EMPATE",
+  "outcomeInsured": "SEGURO",
+  "outcomeBust": "BUST",
+  "outcomeLose": "PIERDE",
+  "statusInProgress": "Partida en curso...",
+  "statusDealing": "Repartiendo cartas...",
+  "statusInsurance": "El crupier muestra un As... esperando el seguro",
+  "statusDealerTurn": "🎩 Turno del Crupier... jugando mano",
+  "statusBotTurn": "🤖 Turno de {name}... pensando jugada",
+  "@statusBotTurn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "statusAway": "{name} se desconectó... se planta en breve",
+  "@statusAway": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "statusTurnOf": "Turno de {name}...",
+  "@statusTurnOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "statusWaitingBets": "Esperando apuestas de los jugadores...",
+  "insuranceOffer": "El crupier muestra un As. ¿Seguro por ${cost}?",
+  "@insuranceOffer": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "insuranceExplain": "Si tiene blackjack, el seguro paga 2 a 1 y recuperas tu apuesta.",
+  "noThanks": "No, gracias",
+  "insure": "Asegurar ${cost}",
+  "@insure": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "betLabel": "APUESTA:",
+  "placeBet": "APOSTAR",
+  "hit": "PEDIR",
+  "stand": "PLANTAR",
+  "double": "DOBLAR",
+  "split": "DIVIDIR",
+  "bjYouBlackjack": "¡Blackjack! Ganas +{net}",
+  "@bjYouBlackjack": {
+    "placeholders": {
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "bjYouCharlie": "¡5-Card Charlie! Ganas +{net}",
+  "@bjYouCharlie": {
+    "placeholders": {
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "bjYouWin": "¡Ganaste +{net}!",
+  "@bjYouWin": {
+    "placeholders": {
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "bjYouPush": "Empate: recuperas tu apuesta",
+  "bjYouInsured": "Blackjack del crupier: el seguro te cubrió",
+  "bjYouInsuredNet": "Blackjack del crupier: el seguro te cubrió ({net})",
+  "@bjYouInsuredNet": {
+    "placeholders": {
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "bjYouBust": "Te pasaste de 21 ({net})",
+  "@bjYouBust": {
+    "placeholders": {
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "bjDealerBlackjack": "¡Blackjack del crupier! ({net})",
+  "@bjDealerBlackjack": {
+    "placeholders": {
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "bjDealerWins": "Gana el crupier ({net})",
+  "@bjDealerWins": {
+    "placeholders": {
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "bjRoundOver": "Ronda finalizada",
+  "hostDealsSoon": "El anfitrión reparte en breve...",
+  "newRound": "Nueva Ronda",
+  "waitingPlayersCount": "Esperando jugadores... ({count})",
+  "@waitingPlayersCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "wrongPassword": "Contraseña incorrecta",
+  "roomFull": "La sala está llena",
+  "joinError": "Error al unirse",
+  "enterRoom": "Entrar a {name}",
+  "@enterRoom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noIpFound": "No encontré una IP en lo que copiaste. Copia la IP que muestra la sala.",
+  "directIpTitle": "Conexión Directa por IP",
+  "pasteIp": "Pegar IP copiada",
+  "hostIpHint": "IP del Host (ej: 192.168.1.50)",
+  "portHint": "Puerto (ej: 54321)",
+  "invalidIpPort": "Por favor ingresa una IP y puerto válidos",
+  "cannotConnect": "No se pudo conectar al Host. Verifica la IP y el Firewall.",
+  "helpTitle": "Ayuda de Conexión",
+  "help1Title": "1. Misma Red Wi-Fi",
+  "help1Body": "Todos los dispositivos deben estar conectados al mismo Wi-Fi o punto de acceso (zona Wi-Fi móvil).",
+  "help2Title": "2. Firewall en Windows / PC",
+  "help2Body": "Si la PC es el Host, asegúrate de permitir que la app acceda a la red a través del Firewall de Windows.",
+  "help3Title": "3. Conexión por IP Directa",
+  "help3Body": "Si el descubrimiento automático no encuentra la sala, el Host verá su IP en pantalla. Usa el botón \"Por IP\" para conectarte directamente.",
+  "roomsTitle": "Salas disponibles",
+  "help": "Ayuda",
+  "notInList": "¿No ves la sala en la lista?",
+  "notInListSubtitle": "Conéctate escribiendo la IP del Host",
+  "byIp": "Por IP",
+  "connectingRoom": "Conectando a la sala...",
+  "searchingRooms": "Buscando salas automáticamente...\nAsegúrate de que ambos dispositivos estén en la misma red Wi-Fi",
+  "roomInGame": "En juego",
+  "roomWaiting": "Esperando jugadores",
+  "roomPlayers": "{count}/{max} jugadores",
+  "@roomPlayers": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "roomWithPassword": " • CON CONTRASEÑA",
+  "roomIp": "IP de la sala",
+  "copiedAddress": "Copiado: {address}. Pégalo en WhatsApp y los demás lo pegan en «Por IP».",
+  "@copiedAddress": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "copy": "Copiar",
+  "backToMenu": "Volver al menú",
+  "options": "Opciones",
+  "leaveTable": "Salir de la mesa",
+  "fastGame": "Juego rápido",
+  "fastGameSubtitle": "Los bots piensan y el crupier reparte más rápido",
+  "showOdds": "Mostrar mi probabilidad",
+  "showOddsSubtitle": "Ayuda: tu % de ganar la mano en tu asiento",
+  "keepAwake": "Pantalla siempre encendida",
+  "keepAwakeSubtitle": "No se apaga mientras estás en la mesa",
+  "notifRoomOpen": "Tu sala está abierta: la partida sigue aunque uses otras apps",
+  "notifLanActive": "Partida en red activa"
+}

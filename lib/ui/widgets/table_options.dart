@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../services/game_settings.dart';
+import '../../l10n/l10n.dart';
 
 /// Gear button for the table headers.
 class TableOptionsButton extends StatelessWidget {
@@ -13,7 +14,7 @@ class TableOptionsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Opciones',
+      message: context.t.options,
       child: Material(
         color: Colors.black38,
         shape: CircleBorder(side: BorderSide(color: const Color(0xFFD4AF37).withValues(alpha: 0.6))),
@@ -75,7 +76,7 @@ Future<void> showTableOptions(
                   children: [
                     Icon(Icons.settings, color: const Color(0xFFFFD54F), size: 22 * s),
                     SizedBox(width: 8 * s),
-                    Text('Opciones',
+                    Text(context.t.options,
                         style: TextStyle(color: const Color(0xFFFFD54F), fontSize: 18 * s, fontWeight: FontWeight.bold)),
                     const Spacer(),
                     // Up here (not at the bottom) so it is reachable without scrolling on phones.
@@ -86,24 +87,24 @@ Future<void> showTableOptions(
                         onExit();
                       },
                       icon: Icon(Icons.logout, size: 18 * s),
-                      label: Text('Salir de la mesa', style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
+                      label: Text(context.t.leaveTable, style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
                     ),
                     IconButton(
-                      tooltip: 'Cerrar',
+                      tooltip: context.t.close,
                       icon: const Icon(Icons.close, color: Colors.white54),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
                 ),
-                toggle('Sonido', 'Cartas, fichas y dados', settings.sound ? Icons.volume_up : Icons.volume_off,
+                toggle(context.t.sound, context.t.soundSubtitle, settings.sound ? Icons.volume_up : Icons.volume_off,
                     settings.sound, settings.setSound),
                 if (GameSettings.fastGameAvailable)
-                  toggle('Juego rápido', 'Los bots piensan y el crupier reparte más rápido', Icons.speed,
+                  toggle(context.t.fastGame, context.t.fastGameSubtitle, Icons.speed,
                       settings.fastGame, settings.setFastGame),
                 if (poker)
-                  toggle('Mostrar mi probabilidad', 'Ayuda: tu % de ganar la mano en tu asiento', Icons.percent,
+                  toggle(context.t.showOdds, context.t.showOddsSubtitle, Icons.percent,
                       settings.showOdds, settings.setShowOdds),
-                toggle('Pantalla siempre encendida', 'No se apaga mientras estás en la mesa', Icons.light_mode,
+                toggle(context.t.keepAwake, context.t.keepAwakeSubtitle, Icons.light_mode,
                     settings.keepAwake, settings.setKeepAwake),
               ],
             ),

@@ -11,6 +11,7 @@ import '../../models/game_state.dart';
 import 'game_table_screen.dart';
 import 'blackjack_table_screen.dart';
 import 'lobby_screen.dart';
+import '../../l10n/l10n.dart';
 
 class RoomListScreen extends StatefulWidget {
   const RoomListScreen({super.key});
@@ -81,12 +82,12 @@ class _RoomListScreenState extends State<RoomListScreen> {
       final game = context.read<GameProvider>();
       game.setHost(false);
       game.setMultiplayer(true);
-      game.setPlayerName(_pendingName ?? 'Jugador');
+      game.setPlayerName(_pendingName ?? context.t.defaultPlayerName);
       final pass = _pendingPassword ?? '';
       _pendingPassword = null;
       p2p.sendMessage(endpointId, {
         'type': 'JOIN_REQUEST',
-        'playerName': _pendingName ?? 'Jugador',
+        'playerName': _pendingName ?? context.t.defaultPlayerName,
         'password': pass,
         'token': game.playerToken,
         'endpointId': endpointId,
@@ -102,7 +103,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
           setState(() => _isConnecting = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(reason == 'password' ? 'Contraseña incorrecta' : (reason == 'room_full' ? 'La sala está llena' : 'Error al unirse')),
+              content: Text(reason == 'password' ? context.t.wrongPassword : (reason == 'room_full' ? context.t.roomFull : context.t.joinError)),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 3),
             ),
@@ -163,13 +164,13 @@ class _RoomListScreenState extends State<RoomListScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Entrar a ${room.name}', style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
+              Text(context.t.enterRoom(room.name), style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
               SizedBox(height: 16 * s),
               TextField(
                 controller: nameController,
                 style: TextStyle(color: Colors.white, fontSize: 14 * s),
                 decoration: InputDecoration(
-                  labelText: 'Tu nombre',
+                  labelText: context.t.yourName,
                   labelStyle: const TextStyle(color: Colors.white54),
                   enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4))),
                   focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
@@ -182,7 +183,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   obscureText: true,
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
                   decoration: InputDecoration(
-                    labelText: 'Contraseña',
+                    labelText: context.t.password,
                     labelStyle: const TextStyle(color: Colors.white54),
                     enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4))),
                     focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
@@ -195,19 +196,19 @@ class _RoomListScreenState extends State<RoomListScreen> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                    child: Text(context.t.cancel, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
                   ),
                   SizedBox(width: 8 * s),
                   TextButton(
                     onPressed: () {
                       Navigator.pop(ctx);
                       setState(() => _isConnecting = true);
-                      _pendingName = nameController.text.trim().isEmpty ? 'Jugador' : nameController.text.trim();
+                      _pendingName = nameController.text.trim().isEmpty ? context.t.defaultPlayerName : nameController.text.trim();
                       _pendingPassword = requirePassword ? passController.text.trim() : '';
                       final p2p = context.read<GameProvider>().p2pService;
                       p2p.connectToDevice(room.endpointId);
                     },
-                    child: Text('Entrar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                    child: Text(context.t.enter, style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
                   ),
                 ],
               ),
@@ -237,7 +238,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
       if (!mounted) return;
       if (address == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No encontré una IP en lo que copiaste. Copia la IP que muestra la sala.')),
+          SnackBar(content: Text(context.t.noIpFound)),
         );
         return;
       }
@@ -263,7 +264,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   children: [
                     Icon(Icons.router, color: Colors.amber, size: 22 * s),
                     SizedBox(width: 8 * s),
-                    Text('Conexión Directa por IP', style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
+                    Text(context.t.directIpTitle, style: TextStyle(color: Colors.amber, fontSize: 16 * s, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 SizedBox(height: 10 * s),
@@ -272,7 +273,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   child: TextButton.icon(
                     onPressed: paste,
                     icon: Icon(Icons.content_paste, color: Colors.amber, size: 16 * s),
-                    label: Text('Pegar IP copiada', style: TextStyle(color: Colors.amber, fontSize: 12 * s)),
+                    label: Text(context.t.pasteIp, style: TextStyle(color: Colors.amber, fontSize: 12 * s)),
                   ),
                 ),
                 TextField(
@@ -280,7 +281,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
                   keyboardType: TextInputType.datetime,
                   decoration: InputDecoration(
-                    labelText: 'IP del Host (ej: 192.168.1.50)',
+                    labelText: context.t.hostIpHint,
                     labelStyle: const TextStyle(color: Colors.white54),
                     enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4))),
                     focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
@@ -292,7 +293,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Puerto (ej: 54321)',
+                    labelText: context.t.portHint,
                     labelStyle: const TextStyle(color: Colors.white54),
                     enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4))),
                     focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
@@ -303,7 +304,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   controller: nameController,
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
                   decoration: InputDecoration(
-                    labelText: 'Tu nombre',
+                    labelText: context.t.yourName,
                     labelStyle: const TextStyle(color: Colors.white54),
                     enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4))),
                     focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
@@ -315,7 +316,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   obscureText: true,
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
                   decoration: InputDecoration(
-                    labelText: 'Contraseña (opcional)',
+                    labelText: context.t.passwordOptional,
                     labelStyle: const TextStyle(color: Colors.white54),
                     enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4))),
                     focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
@@ -327,7 +328,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      child: Text(context.t.cancel, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
                     ),
                     SizedBox(width: 8 * s),
                     TextButton(
@@ -336,7 +337,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                         final port = int.tryParse(portController.text.trim());
                         if (host.isEmpty || port == null || port <= 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Por favor ingresa una IP y puerto válidos')),
+                            SnackBar(content: Text(context.t.invalidIpPort)),
                           );
                           return;
                         }
@@ -346,17 +347,17 @@ class _RoomListScreenState extends State<RoomListScreen> {
                         SharedPreferences.getInstance()
                             .then((prefs) => prefs.setString(_lastAddressKey, '$host:$port'))
                             .catchError((Object _) => false);
-                        _pendingName = nameController.text.trim().isEmpty ? 'Jugador' : nameController.text.trim();
+                        _pendingName = nameController.text.trim().isEmpty ? context.t.defaultPlayerName : nameController.text.trim();
                         _pendingPassword = passController.text.trim();
                         final ok = await p2p.connectToHost(host, port);
                         if (!ok && mounted) {
                           setState(() => _isConnecting = false);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('No se pudo conectar al Host. Verifica la IP y el Firewall.')),
+                            SnackBar(content: Text(context.t.cannotConnect)),
                           );
                         }
                       },
-                      child: Text('Conectar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                      child: Text(context.t.connect, style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
                     ),
                   ],
                 ),
@@ -379,7 +380,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
           children: [
             Icon(Icons.help_outline, color: Colors.amber, size: 22 * s),
             SizedBox(width: 8 * s),
-            Text('Ayuda de Conexión', style: TextStyle(color: Colors.amber, fontSize: 16 * s)),
+            Text(context.t.helpTitle, style: TextStyle(color: Colors.amber, fontSize: 16 * s)),
           ],
         ),
         content: SingleChildScrollView(
@@ -387,18 +388,18 @@ class _RoomListScreenState extends State<RoomListScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _helpItem('1. Misma Red Wi-Fi', 'Todos los dispositivos deben estar conectados al mismo Wi-Fi o punto de acceso (zona Wi-Fi móvil).', s),
+              _helpItem(context.t.help1Title, context.t.help1Body, s),
               SizedBox(height: 10 * s),
-              _helpItem('2. Firewall en Windows / PC', 'Si la PC es el Host, asegúrate de permitir que la app acceda a la red a través del Firewall de Windows.', s),
+              _helpItem(context.t.help2Title, context.t.help2Body, s),
               SizedBox(height: 10 * s),
-              _helpItem('3. Conexión por IP Directa', 'Si el descubrimiento automático no encuentra la sala, el Host verá su IP en pantalla. Usa el botón "Conectar por IP" para conectarte directamente.', s),
+              _helpItem(context.t.help3Title, context.t.help3Body, s),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Entendido', style: TextStyle(color: Colors.amber)),
+            child: Text(context.t.gotIt, style: TextStyle(color: Colors.amber)),
           ),
         ],
       ),
@@ -454,15 +455,15 @@ class _RoomListScreenState extends State<RoomListScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          tooltip: 'Volver',
+          tooltip: context.t.back,
           onPressed: _goBack,
         ),
-        title: Text('Salas disponibles', style: TextStyle(fontSize: 16 * s, color: Colors.white)),
+        title: Text(context.t.roomsTitle, style: TextStyle(fontSize: 16 * s, color: Colors.white)),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline, color: Colors.amber),
-            tooltip: 'Ayuda',
+            tooltip: context.t.help,
             onPressed: _showHelpDialog,
           ),
         ],
@@ -486,15 +487,15 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('¿No ves la sala en la lista?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12 * s)),
-                      Text('Conéctate escribiendo la IP del Host', style: TextStyle(color: Colors.white60, fontSize: 10 * s)),
+                      Text(context.t.notInList, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12 * s)),
+                      Text(context.t.notInListSubtitle, style: TextStyle(color: Colors.white60, fontSize: 10 * s)),
                     ],
                   ),
                 ),
                 ElevatedButton.icon(
                   onPressed: _showDirectIpDialog,
                   icon: const Icon(Icons.login, size: 16),
-                  label: const Text('Por IP'),
+                  label: Text(context.t.byIp),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.amber,
                     foregroundColor: Colors.black,
@@ -509,12 +510,12 @@ class _RoomListScreenState extends State<RoomListScreen> {
             Container(
               padding: EdgeInsets.symmetric(vertical: 8 * s),
               color: Colors.amber.withValues(alpha: 0.2),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber)),
                   SizedBox(width: 10),
-                  Text('Conectando a la sala...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  Text(context.t.connectingRoom, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -527,7 +528,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                         const SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.amber)),
                         SizedBox(height: 16 * s),
                         Text(
-                          'Buscando salas automáticamente...\nAsegúrate de que ambos dispositivos estén en la misma red Wi-Fi',
+                          context.t.searchingRooms,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white54, fontSize: 13 * s),
                         ),
@@ -624,11 +625,11 @@ class _RoomCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              room.started ? 'En juego' : 'Esperando jugadores',
+              room.started ? context.t.roomInGame : context.t.roomWaiting,
               style: TextStyle(color: room.started ? Colors.orange : Colors.green, fontSize: 10 * s),
             ),
             Text(
-              '${room.playerCount}/${room.maxPlayers} jugadores${room.hasPassword ? " • CON CONTRASEÑA" : ""}',
+              '${context.t.roomPlayers('${room.playerCount}', '${room.maxPlayers}')}${room.hasPassword ? context.t.roomWithPassword : ''}',
               style: TextStyle(color: Colors.white54, fontSize: 10 * s),
             ),
           ],

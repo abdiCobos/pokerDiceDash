@@ -5,15 +5,17 @@ import 'package:flutter/services.dart';
 
 import '../../services/p2p_service.dart';
 import '../../services/room_address.dart';
+import '../../l10n/l10n.dart';
 
 /// Host waiting room: the room's IP:port with a copy button, so it can be pasted into
 /// WhatsApp (or any chat) and then into "Por IP" on the other devices.
 class HostAddressChip extends StatefulWidget {
   final int? port;
   final double scale;
-  final String label;
+  /// Defaults to "IP de la sala" in the player's language.
+  final String? label;
 
-  const HostAddressChip({super.key, required this.port, required this.scale, this.label = 'IP de la sala'});
+  const HostAddressChip({super.key, required this.port, required this.scale, this.label});
 
   @override
   State<HostAddressChip> createState() => _HostAddressChipState();
@@ -46,7 +48,7 @@ class _HostAddressChipState extends State<HostAddressChip> {
   Widget build(BuildContext context) {
     final s = widget.scale;
     final port = widget.port;
-    final label = widget.label;
+    final label = widget.label ?? context.t.roomIp;
     return Builder(
       builder: (context) {
         final ip = _ip;
@@ -66,7 +68,7 @@ class _HostAddressChipState extends State<HostAddressChip> {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Copiado: $address. Pégalo en WhatsApp y los demás lo pegan en «Por IP».'),
+                        content: Text(context.t.copiedAddress('$address')),
                         duration: const Duration(seconds: 3),
                       ),
                     );
@@ -85,7 +87,7 @@ class _HostAddressChipState extends State<HostAddressChip> {
                   SizedBox(width: 8 * s),
                   Icon(Icons.copy, color: Colors.amber, size: 14 * s),
                   SizedBox(width: 3 * s),
-                  Text('Copiar', style: TextStyle(color: Colors.amber, fontSize: 10 * s)),
+                  Text(context.t.copy, style: TextStyle(color: Colors.amber, fontSize: 10 * s)),
                 ],
               ),
             ),

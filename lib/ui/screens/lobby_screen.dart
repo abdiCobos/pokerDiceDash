@@ -21,6 +21,7 @@ import '../widgets/app_logo.dart';
 import 'game_table_screen.dart';
 import 'blackjack_table_screen.dart';
 import 'room_list_screen.dart';
+import '../../l10n/l10n.dart';
 
 class LobbyScreen extends StatefulWidget {
   /// Open directly on the "Jugar en red" options (coming back from the room list).
@@ -77,7 +78,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             Icon(Icons.system_update, color: const Color(0xFFFFD54F), size: 22 * s),
             SizedBox(width: 8 * s),
             Expanded(
-              child: Text('Hay una versión nueva',
+              child: Text(context.t.updateTitle,
                   style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 18 * s)),
             ),
           ],
@@ -85,16 +86,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
         content: SizedBox(
           width: 380 * s,
           child: Text(
-            'Ya salió la versión ${update.version} (tienes la $appVersion). '
-            'Descárgala en GitHub e instálala encima: no pierdes tus fichas ni tus ajustes.\n\n'
-            'Para jugar en red, todos deben tener la misma versión.',
+            context.t.updateBody(update.version, appVersion),
             style: TextStyle(color: Colors.white, fontSize: 14 * s, height: 1.35),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Ahora no', style: TextStyle(color: Colors.white54, fontSize: 14 * s)),
+            child: Text(context.t.notNow, style: TextStyle(color: Colors.white54, fontSize: 14 * s)),
           ),
           TextButton(
             onPressed: () async {
@@ -104,11 +103,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 await Clipboard.setData(ClipboardData(text: update.page.toString()));
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('No se pudo abrir el navegador: el enlace quedó copiado.')),
+                  SnackBar(content: Text(context.t.browserFailed)),
                 );
               }
             },
-            child: Text('Descargar',
+            child: Text(context.t.download,
                 style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 14 * s)),
           ),
         ],
@@ -174,7 +173,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Tu nombre',
+                    labelText: context.t.yourName,
                     labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
@@ -191,7 +190,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Nombre de la sala',
+                    labelText: context.t.roomName,
                     labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
@@ -209,7 +208,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 14 * s),
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
-                    labelText: 'Contraseña (opcional)',
+                    labelText: context.t.passwordOptional,
                     labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
@@ -226,7 +225,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(dialogCtx),
-                      child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      child: Text(context.t.cancel, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
                     ),
                     SizedBox(width: 8 * s),
                     TextButton(
@@ -239,12 +238,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             _roomPasswordController.text.trim(),
                           );
                       },
-                      child: Text('Crear', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                      child: Text(context.t.create, style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
                     ),
                   ],
                 );
                 final title = Text(
-                  'Crear Sala',
+                  context.t.createRoomTitle,
                   style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold),
                 );
                 final screen = MediaQuery.of(dialogCtx).size;
@@ -337,7 +336,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Configurar Partida',
+                        context.t.setupGame,
                         style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: 16 * s),
@@ -346,7 +345,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         style: TextStyle(color: Colors.white, fontSize: 14 * s),
                         textInputAction: TextInputAction.done,
                         decoration: InputDecoration(
-                          labelText: 'Tu nombre',
+                          labelText: context.t.yourName,
                           labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
@@ -359,7 +358,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         ),
                       ),
                       SizedBox(height: 16 * s),
-                      Text('Cantidad de bots', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      Text(context.t.botCount, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
                       SizedBox(height: 8 * s),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -395,7 +394,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         children: [
                           TextButton(
                             onPressed: () => Navigator.pop(dialogCtx),
-                            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                            child: Text(context.t.cancel, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
                           ),
                           SizedBox(width: 8 * s),
                           TextButton(
@@ -412,14 +411,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                     create: (_) => BlackjackProvider()..initSinglePlayer(
                                       botCount: _bjBotCount,
                                       difficulty: _botDifficulty,
-                                      playerName: pName.isEmpty ? 'Yo' : pName,
+                                      playerName: pName.isEmpty ? context.t.defaultLocalName : pName,
                                     ),
                                     child: const BlackjackTableScreen(),
                                   ),
                                 ),
                               );
                             },
-                            child: Text('Jugar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                            child: Text(context.t.play, style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
                           ),
                         ],
                       ),
@@ -459,7 +458,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Configurar $modeName',
+                        context.t.setupMode(modeName),
                         style: TextStyle(color: Colors.amber, fontSize: 18 * s, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: 16 * s),
@@ -468,7 +467,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         style: TextStyle(color: Colors.white, fontSize: 14 * s),
                         textInputAction: TextInputAction.done,
                         decoration: InputDecoration(
-                          labelText: 'Tu nombre',
+                          labelText: context.t.yourName,
                           labelStyle: TextStyle(color: Colors.white54, fontSize: 13 * s),
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.4)),
@@ -481,7 +480,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         ),
                       ),
                       SizedBox(height: 16 * s),
-                      Text('Cantidad de bots (1 - 6)', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                      Text(context.t.botCountRange, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
                       SizedBox(height: 8 * s),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -515,7 +514,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         children: [
                           TextButton(
                             onPressed: () => Navigator.pop(dialogCtx),
-                            child: Text('Cancelar', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+                            child: Text(context.t.cancel, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
                           ),
                           SizedBox(width: 8 * s),
                           TextButton(
@@ -537,7 +536,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                 MaterialPageRoute(builder: (_) => const GameTableScreen()),
                               );
                             },
-                            child: Text('Jugar', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
+                            child: Text(context.t.play, style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13 * s)),
                           ),
                         ],
                       ),
@@ -563,7 +562,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     game.setGameMode(_selectedMode);
     AppLogger().event('create_room', params: {'mode': _selectedMode.name, 'transport': 'tcp_local'});
     game.setPlayerName(
-      _playerNameController.text.trim().isEmpty ? 'Host' : _playerNameController.text.trim(),
+      _playerNameController.text.trim().isEmpty ? context.t.defaultHostName : _playerNameController.text.trim(),
     );
     game.setRoomMetadata(
       _roomNameController.text.trim().isEmpty
@@ -582,7 +581,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           builder: (_) => ChangeNotifierProvider(
             create: (_) => BlackjackProvider()..initMultiplayer(
               asHost: true,
-              hostName: _playerNameController.text.trim().isEmpty ? 'Host' : _playerNameController.text.trim(),
+              hostName: _playerNameController.text.trim().isEmpty ? context.t.defaultHostName : _playerNameController.text.trim(),
               p2p: p2p,
               lobby: game,
             ),
@@ -621,14 +620,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   /// Fácil / Normal / Difícil, remembered between games.
   Widget _buildDifficultySelector(double s, StateSetter setDialogState) {
-    const hints = {
-      BotDifficulty.easy: 'Juegan a lo loco y cometen errores.',
-      BotDifficulty.normal: 'Juegan con cabeza, con algún error de vez en cuando.',
-      BotDifficulty.hard: 'Juegan casi perfecto: cuidado con sus apuestas.',
-    };
     return Column(
       children: [
-        Text('Dificultad de los bots', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+        Text(context.t.botDifficulty, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
         SizedBox(height: 8 * s),
         Row(
           children: [
@@ -652,7 +646,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       border: Border.all(color: const Color(0xFFD4AF37), width: 1.2),
                     ),
                     child: Text(
-                      d.label,
+                      context.t.difficultyName(d),
                       style: TextStyle(
                         color: _botDifficulty == d ? const Color(0xFF412402) : const Color(0xFFFFD54F),
                         fontSize: 13 * s,
@@ -666,7 +660,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           ],
         ),
         SizedBox(height: 6 * s),
-        Text(hints[_botDifficulty]!, textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 11.5 * s)),
+        Text(context.t.difficultyHint(_botDifficulty), textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 11.5 * s)),
       ],
     );
   }
@@ -745,7 +739,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Modo de juego', style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
+        Text(context.t.gameMode, style: TextStyle(color: Colors.white54, fontSize: 13 * s)),
         SizedBox(height: 8 * s),
         Row(
           children: [
@@ -779,16 +773,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A2E),
-        title: const Text('¿Salir del juego?', style: TextStyle(color: Colors.amber)),
-        content: const Text('¿Estás seguro que quieres salir de la aplicación?', style: TextStyle(color: Colors.white)),
+        title: Text(context.t.quitAppTitle, style: TextStyle(color: Colors.amber)),
+        content: Text(context.t.quitAppBody, style: TextStyle(color: Colors.white)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+            child: Text(context.t.cancel, style: TextStyle(color: Colors.white54)),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Salir', style: TextStyle(color: Colors.red)),
+            child: Text(context.t.exit, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -858,7 +852,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         _ModeTile(
           scale: s,
           title: 'Dice Dash',
-          subtitle: 'Póker con dados y caos',
+          subtitle: context.t.modeDiceDashSubtitle,
           accent: const Color(0xFFFAC775),
           onAccent: const Color(0xFF633806),
           icon: Icons.casino,
@@ -868,7 +862,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         _ModeTile(
           scale: s,
           title: "Texas Hold'em",
-          subtitle: 'El póker clásico',
+          subtitle: context.t.modeTexasSubtitle,
           accent: const Color(0xFFF7C1C1),
           onAccent: const Color(0xFF791F1F),
           glyph: CustomPaint(size: Size.square(24 * s), painter: const SpadePainter(Color(0xFF791F1F))),
@@ -878,7 +872,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         _ModeTile(
           scale: s,
           title: 'Blackjack',
-          subtitle: 'Gánale al crupier',
+          subtitle: context.t.modeBlackjackSubtitle,
           accent: const Color(0xFFC0DD97),
           onAccent: const Color(0xFF27500A),
           symbol: '21',
@@ -890,16 +884,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
             Expanded(
               child: _PillButton(
                 scale: s,
-                label: 'Jugar en red',
+                label: context.t.playLan,
                 icon: Icons.wifi,
                 filled: true,
                 onTap: () => setState(() => _showMultiplayer = true),
               ),
             ),
             SizedBox(width: 10 * s),
-            _PillButton(scale: s, icon: Icons.help_outline, tooltip: 'Cómo jugar', onTap: () => _showHowToPlay(s)),
+            _PillButton(scale: s, icon: Icons.help_outline, tooltip: context.t.howToPlay, onTap: () => _showHowToPlay(s)),
             SizedBox(width: 10 * s),
-            _PillButton(scale: s, icon: Icons.settings_outlined, tooltip: 'Ajustes', onTap: () => _showSettings(s)),
+            _PillButton(scale: s, icon: Icons.settings_outlined, tooltip: context.t.settings, onTap: () => _showSettings(s)),
           ],
         ),
       ],
@@ -917,14 +911,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
             children: [
               Icon(Icons.wifi, color: const Color(0xFFFFD54F), size: 20 * s),
               SizedBox(width: 8 * s),
-              Text('Jugar en red', style: TextStyle(color: Colors.white, fontSize: 18 * s, fontWeight: FontWeight.bold)),
+              Text(context.t.playLan, style: TextStyle(color: Colors.white, fontSize: 18 * s, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
         _ModeTile(
           scale: s,
-          title: _isHosting ? 'Esperando...' : 'Crear sala',
-          subtitle: 'Los demás se unen a tu partida',
+          title: _isHosting ? context.t.waitingEllipsis : context.t.createRoom,
+          subtitle: context.t.createRoomSubtitle,
           accent: const Color(0xFFFAC775),
           onAccent: const Color(0xFF633806),
           icon: Icons.add_circle_outline,
@@ -934,8 +928,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
         SizedBox(height: 10 * s),
         _ModeTile(
           scale: s,
-          title: 'Unirse a sala',
-          subtitle: 'Busca partidas en tu Wi-Fi o entra por IP',
+          title: context.t.joinRoom,
+          subtitle: context.t.joinRoomSubtitle,
           accent: const Color(0xFFB5D4F4),
           onAccent: const Color(0xFF0C447C),
           icon: Icons.login,
@@ -947,7 +941,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 4 * s),
             decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(10 * s)),
             child: Text(
-              'Todos los dispositivos deben estar en la misma red Wi-Fi.',
+              context.t.sameWifiNote,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70, fontSize: 11.5 * s),
             ),
@@ -956,7 +950,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         SizedBox(height: 12 * s),
         _PillButton(
           scale: s,
-          label: 'Volver',
+          label: context.t.back,
           icon: Icons.arrow_back,
           onTap: () => setState(() => _showMultiplayer = false),
         ),
@@ -988,7 +982,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           borderRadius: BorderRadius.circular(16 * s),
           side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
         ),
-        title: Text('Cómo jugar', style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 18 * s)),
+        title: Text(context.t.howToPlay, style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 18 * s)),
         content: SizedBox(
           width: 420 * s,
           child: SingleChildScrollView(
@@ -997,19 +991,20 @@ class _LobbyScreenState extends State<LobbyScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 section("Texas Hold'em", const Color(0xFFF7C1C1), [
-                  'Recibes 2 cartas; en la mesa salen 5 comunitarias (flop, turn y river).',
-                  'En cada ronda puedes retirarte (FOLD), igualar (CALL/CHECK) o subir (RAISE).',
-                  'Gana la mejor jugada de 5 cartas entre tus 2 y las 5 de la mesa.',
+                  context.t.howTexas1,
+                  context.t.howTexas2,
+                  context.t.howTexas3,
                 ]),
                 section('Dice Dash', const Color(0xFFFAC775), [
-                  "Como Texas Hold'em, pero antes de cada acción lanzas 2 dados.",
-                  'Suma 7: el bote crece un 30 %.',
-                  'Doble 1: ¡INTERCAMBIO! Las manos de todos se mezclan y se reparten de nuevo.',
+                  context.t.howDice1,
+                  context.t.howDice2,
+                  context.t.howDice3,
+                  context.t.howDice4,
                 ]),
                 section('Blackjack', const Color(0xFFC0DD97), [
-                  'Apuesta y acércate a 21 sin pasarte. El As vale 1 u 11.',
-                  'PEDIR toma carta, PLANTAR se queda, DOBLAR duplica la apuesta con una carta más, DIVIDIR separa una pareja.',
-                  'Blackjack paga 3 a 2, el crupier se planta en 17 y 5 cartas sin pasarte (5-Card Charlie) ganan.',
+                  context.t.howBj1,
+                  context.t.howBj2,
+                  context.t.howBj3,
                 ]),
               ],
             ),
@@ -1018,7 +1013,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Entendido', style: TextStyle(color: const Color(0xFFFFD54F), fontSize: 14 * s)),
+            child: Text(context.t.gotIt, style: TextStyle(color: const Color(0xFFFFD54F), fontSize: 14 * s)),
           ),
         ],
       ),
@@ -1029,6 +1024,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final nameCtrl = TextEditingController(text: _playerNameController.text);
     var sound = SoundService().enabled;
     var theme = GameSettings().theme;
+    var language = GameSettings().language;
     var updates = await UpdateChecker.isEnabled();
     if (!mounted) return;
     showDialog(
@@ -1043,15 +1039,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
             borderRadius: BorderRadius.circular(16 * s),
             side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
           ),
-          title: Text('Ajustes', style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 18 * s)),
+          title: Text(context.t.settings, style: TextStyle(color: const Color(0xFFFFD54F), fontWeight: FontWeight.bold, fontSize: 18 * s)),
           content: Builder(builder: (context) {
             final general = <Widget>[
               TextField(
                 controller: nameCtrl,
                 maxLength: 16,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Tu nombre',
+                decoration: InputDecoration(
+                  labelText: context.t.yourName,
                   labelStyle: TextStyle(color: Colors.white70),
                   counterText: '',
                   isDense: true,
@@ -1062,8 +1058,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 activeThumbColor: const Color(0xFFFFD54F),
-                title: const Text('Sonido', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Cartas, fichas y dados', style: TextStyle(color: Colors.white54)),
+                title: Text(context.t.sound, style: TextStyle(color: Colors.white)),
+                subtitle: Text(context.t.soundSubtitle, style: TextStyle(color: Colors.white54)),
                 value: sound,
                 onChanged: (v) => setLocal(() => sound = v),
               ),
@@ -1071,16 +1067,51 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   activeThumbColor: const Color(0xFFFFD54F),
-                  title: const Text('Avisar de versiones nuevas', style: TextStyle(color: Colors.white)),
-                  subtitle: const Text('Revisa GitHub una vez al día', style: TextStyle(color: Colors.white54)),
+                  title: Text(context.t.updateCheck, style: TextStyle(color: Colors.white)),
+                  subtitle: Text(context.t.updateCheckSubtitle, style: TextStyle(color: Colors.white54)),
                   value: updates,
                   onChanged: (v) => setLocal(() => updates = v),
                 ),
+              SizedBox(height: 4 * s),
+              Row(
+                children: [
+                  Text(context.t.language, style: TextStyle(color: Colors.white, fontSize: 15 * s)),
+                  SizedBox(width: 12 * s),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 6 * s,
+                      runSpacing: 6 * s,
+                      children: [
+                        for (final l in AppLanguage.values)
+                          ChoiceChip(
+                            label: Text(switch (l) {
+                              AppLanguage.system => context.t.languageSystem,
+                              // Each language in its own words, so anyone can find theirs.
+                              AppLanguage.es => 'Español',
+                              AppLanguage.en => 'English',
+                            }),
+                            selected: language == l,
+                            onSelected: (_) => setLocal(() => language = l),
+                            selectedColor: const Color(0xFFD4AF37),
+                            backgroundColor: Colors.black26,
+                            labelStyle: TextStyle(
+                              color: language == l ? const Color(0xFF412402) : Colors.white,
+                              fontSize: 12 * s,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            showCheckmark: false,
+                            side: const BorderSide(color: Color(0xFFD4AF37)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ];
             final ambient = <Widget>[
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Ambiente', style: TextStyle(color: Colors.white, fontSize: 15 * s)),
+                child: Text(context.t.scene, style: TextStyle(color: Colors.white, fontSize: 15 * s)),
               ),
               SizedBox(height: 8 * s),
               Row(
@@ -1126,7 +1157,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+              child: Text(context.t.cancel, style: TextStyle(color: Colors.white54)),
             ),
             TextButton(
               onPressed: () async {
@@ -1134,13 +1165,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 setState(() => _playerNameController.text = name);
                 await SoundService().setEnabled(sound);
                 await GameSettings().setTheme(theme);
+                await GameSettings().setLanguage(language);
                 await UpdateChecker.setEnabled(updates);
                 try {
                   await (await SharedPreferences.getInstance()).setString(_playerNamePref, name);
                 } catch (_) {}
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('Guardar', style: TextStyle(color: Color(0xFFFFD54F), fontWeight: FontWeight.bold)),
+              child: Text(context.t.save, style: TextStyle(color: Color(0xFFFFD54F), fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -1372,7 +1404,7 @@ class _ThemeCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          theme.label,
+                          context.t.themeName(theme),
                           maxLines: 2,
                           style: TextStyle(color: selected ? gold : Colors.white, fontSize: 12.5 * s, fontWeight: FontWeight.bold),
                         ),
@@ -1382,7 +1414,7 @@ class _ThemeCard extends StatelessWidget {
                   ),
                   SizedBox(height: 2 * s),
                   Text(
-                    theme.description,
+                    context.t.themeDescription(theme),
                     maxLines: 2,
                     style: TextStyle(color: Colors.white54, fontSize: 10.5 * s),
                   ),

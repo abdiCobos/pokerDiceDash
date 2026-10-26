@@ -115,7 +115,7 @@ class GameProvider extends ChangeNotifier {
   bool _oldHostLeft = false;
   int _migrationStep = -1; // -1: still trying the old host; i: trying _heirs[i]
   DateTime? _awayGraceUntil;
-  String? _hostNotice;
+  HostNotice? _hostNotice;
   Timer? _hostNoticeTimer;
   final StreamController<void> _becameHost = StreamController<void>.broadcast();
 
@@ -128,14 +128,15 @@ class GameProvider extends ChangeNotifier {
   /// Seat of the host that left on purpose before this device inherited the room.
   String? get departedHostSeat => _oldHostLeft ? _oldHostSeat : null;
 
-  /// Short line for the banner: the room is changing hands, or just did.
-  String? get connectionNotice {
+  /// Short line for the banner: the room is changing hands, or just did. The screens
+  /// word it in the player's language.
+  HostNotice? get connectionNotice {
     if (_reconnectGaveUp || _roomClosed) return null;
     if (_clientConnectionLost) {
       if (_migrationStep >= 0 && _migrationStep < _heirs.length) {
-        return 'El anfitrión salió. ${_heirs[_migrationStep].name} se queda con la mesa…';
+        return HostNotice(HostNoticeKind.heirTakingOver, _heirs[_migrationStep].name);
       }
-      return 'Conexión perdida, reconectando…';
+      return const HostNotice(HostNoticeKind.reconnecting);
     }
     return _hostNotice;
   }
@@ -166,13 +167,15 @@ class GameProvider extends ChangeNotifier {
 
 
 
-  String? _centralMessage;
+  /// Message in the middle of the table (dice events, who won). Local to each device:
+  /// the screens word it in the player's language.
+  TableMessage? _centralMessage;
 
-  String? get centralMessage => _centralMessage;
+  TableMessage? get centralMessage => _centralMessage;
 
 
 
-  void setCentralMessage(String msg) {
+  void setCentralMessage(TableMessage msg) {
 
     _centralMessage = msg;
 
@@ -337,7 +340,7 @@ class GameProvider extends ChangeNotifier {
 
   void _onSeatConfirmed() {
     if (_migrationStep >= 0 && _migrationStep < _heirs.length) {
-      _showHostNotice('Ahora el anfitrión es ${_heirs[_migrationStep].name}');
+      _showHostNotice(HostNotice(HostNoticeKind.newHost, _heirs[_migrationStep].name));
     }
     _migrationStep = -1;
     _hasSeat = true;
@@ -646,7 +649,7 @@ class GameProvider extends ChangeNotifier {
         _houseBonus += extra;
         SoundService().chipsMultiply();
         AppLogger().event('lucky_seven', params: {'pot_bonus': extra.toString()});
-        setCentralMessage('Dados de la suerte. El Pot aumenta un 30%');
+        setCentralMessage(const TableMessage(TableMessageKind.luckySeven));
       case DiceEvent.swap:
         _state = _state.copyWith(mustSwapHands: true);
       case DiceEvent.none:
@@ -658,7 +661,7 @@ class GameProvider extends ChangeNotifier {
   void _scheduleForcedAllIn(PlayerModel roller) {
     final epoch = _epoch;
     _diceEventBusy = true;
-    setCentralMessage('¡Doble 6! ${roller.name} va ALL-IN');
+    setCentralMessage(TableMessage(TableMessageKind.doubleSix, name: roller.name));
     Future.delayed(const Duration(milliseconds: 1400), () {
       _diceEventBusy = false;
       if (_isExiting || epoch != _epoch) return;
@@ -682,7 +685,7 @@ class GameProvider extends ChangeNotifier {
     final target = targets[rnd.nextInt(targets.length)];
     final idx = rnd.nextInt(target.hand.length);
     _spied.putIfAbsent(roller.id, () => {}).add('${target.id}:$idx');
-    setCentralMessage('¡Espía! ${roller.name} ve una carta de ${target.name}');
+    setCentralMessage(TableMessage(TableMessageKind.spy, name: roller.name, target: target.name));
   }
 
   /// 6+1: the roller gets a third private card and keeps the best two.
@@ -693,7 +696,7 @@ class GameProvider extends ChangeNotifier {
     roller.hand = [...roller.hand, extra];
     _diceEventBusy = true;
     SoundService().cardMix();
-    setCentralMessage('¡Carta extra! ${roller.name} se queda con sus dos mejores cartas');
+    setCentralMessage(TableMessage(TableMessageKind.extraCard, name: roller.name));
     Future.delayed(const Duration(milliseconds: 2200), () {
       if (_isExiting || epoch != _epoch || roller.hand.length != 3) {
         _diceEventBusy = false;
@@ -832,9 +835,20 @@ class GameProvider extends ChangeNotifier {
   int resultPayoutOf(String playerId) =>
       _resultPayouts[playerId] ?? (_resultWinnerIds.contains(playerId) ? _resultAmount : 0);
 
-  void _setResult(List<String> winnerIds, String title, int amount) {
+  /// Hand that won the last showdown; null when everyone else folded.
+  HandRank? _resultRank;
+  HandRank? get resultRank => _resultRank;
+
+  /// The last hand was won because everyone else folded.
+  bool get resultByFold => _resultTitle != null && _resultRank == null;
+
+  static const _foldTitle = 'por abandono';
+
+  void _setResult(List<String> winnerIds, HandRank? rank, int amount) {
     _resultWinnerIds = List.unmodifiable(winnerIds);
-    _resultTitle = title;
+    _resultRank = rank;
+    // Spanish title: what v1.1.0 clients show (newer ones use the rank code).
+    _resultTitle = rank == null ? _foldTitle : HandResult(rank: rank, bestHand: const [], power: 0).rankName;
     _resultAmount = amount;
   }
 
@@ -842,6 +856,7 @@ class GameProvider extends ChangeNotifier {
     _resultPayouts = const {};
     _resultWinnerIds = const [];
     _resultTitle = null;
+    _resultRank = null;
     _resultAmount = 0;
   }
   int _flyingPotAmount = 0;
@@ -1405,10 +1420,10 @@ class GameProvider extends ChangeNotifier {
       // The hand is over: no more actions until the next deal.
       _state = _state.copyWith(status: GameStatus.finished, currentPlayerIndex: -1);
 
-      _setResult([winner.id], 'por abandono', totalContribs);
+      _setResult([winner.id], null, totalContribs);
       _resultPayouts = {winner.id: totalContribs};
       SoundService().chipsWin();
-      setCentralMessage('¡${winner.name} gana por abandono!');
+      setCentralMessage(TableMessage(TableMessageKind.winsByFold, name: winner.name));
 
       scheduleNewRound();
 
@@ -1757,17 +1772,17 @@ class GameProvider extends ChangeNotifier {
       }
       _resultPayouts = Map.unmodifiable(won);
       SoundService().chipsWin();
-      _setResult([for (final w in winners) w.id], bestHandResult.rankName, mainShare);
+      _setResult([for (final w in winners) w.id], bestHandResult.rank, mainShare);
       if (winners.length > 1) {
-        setCentralMessage('¡Empate! Bote dividido con ${bestHandResult.rankName}');
+        setCentralMessage(TableMessage(TableMessageKind.splitPot, hand: bestHandResult.rank));
       } else {
         _winnerId = winners.first.id;
         _isPotFlying = true;
-        setCentralMessage('¡${winners.first.name} gana con ${bestHandResult.rankName}!');
+        setCentralMessage(TableMessage(TableMessageKind.winsWith, name: winners.first.name, hand: bestHandResult.rank));
       }
       notifyListeners();
     } else {
-      setCentralMessage('¡Showdown! No hay ganador');
+      setCentralMessage(const TableMessage(TableMessageKind.noWinner));
       notifyListeners();
     }
 
@@ -2269,7 +2284,7 @@ class GameProvider extends ChangeNotifier {
 
 
 
-    setCentralMessage('¡MODO CAOS! Intercambio de cartas');
+    setCentralMessage(const TableMessage(TableMessageKind.chaos));
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -2678,7 +2693,12 @@ class GameProvider extends ChangeNotifier {
       'winningCards': _winningCards?.map((c) => c.toMap()).toList(),
       'result': _resultTitle == null
           ? null
-          : {'winners': _resultWinnerIds, 'title': _resultTitle, 'amount': _resultAmount},
+          : {
+              'winners': _resultWinnerIds,
+              'title': _resultTitle,
+              'rank': _resultRank?.name,
+              'amount': _resultAmount,
+            },
     };
   }
 
@@ -2851,7 +2871,7 @@ class GameProvider extends ChangeNotifier {
     if (result is Map) {
       _setResult(
         [for (final id in (result['winners'] as List? ?? const [])) id.toString()],
-        result['title']?.toString() ?? '',
+        _rankFromWire(result['rank'] as String?, result['title']?.toString()),
         (result['amount'] as num?)?.toInt() ?? 0,
       );
     } else {
@@ -2863,6 +2883,15 @@ class GameProvider extends ChangeNotifier {
       _resultPayouts = {for (final e in payouts.entries) e.key.toString(): (e.value as num).toInt()};
     }
     before.playChanges(this);
+  }
+
+  /// The winning hand from a host snapshot: the code, or (v1.1.0 hosts) the Spanish title.
+  static HandRank? _rankFromWire(String? code, String? title) {
+    final byCode = HandRank.values.where((r) => r.name == code).firstOrNull;
+    if (byCode != null) return byCode;
+    return HandRank.values
+        .where((r) => HandResult(rank: r, bestHand: const [], power: 0).rankName == title)
+        .firstOrNull;
   }
 
   PokerPhase _parsePhase(String? name) {
@@ -3186,7 +3215,7 @@ class GameProvider extends ChangeNotifier {
     _awayGraceUntil = DateTime.now().add(const Duration(seconds: 15));
     if (_gameMode != GameMode.blackjack) _callOffHand();
     _p2pService.startAdvertising(_advertisedMetadata());
-    _showHostNotice('El anfitrión salió: ahora tú tienes la mesa');
+    _showHostNotice(const HostNotice(HostNoticeKind.youAreHost));
     notifyListeners();
     if (!_becameHost.isClosed) _becameHost.add(null);
     AppLogger().event('host_migrated', params: {'game_mode': _gameMode.name});
@@ -3221,8 +3250,8 @@ class GameProvider extends ChangeNotifier {
     scheduleNewRound();
   }
 
-  void _showHostNotice(String text) {
-    _hostNotice = text;
+  void _showHostNotice(HostNotice notice) {
+    _hostNotice = notice;
     _hostNoticeTimer?.cancel();
     _hostNoticeTimer = Timer(const Duration(seconds: 5), () {
       _hostNotice = null;
@@ -3351,3 +3380,23 @@ class _SoundSnapshot {
 
 /// What a Dice Dash roll triggers (see `GameProvider.diceEventFor`).
 enum DiceEvent { none, luckySeven, swap, allIn, spy, extraCard }
+
+/// What a message in the middle of the table says (the screens word it).
+enum TableMessageKind { luckySeven, doubleSix, spy, extraCard, winsByFold, splitPot, winsWith, noWinner, chaos }
+
+class TableMessage {
+  final TableMessageKind kind;
+  final String name;
+  final String target;
+  final HandRank? hand;
+  const TableMessage(this.kind, {this.name = '', this.target = '', this.hand});
+}
+
+/// Network banner: the room is changing hands, or reconnecting.
+enum HostNoticeKind { heirTakingOver, reconnecting, newHost, youAreHost }
+
+class HostNotice {
+  final HostNoticeKind kind;
+  final String name;
+  const HostNotice(this.kind, [this.name = '']);
+}

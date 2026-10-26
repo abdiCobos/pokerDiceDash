@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lan_channel_name">Network game</string>
+    <string name="lan_channel_description">Keeps the game running while you use other apps</string>
+    <string name="lan_notification_default">Network game in progress</string>
+</resources>

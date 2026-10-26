@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/game_provider.dart';
 import 'services/p2p_service.dart';
 import 'services/logger_service.dart';
 import 'services/game_settings.dart';
+import 'l10n/l10n.dart';
 import 'ui/screens/lobby_screen.dart';
 
 void main() async {
@@ -39,8 +41,30 @@ class PokerDiceDashApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Rebuilt when the language is changed in Ajustes.
+    return ListenableBuilder(listenable: GameSettings(), builder: (context, _) => _app());
+  }
+
+  Widget _app() {
+    final language = GameSettings().language;
     return MaterialApp(
       title: 'Poker Dice Dash',
+      locale: language == AppLanguage.system ? null : Locale(language.name),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      localeListResolutionCallback: (locales, supported) => resolveLocale(locales?.firstOrNull),
+      builder: (context, child) {
+        // Texts the network layer shows in Android's "game in progress" notification.
+        final t = context.t;
+        P2PService.roomOpenNotice = t.notifRoomOpen;
+        P2PService.lanActiveNotice = t.notifLanActive;
+        return child!;
+      },
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),

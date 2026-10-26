@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../providers/game_provider.dart';
+import '../../l10n/l10n.dart';
 
 /// LAN poker: the last seconds of a turn ("Te quedan 9 s"), so nobody is surprised when
 /// the host plays for them. Hidden while there is plenty of time.
@@ -62,7 +63,7 @@ class _TurnClockState extends State<TurnClock> {
                 Icon(Icons.timer_outlined, color: Colors.amber, size: 15 * s),
                 SizedBox(width: 6 * s),
                 Text(
-                  mine ? 'Te quedan $left s para jugar' : '${player.name} tiene $left s',
+                  mine ? context.t.turnClockMine('$left') : context.t.turnClockOther(player.name, '$left'),
                   style: TextStyle(color: Colors.white, fontSize: 12 * s, fontWeight: FontWeight.bold),
                 ),
               ],

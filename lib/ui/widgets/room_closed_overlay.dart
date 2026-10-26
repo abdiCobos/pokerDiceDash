@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/l10n.dart';
 
 /// Shown to LAN clients when the host closed the room (or never came back):
 /// the table can no longer continue, so the only action is going back to the menu.
@@ -39,7 +40,7 @@ class RoomClosedOverlay extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onExit,
                 icon: Icon(Icons.home, size: 16 * s),
-                label: Text('Volver al menú', style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
+                label: Text(context.t.backToMenu, style: TextStyle(fontSize: 13 * s, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E7D32),
                   foregroundColor: Colors.white,

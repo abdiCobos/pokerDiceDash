@@ -14,6 +14,7 @@ import '../../services/game_settings.dart';
 import '../widgets/table_options.dart';
 import '../widgets/player_seat_card.dart';
 import 'lobby_screen.dart';
+import '../../l10n/l10n.dart';
 
 class BlackjackTableScreen extends StatefulWidget {
   final bool isMultiplayer;
@@ -79,16 +80,16 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A2E),
-        title: const Text('¿Abandonar partida?', style: TextStyle(color: Colors.amber)),
-        content: const Text('¿Estás seguro que quieres salir de la mesa?', style: TextStyle(color: Colors.white)),
+        title: Text(context.t.leaveGameTitle, style: TextStyle(color: Colors.amber)),
+        content: Text(context.t.leaveTableBody, style: TextStyle(color: Colors.white)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+            child: Text(context.t.cancel, style: TextStyle(color: Colors.white54)),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Salir', style: TextStyle(color: Colors.redAccent)),
+            child: Text(context.t.exit, style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -131,7 +132,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                 final closed = lobby != null && (lobby.roomClosed || (lobby.isConnectionLost && lobby.reconnectGaveUp));
                 if (closed) {
                   return RoomClosedOverlay(
-                    message: lobby.roomClosed ? 'El anfitrión cerró la sala.' : 'Se perdió la conexión con el anfitrión.',
+                    message: lobby.roomClosed ? context.t.roomClosedByHost : context.t.connectionLostHost,
                     scale: _s,
                     onExit: () {
                       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -148,7 +149,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                 return Stack(
                   children: [
                     Positioned.fill(child: _buildLandscapeTable(bj)),
-                    ConnectionBanner(text: notice, warning: lobby!.isConnectionLost, scale: _s),
+                    ConnectionBanner(text: context.t.hostNotice(notice), warning: lobby!.isConnectionLost, scale: _s),
                   ],
                 );
               },
@@ -198,11 +199,11 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Expanded(child: _rulesText('BLACKJACK PAGA 3 A 2', Alignment.centerRight)),
+                      Expanded(child: _rulesText(context.t.rulesPays, Alignment.centerRight)),
                       SizedBox(width: 14 * _s),
                       _buildDealerSection(dealer, bj),
                       SizedBox(width: 14 * _s),
-                      Expanded(child: _rulesText('CRUPIER SE PLANTA EN 17  •  5-CARD CHARLIE', Alignment.centerLeft)),
+                      Expanded(child: _rulesText(context.t.rulesDealer, Alignment.centerLeft)),
                     ],
                   ),
                 ),
@@ -271,7 +272,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                     children: [
                       Icon(Icons.arrow_back, color: Colors.white70, size: 16 * _s),
                       SizedBox(width: 4 * _s),
-                      Text('Salir', style: TextStyle(color: Colors.white70, fontSize: 11 * _s)),
+                      Text(context.t.exit, style: TextStyle(color: Colors.white70, fontSize: 11 * _s)),
                     ],
                   ),
                 ),
@@ -281,7 +282,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               Icon(Icons.style, color: Colors.amber.withValues(alpha: 0.7), size: 16 * _s),
               SizedBox(width: 4 * _s),
               Text(
-                'Mazo: ${bj.deckCount}',
+                context.t.shoeCount('${bj.deckCount}'),
                 style: TextStyle(color: Colors.white70, fontSize: 11 * _s, fontWeight: FontWeight.w500),
               ),
               const Spacer(),
@@ -387,7 +388,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               Icon(Icons.person_pin, color: Colors.redAccent, size: 15 * _s),
               SizedBox(width: 4 * _s),
               Text(
-                'CRUPIER',
+                context.t.dealer,
                 style: TextStyle(
                   color: Colors.redAccent.shade100,
                   fontSize: 11 * _s,
@@ -619,7 +620,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
                   children: [
                     if (player.hands.length > 1)
                       Text(
-                        isActiveHand ? '▶ M${hIdx + 1}' : 'M${hIdx + 1}',
+                        isActiveHand ? '▶ ${context.t.handShort('${hIdx + 1}')}' : context.t.handShort('${hIdx + 1}'),
                         style: TextStyle(
                           color: isActiveHand ? Colors.amber : Colors.white54,
                           fontSize: 9 * _s,
@@ -647,7 +648,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               height: 65 * cardScale,
               alignment: Alignment.center,
               child: Text(
-                player.totalBet > 0 ? 'Listo' : 'Apostando...',
+                player.totalBet > 0 ? context.t.ready : context.t.bettingEllipsis,
                 style: TextStyle(color: Colors.white30, fontSize: 10 * _s),
               ),
             ),
@@ -708,7 +709,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           boxShadow: [BoxShadow(color: bg.withValues(alpha: 0.6), blurRadius: 8 * _s)],
         ),
         child: Text(
-          '$outcome$amount',
+          '${context.t.outcomeLabel(outcome)}$amount',
           style: TextStyle(color: fg, fontSize: 10 * _s, fontWeight: FontWeight.w900, letterSpacing: 0.5),
         ),
       ),
@@ -784,25 +785,24 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     }
 
     // Status message when waiting for others / dealer
-    String statusText = 'Partida en curso...';
+    final t = context.t;
+    String statusText = t.statusInProgress;
     if (bj.phase == BlackjackPhase.dealing) {
-      statusText = 'Repartiendo cartas...';
+      statusText = t.statusDealing;
     } else if (bj.phase == BlackjackPhase.insurance) {
-      statusText = 'El crupier muestra un As... esperando el seguro';
+      statusText = t.statusInsurance;
     } else if (bj.phase == BlackjackPhase.dealerTurn) {
-      statusText = '🎩 Turno del Crupier... jugando mano';
+      statusText = t.statusDealerTurn;
     } else if (bj.phase == BlackjackPhase.playerTurn) {
       final active = bj.activePlayers;
       if (active.isNotEmpty && bj.currentPlayerIndex < active.length) {
         final current = active[bj.currentPlayerIndex];
         statusText = current.isBot
-            ? '🤖 Turno de ${current.name}... pensando jugada'
-            : (bj.awaySeats.contains(current.id)
-                ? '${current.name} se desconectó... se planta en breve'
-                : 'Turno de ${current.name}...');
+            ? t.statusBotTurn(current.name)
+            : (bj.awaySeats.contains(current.id) ? t.statusAway(current.name) : t.statusTurnOf(current.name));
       }
     } else if (bj.phase == BlackjackPhase.betting) {
-      statusText = 'Esperando apuestas de los jugadores...';
+      statusText = t.statusWaitingBets;
     }
 
     return Container(
@@ -842,13 +842,13 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'El crupier muestra un As. ¿Seguro por \$$cost?',
+                context.t.insuranceOffer('$cost'),
                 style: TextStyle(color: Colors.white, fontSize: 13 * _s, fontWeight: FontWeight.bold),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                'Si tiene blackjack, el seguro paga 2 a 1 y recuperas tu apuesta.',
+                context.t.insuranceExplain,
                 style: TextStyle(color: Colors.white60, fontSize: 10 * _s),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -879,7 +879,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
             side: const BorderSide(color: Colors.white38),
             padding: EdgeInsets.symmetric(horizontal: 14 * _s, vertical: 10 * _s),
           ),
-          child: Text('No, gracias', style: TextStyle(fontSize: 12 * _s, fontWeight: FontWeight.bold)),
+          child: Text(context.t.noThanks, style: TextStyle(fontSize: 12 * _s, fontWeight: FontWeight.bold)),
         ),
         SizedBox(width: 8 * _s),
         ElevatedButton(
@@ -889,7 +889,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
             foregroundColor: Colors.white,
             padding: EdgeInsets.symmetric(horizontal: 16 * _s, vertical: 10 * _s),
           ),
-          child: Text('Asegurar \$$cost', style: TextStyle(fontSize: 12 * _s, fontWeight: FontWeight.bold)),
+          child: Text(context.t.insure('$cost'), style: TextStyle(fontSize: 12 * _s, fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -941,7 +941,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
           child: Row(
             children: [
               Text(
-                'APUESTA:',
+                context.t.betLabel,
                 style: TextStyle(color: Colors.amber, fontSize: 11 * _s, fontWeight: FontWeight.bold),
               ),
               SizedBox(width: 6 * _s),
@@ -985,7 +985,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
             elevation: 4,
           ),
           child: Text(
-            'APOSTAR',
+            context.t.placeBet,
             style: TextStyle(fontSize: 13 * _s, fontWeight: FontWeight.bold, letterSpacing: 1.0),
           ),
         ),
@@ -1005,7 +1005,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       children: [
         // Pedir (Hit)
         _actionButton(
-          label: 'PEDIR',
+          label: context.t.hit,
           icon: Icons.add_card,
           color: Colors.green.shade700,
           onTap: () => bj.hit(player.id),
@@ -1014,7 +1014,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
 
         // Plantar (Stand)
         _actionButton(
-          label: 'PLANTAR',
+          label: context.t.stand,
           icon: Icons.pan_tool,
           color: Colors.red.shade700,
           onTap: () => bj.stand(player.id),
@@ -1024,7 +1024,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         if (canDouble) ...[
           SizedBox(width: 10 * _s),
           _actionButton(
-            label: 'DOBLAR',
+            label: context.t.double,
             icon: Icons.double_arrow,
             color: Colors.orange.shade700,
             onTap: () => bj.doubleDown(player.id),
@@ -1035,7 +1035,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         if (canSplit) ...[
           SizedBox(width: 10 * _s),
           _actionButton(
-            label: 'DIVIDIR',
+            label: context.t.split,
             icon: Icons.call_split,
             color: Colors.blue.shade700,
             onTap: () => bj.splitPair(player.id),
@@ -1088,27 +1088,26 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
   String _localResultText(BlackjackProvider bj) {
     final id = bj.localPlayer.id;
     final net = bj.roundNet[id];
+    final t = context.t;
     switch (bj.roundOutcome[id]) {
       case 'BLACKJACK':
-        return '¡Blackjack! Ganas +$net';
+        return t.bjYouBlackjack('$net');
       case 'CHARLIE':
-        return '¡5-Card Charlie! Ganas +$net';
+        return t.bjYouCharlie('$net');
       case 'GANA':
-        return '¡Ganaste +$net!';
+        return t.bjYouWin('$net');
       case 'EMPATE':
-        return 'Empate: recuperas tu apuesta';
+        return t.bjYouPush;
       case 'SEGURO':
-        return net == 0
-            ? 'Blackjack del crupier: el seguro te cubrió'
-            : 'Blackjack del crupier: el seguro te cubrió ($net)';
+        return net == 0 ? t.bjYouInsured : t.bjYouInsuredNet('$net');
       case 'BUST':
-        return 'Te pasaste de 21 ($net)';
+        return t.bjYouBust('$net');
       case 'PIERDE':
         // A dealer natural ends the round at once: say why nobody was asked to play.
         final dealerNatural = bj.dealer?.hands.firstOrNull?.isNatural ?? false;
-        return dealerNatural ? '¡Blackjack del crupier! ($net)' : 'Gana el crupier ($net)';
+        return dealerNatural ? t.bjDealerBlackjack('$net') : t.bjDealerWins('$net');
       default:
-        return 'Ronda finalizada';
+        return t.bjRoundOver;
     }
   }
 
@@ -1140,12 +1139,12 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         SizedBox(width: 16 * _s),
         // Nueva Ronda Button (the host deals; clients wait for it)
         if (bj.isClient)
-          Text('El anfitrión reparte en breve...', style: TextStyle(color: Colors.white70, fontSize: 11 * _s))
+          Text(context.t.hostDealsSoon, style: TextStyle(color: Colors.white70, fontSize: 11 * _s))
         else
         ElevatedButton.icon(
           onPressed: () => _onNewRound(bj),
           icon: Icon(Icons.replay, size: 18 * _s),
-          label: Text('Nueva Ronda', style: TextStyle(fontSize: 13 * _s, fontWeight: FontWeight.bold)),
+          label: Text(context.t.newRound, style: TextStyle(fontSize: 13 * _s, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green.shade700,
             foregroundColor: Colors.white,
@@ -1166,7 +1165,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       children: [
         Icon(Icons.people, size: 40 * _s, color: Colors.white24),
         SizedBox(height: 6 * _s),
-        Text('Esperando jugadores... (${bj.activePlayers.length})',
+        Text(context.t.waitingPlayersCount('${bj.activePlayers.length}'),
             style: TextStyle(color: Colors.white70, fontSize: 14 * _s)),
         if (widget.isHost)
           Padding(
@@ -1181,7 +1180,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
               backgroundColor: Colors.amber,
               padding: EdgeInsets.symmetric(horizontal: 28 * _s, vertical: 10 * _s),
             ),
-            child: Text('Iniciar Partida',
+            child: Text(context.t.startGame,
                 style: TextStyle(fontSize: 14 * _s, color: Colors.black, fontWeight: FontWeight.bold)),
           ),
       ],

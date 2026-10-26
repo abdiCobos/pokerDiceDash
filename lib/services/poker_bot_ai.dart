@@ -6,13 +6,6 @@ import '../models/hand_evaluator.dart';
 /// How well the bots play. Chosen by the player (Ajustes / table setup).
 enum BotDifficulty { easy, normal, hard }
 
-extension BotDifficultyLabel on BotDifficulty {
-  String get label => switch (this) {
-        BotDifficulty.easy => 'Fácil',
-        BotDifficulty.normal => 'Normal',
-        BotDifficulty.hard => 'Difícil',
-      };
-}
 
 /// Playing style. Each bot gets one so the table does not feel like clones.
 class BotPersonality {

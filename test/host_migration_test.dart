@@ -114,7 +114,7 @@ void main() {
 
     ana.exitGame();
     await waitFor(() => luis.isHost, reason: 'Luis inherits the room');
-    expect(luis.connectionNotice, contains('tú tienes la mesa'));
+    expect(luis.connectionNotice?.kind, HostNoticeKind.youAreHost);
     expect(_chipsAndPot(luis), total, reason: 'the bets of the called-off hand went back to their owners');
     await waitFor(() => !carla.isConnectionLost, reason: 'Carla reconnects to Luis');
     expect(carla.localPlayerId, carlaSeat, reason: 'Carla keeps her seat');

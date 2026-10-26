@@ -28,7 +28,7 @@ class KeepAliveService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val text = intent?.getStringExtra(EXTRA_TEXT) ?: "Partida en red activa"
+        val text = intent?.getStringExtra(EXTRA_TEXT) ?: getString(R.string.lan_notification_default)
         val notification = buildNotification(text)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
@@ -53,8 +53,8 @@ class KeepAliveService : Service() {
     private fun buildNotification(text: String): Notification {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, "Partida en red", NotificationManager.IMPORTANCE_LOW)
-            channel.description = "Mantiene la partida activa mientras usas otras apps"
+            val channel = NotificationChannel(CHANNEL_ID, getString(R.string.lan_channel_name), NotificationManager.IMPORTANCE_LOW)
+            channel.description = getString(R.string.lan_channel_description)
             channel.setShowBadge(false)
             manager.createNotificationChannel(channel)
         }

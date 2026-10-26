@@ -68,6 +68,10 @@ class P2PService {
 
   P2PService();
 
+  /// Android notification texts, in the player's language (set by the app).
+  static String roomOpenNotice = 'Tu sala está abierta: la partida sigue aunque uses otras apps';
+  static String lanActiveNotice = 'Partida en red activa';
+
   /// Port this device opens when it hosts a room (also the one announced to other players
   /// in case it inherits a room). Tests give each simulated device its own.
   int preferredPort = RoomAddress.defaultPort;
@@ -191,7 +195,7 @@ class P2PService {
         }
         _serverSocket = server;
         AppLogger().log('P2P: Servidor escuchando en puerto ${server.port}');
-        BackgroundKeeper.start('Tu sala está abierta: la partida sigue aunque uses otras apps');
+        BackgroundKeeper.start(roomOpenNotice);
 
         server.listen(
           (Socket clientSocket) {
@@ -367,7 +371,7 @@ class P2PService {
       lastPort = port;
       _registerSocket(endpointId, socket);
       AppLogger().log('P2P: Conectado exitosamente a $endpointId');
-      BackgroundKeeper.start('Partida en red activa');
+      BackgroundKeeper.start(lanActiveNotice);
       return true;
     } catch (e) {
       AppLogger().log('P2P: Error de conexión a $endpointId: $e');

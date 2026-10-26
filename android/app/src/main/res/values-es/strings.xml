@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lan_channel_name">Partida en red</string>
+    <string name="lan_channel_description">Mantiene la partida activa mientras usas otras apps</string>
+    <string name="lan_notification_default">Partida en red activa</string>
+</resources>

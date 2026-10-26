@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:poker_dice_dash/l10n/app_localizations.dart';
 import 'package:poker_dice_dash/models/game_state.dart';
 import 'package:poker_dice_dash/providers/game_provider.dart';
 import 'package:poker_dice_dash/services/p2p_service.dart';
@@ -30,7 +31,11 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(ChangeNotifierProvider.value(
       value: game,
-      child: const MaterialApp(home: GameTableScreen()),
+      child: const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: GameTableScreen(),
+      ),
     ));
 
     // Wait for the blinds to be on the table.
