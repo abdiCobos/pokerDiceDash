@@ -8,7 +8,7 @@ import 'sound_service.dart';
 /// Where the tables and the menu are set: the plain green felt of the first version, or a
 /// pixel-art scene (assets/images/cantina).
 /// Names and descriptions are in the translations (AppTexts.themeName).
-enum TableTheme { clasico, cantina, garito }
+enum TableTheme { clasico, cantina, garito, casino }
 
 /// Language of the game: the device's (Spanish or English), or one picked in Ajustes.
 enum AppLanguage { system, es, en }

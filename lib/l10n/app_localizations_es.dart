@@ -233,6 +233,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get themeGaritoDesc => 'Mafia y dinero sucio';
 
   @override
+  String get themeCasino => 'Casino de lujo';
+
+  @override
+  String get themeCasinoDesc => 'Candelabros y neón';
+
+  @override
   String get updateTitle => 'Hay una versión nueva';
 
   @override

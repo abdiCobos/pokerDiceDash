@@ -35,12 +35,14 @@ extension AppTexts on AppLocalizations {
         TableTheme.clasico => themeClasico,
         TableTheme.cantina => themeCantina,
         TableTheme.garito => themeGarito,
+        TableTheme.casino => themeCasino,
       };
 
   String themeDescription(TableTheme theme) => switch (theme) {
         TableTheme.clasico => themeClasicoDesc,
         TableTheme.cantina => themeCantinaDesc,
         TableTheme.garito => themeGaritoDesc,
+        TableTheme.casino => themeCasinoDesc,
       };
 
   String difficultyName(BotDifficulty d) => switch (d) {

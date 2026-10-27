@@ -1,6 +1,6 @@
 Poker Dice Dash is a pocket casino: poker with dice, classic Texas Hold'em and Blackjack in one app. Play alone against bots or with friends on the same Wi-Fi network, with no accounts, no ads and no internet needed.
 
-Pick the scene: a classic green table, a Mexican cantina or an underground den, all in pixel art.
+Pick the scene: a classic green table, a Mexican cantina, an underground den or a luxury casino, all in pixel art.
 
 <b>Dice Dash: poker with dice</b>
 Before every move you roll two dice, and some rolls shake up the hand:

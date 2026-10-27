@@ -78,5 +78,8 @@ class TableFeltStyle {
         // Worn, darker felt under a single bulb; black-lacquered rail.
         TableTheme.garito => const TableFeltStyle(
             [Color(0xFF2A7A4E), Color(0xFF1B5A39), Color(0xFF0F3A25)], Color(0xFF1C130E), Color(0xFF0B0705)),
+        // Wine-red felt on a mahogany rail with a gold edge.
+        TableTheme.casino => const TableFeltStyle(
+            [Color(0xFF9A2234), Color(0xFF761828), Color(0xFF4E0E1A)], Color(0xFF3A170F), Color(0xFFB8892E)),
       };
 }

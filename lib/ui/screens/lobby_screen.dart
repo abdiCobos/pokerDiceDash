@@ -1089,25 +1089,28 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 child: Text(context.t.scene, style: TextStyle(color: Colors.white, fontSize: 15 * s)),
               ),
               SizedBox(height: 8 * s),
-              // Same height for every card, even when a name fits on one line.
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final t in TableTheme.values) ...[
-                      if (t != TableTheme.values.first) SizedBox(width: 10 * s),
-                      Expanded(
-                        child: _ThemeCard(
-                          theme: t,
-                          selected: t == theme,
-                          scale: s,
-                          onTap: () => setLocal(() => theme = t),
+              // Two per row so the names fit; same height for every card in a row.
+              for (var i = 0; i < TableTheme.values.length; i += 2) ...[
+                if (i > 0) SizedBox(height: 10 * s),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final t in TableTheme.values.skip(i).take(2)) ...[
+                        if (t != TableTheme.values[i]) SizedBox(width: 10 * s),
+                        Expanded(
+                          child: _ThemeCard(
+                            theme: t,
+                            selected: t == theme,
+                            scale: s,
+                            onTap: () => setLocal(() => theme = t),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ];
             final languagePicker = <Widget>[
               SizedBox(height: 10 * s),
@@ -1400,6 +1403,7 @@ class _ThemeCard extends StatelessWidget {
             Stack(
               children: [
                 SizedBox(
+                  width: double.infinity,
                   height: 50 * s,
                   child: theme == TableTheme.clasico
                       ? DecoratedBox(

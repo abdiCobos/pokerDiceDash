@@ -518,6 +518,18 @@ abstract class AppLocalizations {
   /// **'Mafia y dinero sucio'**
   String get themeGaritoDesc;
 
+  /// No description provided for @themeCasino.
+  ///
+  /// In es, this message translates to:
+  /// **'Casino de lujo'**
+  String get themeCasino;
+
+  /// No description provided for @themeCasinoDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Candelabros y neón'**
+  String get themeCasinoDesc;
+
   /// No description provided for @updateTitle.
   ///
   /// In es, this message translates to:

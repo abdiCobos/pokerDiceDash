@@ -109,12 +109,13 @@ The look is a dark, warm casino: green felt, wooden rail, gold trim, amber for
 
 ## Scene backgrounds (themes)
 - Menu and tables sit on `SceneBackground` (lib/ui/widgets/scene_background.dart), which follows
-  `GameSettings().theme` (`TableTheme`: `cantina`, `garito`; chosen in Ajustes, saved as `table_theme`).
+  `GameSettings().theme` (`TableTheme`: `clasico` (plain green, no picture), `cantina`, `garito`, `casino`; chosen in Ajustes, saved as `table_theme`).
 - Every theme has three pixel-art PNGs in assets/images/cantina/, drawn by `tool/pixelart/cantina.py`
   (no external art): `<theme>_bg.png` 444x200 (phones ~20:9), `<theme>_bg_16x9.png` 356x200 (PC),
   `<theme>_menu.png` 200x444 (portrait menu). Shown with `FilterQuality.none`. Edit the script and run it
   (all scenes); never hand-edit PNGs. test/table_theme_test.dart checks every file exists.
-- Felt and rail per theme: `TableFeltStyle.of(theme)`.
+- Felt and rail per theme: `TableFeltStyle.of(theme)` (casino: wine-red felt, gold rail edge).
+- Ajustes shows the theme cards two per row (four in one row cut the names).
 - Adding a theme: new enum value (label + description), a table and a menu scene in the script, a
   `TableFeltStyle`. Keep detail OUTSIDE the table oval (x 10-90 %, y 20-85 %); right-hand objects use `R(x)`.
 - Controls over a scene need a dark backdrop (black54 disc / pill) to stay readable.

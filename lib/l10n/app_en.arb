@@ -70,6 +70,8 @@
   "themeCantinaDesc": "Papel picado and tequila",
   "themeGarito": "Underground den",
   "themeGaritoDesc": "Mob money and danger",
+  "themeCasino": "Luxury casino",
+  "themeCasinoDesc": "Chandeliers and neon",
   "updateTitle": "A new version is out",
   "updateBody": "Version {newVersion} is out (you have {current}). Download it from GitHub and install it over this one: you keep your chips and settings.\n\nTo play together, everyone needs the same version.",
   "notNow": "Not now",

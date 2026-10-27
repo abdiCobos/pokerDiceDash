@@ -1,4 +1,4 @@
-"""Pixel-art backgrounds (Mexican cantina, back room of a mob house) (no external art, no licences).
+"""Pixel-art backgrounds (Mexican cantina, back room of a mob house, luxury casino) (no external art, no licences).
 
 Drawn pixel by pixel at low resolution with a fixed palette, then shown by Flutter with
 nearest-neighbour scaling (FilterQuality.none) so they stay crisp on any screen.
@@ -1073,6 +1073,332 @@ def garito_menu_scene():
     dark_vignette(strength=0.16, start=0.62)
 
 
+# === casino: a luxury Las Vegas floor, red carpet, chandeliers, slot machines and neon ===========
+P.update({
+    'cw_dd': (30, 6, 12), 'cw_d': (52, 10, 20), 'cw': (80, 15, 30), 'cw_l': (110, 24, 40),
+    'cw_h': (144, 40, 52), 'cw_hh': (178, 66, 66),
+    'au_dd': (70, 46, 14), 'au_d': (112, 80, 24), 'au': (168, 124, 40), 'au_l': (220, 176, 72), 'au_h': (252, 226, 146),
+    'cc_d': (18, 9, 12), 'cc': (32, 16, 22), 'cc_l': (50, 26, 32),
+    'cp_dd': (44, 6, 12), 'cp_d': (72, 10, 20), 'cp': (106, 18, 28), 'cp_l': (140, 30, 38),
+    'navy': (26, 30, 74), 'navy_l': (48, 58, 120),
+    'mah_d': (34, 14, 10), 'mah': (58, 24, 16), 'mah_l': (84, 38, 24),
+    'chrome_d': (54, 56, 66), 'chrome': (110, 114, 128), 'chrome_l': (176, 182, 194), 'chrome_h': (228, 232, 238),
+    'scr': (244, 238, 220), 'scr_d': (190, 182, 160),
+    'neon_p': (255, 64, 170), 'neon_c': (64, 226, 255), 'neon_y': (255, 214, 64), 'neon_g': (90, 255, 140),
+    'cr': (186, 214, 236), 'cr_l': (238, 248, 255),
+})
+CW_BANDS = ['cw_dd', 'cw_d', 'cw', 'cw_l', 'cw_h', 'cw_hh']
+CARPET_BANDS = ['cp_dd', 'cp_d', 'cp', 'cp_l']
+MAH_BANDS = ['mah_d', 'mah_d', 'mah', 'mah_l']
+
+FONT = {  # 3x5 neon letters
+    'C': ['XXX', 'X..', 'X..', 'X..', 'XXX'], 'A': ['.X.', 'X.X', 'XXX', 'X.X', 'X.X'],
+    'S': ['XXX', 'X..', 'XXX', '..X', 'XXX'], 'I': ['XXX', '.X.', '.X.', '.X.', 'XXX'],
+    'N': ['X.X', 'XXX', 'XXX', 'XXX', 'X.X'], 'O': ['XXX', 'X.X', 'X.X', 'X.X', 'XXX'],
+    'L': ['X..', 'X..', 'X..', 'X..', 'XXX'], 'T': ['XXX', '.X.', '.X.', '.X.', '.X.'],
+    '7': ['XXX', '..X', '.X.', '.X.', '.X.'], 'B': ['XX.', 'X.X', 'XX.', 'X.X', 'XX.'],
+    'R': ['XX.', 'X.X', 'XX.', 'X.X', 'X.X'], ' ': ['...'] * 5,
+}
+SUITS = {
+    'heart': ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
+    'spade': ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', 'XXXXXXX', '...X...', '..XXX..'],
+    'diamond': ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
+    'club': ['..XXX..', '..XXX..', 'XX.X.XX', 'XXXXXXX', 'XX.X.XX', '...X...', '..XXX..'],
+}
+
+
+def glow(cells, color, radius=2, amount=0.3):
+    """Soft halo around lit pixels (neon, bulbs)."""
+    done = set(cells)
+    for (x, y) in cells:
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                q = (x + dx, y + dy)
+                if q in done or not (0 <= q[0] < W and 0 <= q[1] < H):
+                    continue
+                d = math.hypot(dx, dy)
+                if d <= radius and dither(q[0], q[1], (1 - d / (radius + 0.5)) * 0.9):
+                    put(q[0], q[1], mix(px[q[0], q[1]], color, amount))
+                    done.add(q)
+
+
+def neon_text(text, x0, y0, color, scale=1, spacing=1):
+    """Neon letters: a hot white core on the tube colour, with a halo."""
+    cells = []
+    x = x0
+    for ch in text:
+        g = FONT[ch]
+        for gy, row in enumerate(g):
+            for gx, v in enumerate(row):
+                if v == 'X':
+                    for sy in range(scale):
+                        for sx in range(scale):
+                            cells.append((x + gx * scale + sx, y0 + gy * scale + sy))
+        x += (len(g[0]) + spacing) * scale
+    glow(cells, color, radius=3, amount=0.32)
+    for i, (cx, cy) in enumerate(cells):
+        put(cx, cy, mix(color, 'cr_l', 0.45) if (cx + cy) % 3 else color)
+    return x - spacing * scale
+
+
+def neon_suit(name, x0, y0, color, scale=2):
+    """Neon outline of a card suit."""
+    g = SUITS[name]
+    inside = set()
+    for gy, row in enumerate(g):
+        for gx, v in enumerate(row):
+            if v == 'X':
+                for sy in range(scale):
+                    for sx in range(scale):
+                        inside.add((x0 + gx * scale + sx, y0 + gy * scale + sy))
+    edge = [p for p in inside if any((p[0] + dx, p[1] + dy) not in inside for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+    glow(edge, color, radius=3, amount=0.3)
+    for p in inside:
+        put(p[0], p[1], mix(px[p[0], p[1]], color, 0.16))
+    for p in edge:
+        put(p[0], p[1], mix(color, 'cr_l', 0.35))
+
+
+def neon_frame(x0, y0, x1, y1, color):
+    cells = [(x, y0) for x in range(x0, x1)] + [(x, y1) for x in range(x0, x1)]
+    cells += [(x0, y) for y in range(y0, y1 + 1)] + [(x1 - 1, y) for y in range(y0, y1 + 1)]
+    glow(cells, color, radius=2, amount=0.28)
+    for p in cells:
+        put(p[0], p[1], color)
+
+
+def coffered_ceiling(ceil, lamps):
+    """Dark lacquered ceiling in square coffers with gold mouldings."""
+    for y in range(ceil):
+        for x in range(W):
+            lit = light_at(x, y + 12, lamps)
+            c = banded(['cc_d', 'cc', 'cc_l'], lit * 0.9 + 0.1, x, y)
+            if x % 26 in (0, 1) or y % 9 == 0:
+                c = banded(['au_dd', 'au_d', 'au'], lit + 0.2, x, y)
+            put(x, y, c)
+    rect(0, ceil - 2, W, ceil - 1, 'au_l')
+    rect(0, ceil - 1, W, ceil, 'au_d')
+
+
+def damask_wall(y0, y1, lamps, base=0.22):
+    """Deep red silk wallpaper with a gold damask motif, lit in bands by the chandeliers."""
+    for y in range(y0, y1):
+        for x in range(W):
+            lit = light_at(x, y, lamps) + base - 0.16 * (y - y0) / max(1, y1 - y0)
+            c = banded(CW_BANDS, lit, x, y)
+            gx, gy = x % 14, (y - y0) % 18
+            if (gy // 9) % 2:
+                gx = (gx + 7) % 14
+            dx, dy = abs(gx - 7), abs(gy % 9 - 4)
+            if dx + dy == 3 or (dx == 0 and dy <= 1) or (dy == 0 and dx == 5):
+                c = mix(c, 'au_d', 0.45)
+            put(x, y, c)
+
+
+def gold_column(x0, w, y0, y1, lamps):
+    """Fluted gold pilaster with a capital and a base."""
+    shades = ['au_dd', 'au_d', 'au', 'au_l', 'au_h', 'au_l', 'au', 'au_d', 'au_dd']
+    for y in range(y0, y1):
+        lit = light_at(x0 + w // 2, y, lamps)
+        for i in range(w):
+            k = int(i * len(shades) / w)
+            c = shades[k]
+            if i % 3 == 2 and 2 < i < w - 2:
+                c = 'au_dd'  # flute
+            put(x0 + i, y, mix(c, 'void', max(0.0, 0.45 - lit * 0.6)))
+    for k, (dx, h) in enumerate(((2, 2), (1, 2), (0, 2))):
+        rect(x0 - dx, y0 - 2 * (k + 1), x0 + w + dx, y0 - 2 * k, 'au_l' if k == 1 else 'au')
+    rect(x0 - 2, y1, x0 + w + 2, y1 + 3, 'au')
+    rect(x0 - 2, y1, x0 + w + 2, y1 + 1, 'au_l')
+
+
+def chandelier(cx, cy, ceil, r):
+    """Gold frame with candle bulbs and strands of crystal drops."""
+    for y in range(ceil, cy - 2):
+        put(cx, y, 'au' if y % 2 else 'au_d')
+    lit = []
+    rect(cx - r, cy, cx + r + 1, cy + 2, 'au')
+    rect(cx - r, cy, cx + r + 1, cy + 1, 'au_l')
+    for dx in range(-r, r + 1, max(2, r // 3)):  # arms curving up to the candles
+        ty = cy - 3 - (r - abs(dx)) // 4
+        for y in range(ty, cy):
+            put(cx + dx, y, 'au_d')
+        put(cx + dx, ty - 1, 'glow2')
+        put(cx + dx, ty - 2, 'bulb')
+        lit += [(cx + dx, ty - 1), (cx + dx, ty - 2)]
+    for dx in range(-r + 1, r, 2):  # crystal strands, longest in the middle
+        length = 3 + (r - abs(dx)) // 2
+        for y in range(cy + 2, cy + 2 + length):
+            put(cx + dx, y, 'cr_l' if (y + dx) % 3 == 0 else 'cr')
+        lit.append((cx + dx, cy + 1 + length))
+    rect(cx - 1, cy + 3 + r // 2, cx + 2, cy + 6 + r // 2, 'au')
+    glow(lit, 'glow2', radius=3, amount=0.35)
+    for p in lit:
+        put(p[0], p[1], 'bulb_c')
+
+
+def slot_machine(x0, yb, w, h, accent, symbol='7'):
+    """Upright slot machine: lit topper, three reels, buttons, a lever on the right."""
+    top = yb - h
+    # topper with chasing bulbs
+    rect(x0 + 1, top - 7, x0 + w - 1, top, accent)
+    rect(x0 + 2, top - 6, x0 + w - 2, top - 1, mix(accent, 'cr_l', 0.35))
+    for i in range(x0 + 1, x0 + w - 1, 2):
+        put(i, top - 7, 'neon_y')
+        put(i + 1, top - 1, 'bulb_c')
+    glow([(i, top - 4) for i in range(x0 + 2, x0 + w - 2)], accent, radius=3, amount=0.25)
+    # chrome cabinet
+    for y in range(top, yb):
+        for x in range(x0, x0 + w):
+            c = 'chrome'
+            if x == x0:
+                c = 'chrome_l'
+            elif x == x0 + w - 1:
+                c = 'chrome_d'
+            put(x, y, c)
+    rect(x0 + 1, top, x0 + w - 1, top + 1, 'chrome_h')
+    # reel window
+    sy0, sy1 = top + 4, top + 15
+    rect(x0 + 2, sy0 - 1, x0 + w - 2, sy1 + 1, 'black')
+    rect(x0 + 3, sy0, x0 + w - 3, sy1, 'scr')
+    reel_w = (w - 6) // 3
+    for k in range(3):
+        rx = x0 + 3 + k * reel_w
+        if k:
+            rect(rx, sy0, rx + 1, sy1, 'scr_d')
+        g = FONT[symbol]
+        ox = rx + (reel_w - 3) // 2 + (1 if k else 0)
+        for gy, row in enumerate(g):
+            for gx, v in enumerate(row):
+                if v == 'X':
+                    put(ox + gx, sy0 + 3 + gy, 'red')
+    rect(x0 + 3, sy0 + 5, x0 + w - 3, sy0 + 6, mix('scr', 'red', 0.25))  # pay line
+    # button deck and coin tray
+    rect(x0 + 1, sy1 + 3, x0 + w - 1, sy1 + 6, 'chrome_d')
+    for i, c in enumerate(('red_l', 'neon_y', 'neon_g')):
+        put(x0 + 3 + i * 4, sy1 + 4, c)
+        put(x0 + 4 + i * 4, sy1 + 4, c)
+    rect(x0 + 3, yb - 9, x0 + w - 3, yb - 6, 'black')
+    rect(x0 + 4, yb - 7, x0 + w - 4, yb - 6, 'au')  # coins in the tray
+    rect(x0, yb - 2, x0 + w, yb, 'chrome_d')
+    # lever
+    for y in range(top + 6, top + 18):
+        put(x0 + w, y, 'chrome_l')
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            put(x0 + w + dx, top + 5 + dy, 'red' if dx or dy else 'red_l')
+
+
+def mahogany_wainscot(y0, y1, lamps):
+    for y in range(y0, y1):
+        for x in range(W):
+            lit = light_at(x, y, lamps) * 0.7 + 0.1
+            c = banded(MAH_BANDS, lit, x, y)
+            gx = x % 24
+            if gx in (2, 21) and y0 + 5 < y < y1 - 4 or y in (y0 + 5, y1 - 4) and 2 <= gx <= 21:
+                c = 'au_d'
+            put(x, y, c)
+    rect(0, y0, W, y0 + 1, 'au_l')
+    rect(0, y0 + 1, W, y0 + 2, 'au_d')
+    rect(0, y1 - 1, W, y1, 'au_d')
+
+
+def casino_carpet(y0, lamps):
+    """The famous casino carpet: red with a gold lattice and navy medallions (rows grow a
+    little towards the viewer)."""
+    rect(0, y0 - 1, W, y0, 'black')
+    v = 0.0
+    for y in range(y0, H):
+        tile_h = 7 + (y - y0) * 0.12
+        fv = (v % 1.0) * 10
+        v += 1 / tile_h
+        row = int(v)
+        for x in range(W):
+            fu = ((x + (6 if row % 2 else 0)) % 12)
+            lit = light_at(x, y - 60, lamps) * 0.55 + 0.4
+            c = banded(CARPET_BANDS, lit, x, y)
+            dd = abs(fu - 6) / 6 + abs(fv - 5) / 5
+            if 0.86 < dd < 1.06:
+                c = mix(c, 'au_l', 0.5)
+            elif dd < 0.3:
+                c = mix(c, 'navy_l', 0.65)
+            elif dd < 0.45:
+                c = mix(c, 'navy', 0.55)
+            put(x, y, c)
+
+
+def velvet_rope(xa, xb, yb, sag=4):
+    """Two gold stanchions with a red velvet rope."""
+    for x in (xa, xb):
+        rect(x, yb - 13, x + 2, yb, 'au')
+        put(x, yb - 13, 'au_h')
+        rect(x - 1, yb - 15, x + 3, yb - 13, 'au_l')
+        rect(x - 2, yb - 1, x + 4, yb + 1, 'au_d')
+    for x in range(xa + 2, xb):
+        t = (x - xa) / max(1, xb - xa)
+        y = yb - 13 + int(sag * 4 * t * (1 - t))
+        put(x, y, 'red_l')
+        put(x, y + 1, 'red')
+        put(x, y + 2, 'red_d')
+
+
+def casino_table_scene(width):
+    begin(width, 200, 61)
+    ceil, rail, flr = 16, 136, 166
+    lamps = [(W // 2, 30, 200, 0.72), (int(W * 0.24), 26, 120, 0.6), (R(int(W * 0.24)), 26, 120, 0.6)]
+    coffered_ceiling(ceil, lamps)
+    damask_wall(ceil, rail, lamps)
+    mahogany_wainscot(rail, flr, lamps)
+    casino_carpet(flr, lamps)
+    # gold columns framing the room, just inside the slot machines
+    gold_column(44, 8, ceil + 6, rail - 3, lamps)
+    gold_column(R(52), 8, ceil + 6, rail - 3, lamps)
+    # left: a bank of slot machines under a SLOTS sign
+    neon_text('SLOTS', 6, 26, 'neon_c')
+    slot_machine(3, flr + 2, 18, 46, 'neon_p')
+    slot_machine(22, flr + 2, 18, 46, 'neon_c')
+    # right: more slots under a 777 sign
+    neon_text('777', R(32), 26, 'neon_p')
+    slot_machine(R(40), flr + 2, 18, 46, 'neon_y')
+    slot_machine(R(21), flr + 2, 18, 46, 'neon_p')
+    # top band: neon suits between the chandeliers (kept above y 31, where Blackjack prints its rules)
+    neon_suit('heart', int(W * 0.34) - 7, 18, 'neon_p', 1)
+    neon_suit('spade', int(W * 0.40) - 7, 18, 'neon_c', 1)
+    neon_suit('diamond', R(int(W * 0.40)), 18, 'neon_p', 1)
+    neon_suit('club', R(int(W * 0.34)), 18, 'neon_c', 1)
+    for lx, ly, *_ in lamps:
+        chandelier(lx, ly, ceil, 11 if lx == W // 2 else 7)
+    velvet_rope(58, 96, H - 6)
+    velvet_rope(R(98), R(60), H - 6)
+    dark_vignette(strength=0.12, start=0.65)
+
+
+def casino_menu_scene():
+    begin(200, 444, 63)
+    ceil, rail, flr = 16, 350, 392
+    lamps = [(W // 2, 44, 240, 0.72), (24, 40, 100, 0.55), (R(24), 40, 100, 0.55), (W // 2, 470, 140, 0.5)]
+    coffered_ceiling(ceil, lamps)
+    damask_wall(ceil, rail, lamps)
+    mahogany_wainscot(rail, flr, lamps)
+    gold_column(2, 9, ceil + 6, rail - 3, lamps)
+    gold_column(R(11), 9, ceil + 6, rail - 3, lamps)
+    chandelier(W // 2, 44, ceil, 16)
+    chandelier(30, 36, ceil, 7)
+    chandelier(R(30), 36, ceil, 7)
+    # beside the logo: neon suits
+    neon_suit('heart', 16, 104, 'neon_p', 2)
+    neon_suit('spade', R(30), 104, 'neon_c', 2)
+    neon_suit('diamond', 18, 140, 'neon_c', 1)
+    neon_suit('club', R(26), 140, 'neon_p', 1)
+    # the casino floor at the bottom: a row of slot machines behind the lower buttons
+    casino_carpet(flr, lamps)
+    for i, accent in enumerate(('neon_c', 'neon_p', 'neon_y', 'neon_c', 'neon_p', 'neon_y', 'neon_c', 'neon_p', 'neon_y', 'neon_c')):
+        slot_machine(4 + i * 20, flr + 4, 18, 44, accent)
+    velvet_rope(20, 70, H - 8)
+    velvet_rope(R(72), R(22), H - 8)
+    dark_vignette(strength=0.12, start=0.66)
+
+
 SCENES = {
     'cantina_bg.png': lambda: table_scene(444),
     'cantina_bg_16x9.png': lambda: table_scene(356),
@@ -1080,6 +1406,9 @@ SCENES = {
     'garito_bg.png': lambda: garito_table_scene(444),
     'garito_bg_16x9.png': lambda: garito_table_scene(356),
     'garito_menu.png': garito_menu_scene,
+    'casino_bg.png': lambda: casino_table_scene(444),
+    'casino_bg_16x9.png': lambda: casino_table_scene(356),
+    'casino_menu.png': casino_menu_scene,
 }
 
 

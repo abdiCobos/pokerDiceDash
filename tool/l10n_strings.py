@@ -101,6 +101,8 @@ S = {
     'themeCantinaDesc': ('Papel picado y tequila', 'Papel picado and tequila'),
     'themeGarito': ('Garito clandestino', 'Underground den'),
     'themeGaritoDesc': ('Mafia y dinero sucio', 'Mob money and danger'),
+    'themeCasino': ('Casino de lujo', 'Luxury casino'),
+    'themeCasinoDesc': ('Candelabros y neón', 'Chandeliers and neon'),
 
     # --- Update notice ------------------------------------------------------------------------
     'updateTitle': ('Hay una versión nueva', 'A new version is out'),

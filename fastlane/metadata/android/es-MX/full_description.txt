@@ -1,6 +1,6 @@
 Poker Dice Dash es un casino de bolsillo: póker con dados, Texas Hold'em clásico y Blackjack en una sola app. Juega solo contra bots o con tus amigos en la misma red Wi-Fi, sin cuentas, sin anuncios y sin internet.
 
-Elige el ambiente: mesa verde clásica, cantina mexicana o garito clandestino, todo en pixel art.
+Elige el ambiente: mesa verde clásica, cantina mexicana, garito clandestino o casino de lujo, todo en pixel art.
 
 En español e inglés (sigue el idioma de tu teléfono o elígelo en Ajustes).
 

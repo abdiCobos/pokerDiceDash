@@ -38,7 +38,7 @@
 
 ### Pick the scene
 
-In **Settings → Scene** you choose where the game takes place: the **Classic** plain green table of the first version, a **Mexican cantina** with papel picado, tequila and talavera tiles, or a seedy **underground den** run by the mob. The menu and every table change with it.
+In **Settings → Scene** you choose where the game takes place: the **Classic** plain green table of the first version, a **Mexican cantina** with papel picado, tequila and talavera tiles, a seedy **underground den** run by the mob, or a **luxury casino** with chandeliers, neon and slot machines. The menu and every table change with it.
 
 <table>
   <tr>

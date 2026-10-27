@@ -77,6 +77,8 @@
   "themeCantinaDesc": "Papel picado y tequila",
   "themeGarito": "Garito clandestino",
   "themeGaritoDesc": "Mafia y dinero sucio",
+  "themeCasino": "Casino de lujo",
+  "themeCasinoDesc": "Candelabros y neón",
   "updateTitle": "Hay una versión nueva",
   "updateBody": "Ya salió la versión {newVersion} (tienes la {current}). Descárgala en GitHub e instálala encima: no pierdes tus fichas ni tus ajustes.\n\nPara jugar en red, todos deben tener la misma versión.",
   "@updateBody": {

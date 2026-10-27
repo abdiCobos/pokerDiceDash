@@ -38,7 +38,7 @@
 
 ### Elige el ambiente
 
-En **Ajustes → Ambiente** cambias el lugar donde se juega: la mesa verde **Clásica** de la primera versión, una **Cantina mexicana** con papel picado, tequila y talavera, o un **Garito clandestino** de mala muerte, con mafia y dinero sucio. El menú y todas las mesas cambian con él.
+En **Ajustes → Ambiente** cambias el lugar donde se juega: la mesa verde **Clásica** de la primera versión, una **Cantina mexicana** con papel picado, tequila y talavera, un **Garito clandestino** de mala muerte, con mafia y dinero sucio, o un **Casino de lujo** con candelabros, neón y tragamonedas. El menú y todas las mesas cambian con él.
 
 <table>
   <tr>
