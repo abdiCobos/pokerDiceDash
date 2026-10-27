@@ -347,13 +347,23 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       alignment: alignment,
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.amber.withValues(alpha: 0.22),
-            fontSize: 9.5 * _s,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2.0,
+        // Dark band behind the rules so they stay readable over any scene (pillars, neon).
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.38),
+            borderRadius: BorderRadius.circular(8 * _s),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 2 * _s),
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.amber.withValues(alpha: 0.5),
+                fontSize: 9.5 * _s,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.0,
+              ),
+            ),
           ),
         ),
       ),

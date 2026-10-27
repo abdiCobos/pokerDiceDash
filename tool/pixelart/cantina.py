@@ -1351,8 +1351,9 @@ def casino_table_scene(width):
     mahogany_wainscot(rail, flr, lamps)
     casino_carpet(flr, lamps)
     # gold columns framing the room, just inside the slot machines
-    gold_column(44, 8, ceil + 6, rail - 3, lamps)
-    gold_column(R(52), 8, ceil + 6, rail - 3, lamps)
+    # the columns start under the band where Blackjack prints its rules (y 31-40)
+    gold_column(44, 8, 46, rail - 3, lamps)
+    gold_column(R(52), 8, 46, rail - 3, lamps)
     # left: a bank of slot machines under a SLOTS sign
     neon_text('SLOTS', 6, 26, 'neon_c')
     slot_machine(3, flr + 2, 18, 46, 'neon_p')
