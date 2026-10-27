@@ -29,7 +29,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final settings = GameSettings();
     await settings.load();
-    expect(settings.theme, TableTheme.cantina, reason: 'cantina is the default');
+    expect(settings.theme, TableTheme.casino, reason: 'casino is the default');
     var notified = 0;
     void listener() => notified++;
     settings.addListener(listener);
@@ -39,7 +39,7 @@ void main() {
     expect((await SharedPreferences.getInstance()).getString('table_theme'), 'garito');
     await settings.load();
     expect(settings.theme, TableTheme.garito);
-    await settings.setTheme(TableTheme.cantina);
+    await settings.setTheme(TableTheme.casino);
   });
 
   test('every theme has its own felt', () {

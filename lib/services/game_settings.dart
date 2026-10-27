@@ -29,7 +29,7 @@ class GameSettings extends ChangeNotifier {
   bool _fastGame = false;
   bool _showOdds = false;
   bool _keepAwake = true;
-  TableTheme _theme = TableTheme.cantina;
+  TableTheme _theme = TableTheme.casino;
   AppLanguage _language = AppLanguage.system;
 
   AppLanguage get language => _language;
@@ -64,7 +64,7 @@ class GameSettings extends ChangeNotifier {
       _showOdds = p.getBool(_oddsKey) ?? false;
       _keepAwake = p.getBool(_awakeKey) ?? true;
       final t = p.getString(_themeKey);
-      _theme = TableTheme.values.firstWhere((v) => v.name == t, orElse: () => TableTheme.cantina);
+      _theme = TableTheme.values.firstWhere((v) => v.name == t, orElse: () => TableTheme.casino);
       final l = p.getString(_languageKey);
       _language = AppLanguage.values.firstWhere((v) => v.name == l, orElse: () => AppLanguage.system);
     } catch (_) {}
