@@ -21,29 +21,29 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/2_dicedash.png" alt="Dice Dash"><p align="center">Dice Dash: poker with dice</p></td>
-    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/3_texas.png" alt="Texas Hold'em"><p align="center">Texas Hold'em</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_dicedash.png" alt="Dice Dash"><p align="center">Dice Dash: poker with dice</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_texas.png" alt="Texas Hold'em"><p align="center">Texas Hold'em</p></td>
   </tr>
   <tr>
-    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/4_blackjack.png" alt="Blackjack"><p align="center">Blackjack</p></td>
-    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/5_blackjack_result.png" alt="Blackjack results"><p align="center">Round results</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4_blackjack.png" alt="Blackjack"><p align="center">Blackjack</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5_blackjack_result.png" alt="Blackjack results"><p align="center">Round results</p></td>
   </tr>
 </table>
 
 <p align="center">
-  <img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/1_menu.png" alt="Menu" width="24%">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_menu.png" alt="Menu" width="24%">
   &nbsp;
-  <img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/6_lan.png" alt="LAN play" width="24%">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6_lan.png" alt="LAN play" width="24%">
 </p>
 
 ### Pick the scene
 
-In **Settings → Scene** you choose where the game takes place: the **Classic** plain green table of the first version, a **Mexican cantina** with papel picado, tequila and talavera tiles, a seedy **underground den** run by the mob, or a **luxury casino** with chandeliers, neon and slot machines. The menu and every table change with it.
+The game starts in the **luxury casino**, with chandeliers, neon and slot machines. In **Settings → Scene** you can switch to the **Classic** plain green table of the first version, a **Mexican cantina** with papel picado, tequila and talavera tiles, or a seedy **underground den** run by the mob. The menu and every table change with it.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/ajustes_ambiente.png" alt="Settings: pick the scene"><p align="center">Settings: pick the scene</p></td>
-    <td width="50%"><img src="docs/screenshots/texas_garito.png" alt="Texas Hold'em table in the underground den"><p align="center">Texas Hold'em in the underground den</p></td>
+    <td width="30%"><img src="docs/screenshots/ajustes_casino_en.png" alt="Settings: pick the scene"><p align="center">Settings: pick the scene</p></td>
+    <td width="70%"><img src="docs/screenshots/texas_garito.png" alt="Texas Hold'em table in the underground den"><p align="center">Texas Hold'em in the underground den</p></td>
   </tr>
 </table>
 

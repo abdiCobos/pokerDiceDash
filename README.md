@@ -38,12 +38,12 @@
 
 ### Elige el ambiente
 
-En **Ajustes → Ambiente** cambias el lugar donde se juega: la mesa verde **Clásica** de la primera versión, una **Cantina mexicana** con papel picado, tequila y talavera, un **Garito clandestino** de mala muerte, con mafia y dinero sucio, o un **Casino de lujo** con candelabros, neón y tragamonedas. El menú y todas las mesas cambian con él.
+El juego empieza en el **Casino de lujo**, con candelabros, neón y tragamonedas. En **Ajustes → Ambiente** puedes cambiarlo por la mesa verde **Clásica** de la primera versión, una **Cantina mexicana** con papel picado, tequila y talavera, o un **Garito clandestino** de mala muerte, con mafia y dinero sucio. El menú y todas las mesas cambian con él.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/ajustes_ambiente.png" alt="Ajustes: elegir el ambiente"><p align="center">Ajustes: elige el ambiente</p></td>
-    <td width="50%"><img src="docs/screenshots/texas_garito.png" alt="Mesa de Texas Hold'em en el Garito clandestino"><p align="center">Texas Hold'em en el Garito clandestino</p></td>
+    <td width="30%"><img src="docs/screenshots/ajustes_casino_es.png" alt="Ajustes: elegir el ambiente"><p align="center">Ajustes: elige el ambiente</p></td>
+    <td width="70%"><img src="docs/screenshots/texas_garito.png" alt="Mesa de Texas Hold'em en el Garito clandestino"><p align="center">Texas Hold'em en el Garito clandestino</p></td>
   </tr>
 </table>
 
