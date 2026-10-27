@@ -1,0 +1,4 @@
+• Nuevo ambiente Casino de lujo: candelabros, neón, tragamonedas y mesa roja. Es el ambiente inicial; los demás siguen en Ajustes.
+• Blackjack: al dividir, las dos manos van lado a lado y las cartas ya no se hacen chicas.
+• Las reglas de Blackjack se leen bien sobre cualquier ambiente.
+• Ajustes muestra los ambientes de dos en dos para que se lean los nombres.

@@ -1,0 +1,4 @@
+• New Luxury casino scene: chandeliers, neon, slot machines and a red table. It is the default scene; the others are still in Settings.
+• Blackjack: after a split, both hands sit side by side and the cards no longer shrink.
+• The Blackjack rules are easy to read over every scene.
+• Settings shows the scenes two per row so their names fit.
