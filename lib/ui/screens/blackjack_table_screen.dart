@@ -448,6 +448,9 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
       crossAxisAlignment: CrossAxisAlignment.end,
       children: players.map((p) {
         return Expanded(
+          // A split seat shows its hands side by side, so it gets a wider slot
+          // instead of a taller one (a taller seat would shrink the whole row).
+          flex: p.hands.length > 1 ? 3 : 2,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: count > 4 ? 2.0 * _s : 4.0 * _s),
             child: _buildSeatCard(
@@ -600,48 +603,19 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
 
           // Cards Area
           if (showCards && player.hands.isNotEmpty) ...[
-            ...player.hands.asMap().entries.map((e) {
-              final hIdx = e.key;
-              final hand = e.value;
-              final isActiveHand = hIdx == player.activeHandIndex && isCurrent;
-
-              return Container(
-                margin: EdgeInsets.only(bottom: 2 * _s),
-                padding: player.hands.length > 1 ? EdgeInsets.all(2 * _s) : EdgeInsets.zero,
-                decoration: isActiveHand
-                    ? BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6 * _s),
-                        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
-                      )
-                    : null,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (player.hands.length > 1)
-                      Text(
-                        isActiveHand ? '▶ ${context.t.handShort('${hIdx + 1}')}' : context.t.handShort('${hIdx + 1}'),
-                        style: TextStyle(
-                          color: isActiveHand ? Colors.amber : Colors.white54,
-                          fontSize: 9 * _s,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    _buildCardRow(
-                      cards: hand.cards,
-                      playerId: player.id,
-                      handIdx: hIdx,
-                      showFace: true,
-                      cardScale: cardScale,
-                      overlapStep: cardOverlap,
-                    ),
-                    SizedBox(height: 2 * _s),
-                    if (hand.cards.isNotEmpty)
-                      _handValueBadge(hand.handValue, hand.isBusted, hand.isBlackjack, charlie: hand.isCharlie),
+            if (player.hands.length == 1)
+              _buildSeatHand(player, 0, isCurrent, cardScale, cardOverlap)
+            else
+              // Split: hands side by side, same height as an unsplit seat.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (var h = 0; h < player.hands.length; h++) ...[
+                    if (h > 0) SizedBox(width: 3 * _s),
+                    Expanded(child: _buildSeatHand(player, h, isCurrent, cardScale, cardOverlap)),
                   ],
-                ),
-              );
-            }),
+                ],
+              ),
           ] else ...[
             // Empty placeholder during betting phase
             Container(
@@ -671,6 +645,66 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
         ),
       ],
     );
+  }
+
+  /// One hand inside a seat: its cards and, under them, its value (with "M1"/"M2"
+  /// when the seat split). The active split hand is outlined in amber.
+  Widget _buildSeatHand(BlackjackPlayer player, int hIdx, bool isCurrent, double cardScale, double cardOverlap) {
+    final hand = player.hands[hIdx];
+    final split = player.hands.length > 1;
+    final isActiveHand = split && hIdx == player.activeHandIndex && isCurrent;
+    // While this seat plays a split, the hand that waits is dimmed.
+    final waiting = split && isCurrent && !isActiveHand;
+    final box = Container(
+      margin: EdgeInsets.only(bottom: 2 * _s),
+      padding: split ? EdgeInsets.symmetric(horizontal: 2 * _s, vertical: 1 * _s) : EdgeInsets.zero,
+      decoration: isActiveHand
+          ? BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(6 * _s),
+              border: Border.all(color: Colors.amber, width: 1.5),
+            )
+          : null,
+      child: LayoutBuilder(
+        builder: (context, c) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildCardRow(
+              cards: hand.cards,
+              playerId: player.id,
+              handIdx: hIdx,
+              showFace: true,
+              cardScale: cardScale,
+              overlapStep: cardOverlap,
+              maxWidth: c.maxWidth,
+            ),
+            SizedBox(height: 2 * _s),
+            if (hand.cards.isNotEmpty)
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (split) ...[
+                      Text(
+                        isActiveHand ? '▶ ${context.t.handShort('${hIdx + 1}')}' : context.t.handShort('${hIdx + 1}'),
+                        style: TextStyle(
+                          color: isActiveHand ? Colors.amber : Colors.white54,
+                          fontSize: 9 * _s,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 3 * _s),
+                    ],
+                    _handValueBadge(hand.handValue, hand.isBusted, hand.isBlackjack, charlie: hand.isCharlie),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    return AnimatedOpacity(opacity: waiting ? 0.5 : 1, duration: const Duration(milliseconds: 250), child: box);
   }
 
   /// Result pill over a seat at round end: "BLACKJACK +150", "PIERDE -100"...
@@ -726,6 +760,7 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     bool hideSecondCard = false,
     double cardScale = 0.65,
     double overlapStep = 20.0,
+    double maxWidth = double.infinity,
   }) {
     if (cards.isEmpty) return const SizedBox.shrink();
 
@@ -734,6 +769,11 @@ class _BlackjackTableScreenState extends State<BlackjackTableScreen> with Ticker
     final cardW = CardWidget.cardWidth * cardScale * auto;
     final cardH = CardWidget.cardHeight * cardScale * auto;
     overlapStep *= auto;
+    // Tighter fan when the hand would not fit its slot (split hands, many cards):
+    // the cards keep their size and overlap more.
+    if (cards.length > 1 && cardW + (cards.length - 1) * overlapStep > maxWidth) {
+      overlapStep = ((maxWidth - cardW) / (cards.length - 1)).clamp(cardW * 0.18, overlapStep);
+    }
     final totalW = cardW + (cards.length - 1) * overlapStep;
 
     return SizedBox(
