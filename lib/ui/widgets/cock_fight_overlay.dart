@@ -79,18 +79,23 @@ class _CockFightOverlayState extends State<CockFightOverlay> with TickerProvider
         final content = _seg(inT, announce - 0.45, 0.45) * (1 - _seg(outT, 0, 0.25));
         return LayoutBuilder(
           builder: (context, c) {
-            final h = c.maxHeight;
-            final stripW = c.maxWidth / _strips;
+            // The table sits inside the safe area; the curtain also covers the notch and the
+            // system bars so no cantina shows at the edges.
+            final edge = MediaQueryData.fromView(View.of(context)).padding;
+            final h = c.maxHeight + edge.top + edge.bottom;
+            final stripW = (c.maxWidth + edge.left + edge.right) / _strips;
             return Stack(
+              clipBehavior: Clip.none,
               children: [
                 // Velvet strips falling in one after another (and out the same way); taps on the
                 // table underneath never get through while they are up.
                 for (var i = 0; i < _strips; i++)
                   Positioned(
-                    left: i * stripW - 0.5,
+                    left: i * stripW - 0.5 - edge.left,
                     width: stripW + 1,
                     top:
-                        -h * (1 - Curves.easeOutCubic.transform(_seg(inT, i * 0.05, 0.35))) +
+                        -edge.top -
+                        h * (1 - Curves.easeOutCubic.transform(_seg(inT, i * 0.05, 0.35))) +
                         h * Curves.easeInCubic.transform(_seg(outT, 0.15 + i * 0.05, 0.4)),
                     height: h,
                     child: GestureDetector(
