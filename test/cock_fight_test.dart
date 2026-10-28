@@ -21,6 +21,11 @@ GameProvider newGame(GameMode mode, int bots) {
 
 /// The local player rolls and checks/calls when it is their turn (never during a fight).
 void humanPlays(GameProvider g) {
+  // Keep the human able to bet (a fight needs someone with 50 chips).
+  final local = g.players.where((p) => p.isLocal).firstOrNull;
+  if (local != null && local.chipBalance < 300 && g.state.status == GameStatus.finished && g.cockFight == null) {
+    g.debugSetChips(local.id, 1000);
+  }
   final idx = g.state.currentPlayerIndex;
   if (idx < 0 || idx >= g.players.length || g.cockFight != null) return;
   final me = g.players[idx];
@@ -58,7 +63,9 @@ void main() {
     final f = CockFight(seed: 1, fighters: const ['El Colorado', 'El Giro'], favorite: 1);
     expect(f.payout(1, 50), 75);
     expect(f.payout(0, 50), 150);
-    expect(f.payout(0, 20), 60);
+    expect(f.payout(1, 200), 300);
+    expect(f.payout(0, 200), 600);
+    expect(CockFight.bets, [50, 100, 200]);
     expect(CockFight.favoriteWins, greaterThan(0.5));
   });
 
@@ -99,6 +106,8 @@ void main() {
     g.placeCockBet(me, f.favorite, 50);
     expect(g.players.firstWhere((p) => p.id == me).chipBalance, myBefore - 50);
     g.placeCockBet(me, 1 - f.favorite, 100);
+    g.placeCockBet('1', f.favorite, 20);
+    expect(f.wagers['1']?.$2 == 20, isFalse, reason: 'only 50, 100 or 200');
     expect(f.wagerChips(me), 50, reason: 'one bet per fight');
 
     final round = g.roundCounter;
@@ -153,7 +162,7 @@ void main() {
     }
     final f = g.cockFight!;
     // Wait for the bot, then pass: no need to wait for the 12 s clock.
-    for (var i = 0; i < 80 && f.wagers.length < 1; i++) {
+    for (var i = 0; i < 150 && f.wagers.length < 1; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     g.placeCockBet(g.localPlayerId, 0, 0);

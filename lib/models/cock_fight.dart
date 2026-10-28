@@ -14,7 +14,7 @@ class CockFight {
   static const redNames = ['El Colorado', 'El Canelo', 'El Huracán', 'El Charro', 'El Tequilero', 'El Bravo'];
   static const lightNames = ['El Giro', 'El Cenizo', 'El Güero', 'El Pinto', 'El Relámpago', 'El Mariachi'];
 
-  static const bets = [20, 50, 100];
+  static const bets = [50, 100, 200];
 
   /// Total returned per chip bet: the favourite pays less, the underdog much more.
   static const favoritePays = 1.5;
@@ -23,11 +23,15 @@ class CockFight {
   /// Chance that the favourite wins.
   static const favoriteWins = 0.65;
 
+  /// The announcement ("¡Pelea de gallos! Apuesta a tu favorito") before the bets open.
+  static const announceTime = Duration(milliseconds: 3000);
   static const bettingTime = Duration(seconds: 12);
 
   /// Length of the fight animation (walk in, punches, K.O., the hen, walk off).
   static const fightTime = Duration(seconds: 14);
-  static const resultTime = Duration(seconds: 4);
+  /// The result, then the ring leaves the screen ([exitAt] into it) before the next hand.
+  static const resultTime = Duration(milliseconds: 4600);
+  static const exitAt = Duration(milliseconds: 3400);
 
   /// Seeds the punch sequence so every device plays the same fight.
   final int seed;

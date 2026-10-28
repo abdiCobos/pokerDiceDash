@@ -1863,9 +1863,9 @@ class GameProvider extends ChangeNotifier {
       notifyListeners();
       broadcastState();
       for (final bot in _players.where((p) => p.isBot)) {
-        Timer(Duration(milliseconds: 1500 + _cockRng.nextInt(5000)), () => _botBetOnCocks(bot.id, epoch));
+        Timer(CockFight.announceTime + Duration(milliseconds: 1500 + _cockRng.nextInt(5000)), () => _botBetOnCocks(bot.id, epoch));
       }
-      _cockTimer = Timer(CockFight.bettingTime, () => _beginCockFight(epoch));
+      _cockTimer = Timer(CockFight.announceTime + CockFight.bettingTime, () => _beginCockFight(epoch));
     });
   }
 

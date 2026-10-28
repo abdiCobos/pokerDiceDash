@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -9,7 +10,11 @@ import '../../providers/game_provider.dart';
 
 /// Full-screen cockfight over the Dice Dash table (cantina only): bets, the boxing match in
 /// pixel art, and the result. Everything it shows comes from [GameProvider.cockFight].
-class CockFightOverlay extends StatelessWidget {
+///
+/// It comes in like a cascade (velvet strips falling one after another, then the hanging
+/// "¡Pelea de gallos!" sign) and leaves the same way, falling off the bottom of the screen,
+/// so the table never comes back from one frame to the next.
+class CockFightOverlay extends StatefulWidget {
   final GameProvider game;
   final double scale;
   const CockFightOverlay({super.key, required this.game, required this.scale});
@@ -17,9 +22,105 @@ class CockFightOverlay extends StatelessWidget {
   static const _gold = Color(0xFFFFD54F);
 
   @override
+  State<CockFightOverlay> createState() => _CockFightOverlayState();
+}
+
+class _CockFightOverlayState extends State<CockFightOverlay> with TickerProviderStateMixin {
+  static const _strips = 9;
+  late final AnimationController _in = AnimationController(vsync: this, duration: CockFight.announceTime);
+  late final AnimationController _out = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+  Timer? _exitTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Joining in the middle of a fight: no announcement.
+    if (widget.game.cockFight?.phase == CockFightPhase.betting) {
+      _in.forward();
+    } else {
+      _in.value = 1;
+    }
+    _scheduleExit();
+  }
+
+  @override
+  void didUpdateWidget(covariant CockFightOverlay old) {
+    super.didUpdateWidget(old);
+    _scheduleExit();
+  }
+
+  void _scheduleExit() {
+    if (widget.game.cockFight?.phase != CockFightPhase.result || _exitTimer != null) return;
+    _exitTimer = Timer(CockFight.exitAt, () {
+      if (mounted) _out.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _exitTimer?.cancel();
+    _in.dispose();
+    _out.dispose();
+    super.dispose();
+  }
+
+  static double _seg(double t, double from, double length) => ((t - from) / length).clamp(0.0, 1.0);
+
+  @override
   Widget build(BuildContext context) {
-    final f = game.cockFight!;
-    final s = scale;
+    final f = widget.game.cockFight!;
+    final announce = CockFight.announceTime.inMilliseconds / 1000;
+    return AnimatedBuilder(
+      animation: Listenable.merge([_in, _out]),
+      builder: (context, _) {
+        if (_out.isCompleted) return const SizedBox.shrink();
+        final inT = _in.value * announce;
+        final outT = _out.value;
+        final content = _seg(inT, announce - 0.45, 0.45) * (1 - _seg(outT, 0, 0.25));
+        return LayoutBuilder(
+          builder: (context, c) {
+            final h = c.maxHeight;
+            final stripW = c.maxWidth / _strips;
+            return Stack(
+              children: [
+                // Velvet strips falling in one after another (and out the same way); taps on the
+                // table underneath never get through while they are up.
+                for (var i = 0; i < _strips; i++)
+                  Positioned(
+                    left: i * stripW - 0.5,
+                    width: stripW + 1,
+                    top:
+                        -h * (1 - Curves.easeOutCubic.transform(_seg(inT, i * 0.05, 0.35))) +
+                        h * Curves.easeInCubic.transform(_seg(outT, 0.15 + i * 0.05, 0.4)),
+                    height: h,
+                    child: GestureDetector(
+                      onTap: () {},
+                      child: _Strip(scale: widget.scale),
+                    ),
+                  ),
+                if (content > 0)
+                  Opacity(
+                    opacity: content,
+                    child: Transform.scale(scale: 0.94 + 0.06 * content, child: _body(context, f)),
+                  ),
+                if (inT > 0.5 && inT < announce)
+                  _Announcement(
+                    drop: Curves.easeOutBack.transform(_seg(inT, 0.55, 0.55)),
+                    leave: _seg(inT, announce - 0.5, 0.5),
+                    height: h,
+                    scale: widget.scale,
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _body(BuildContext context, CockFight f) {
+    final game = widget.game;
+    final s = widget.scale;
     final t = context.t;
     final me = game.localPlayerId;
     final myChips = game.players.where((p) => p.id == me).firstOrNull?.chipBalance ?? 0;
@@ -42,13 +143,6 @@ class CockFightOverlay extends StatelessWidget {
 
     return Stack(
       children: [
-        // The table is still there underneath, dimmed; taps do not reach it.
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: () {},
-            child: const ColoredBox(color: Color(0xCC0A0503)),
-          ),
-        ),
         SafeArea(
           child: Padding(
             padding: EdgeInsets.fromLTRB(10 * s, 6 * s, 10 * s, 6 * s),
@@ -98,7 +192,11 @@ class CockFightOverlay extends StatelessWidget {
                           child: Text(t.cockPass, style: TextStyle(fontSize: 12 * s)),
                         ),
                       ],
-                      if (betting) ...[SizedBox(width: 12 * s), _Countdown(key: ValueKey(f.seed), scale: s)],
+                      // The clock starts when the announcement is over.
+                      if (betting && _in.isCompleted) ...[
+                        SizedBox(width: 12 * s),
+                        _Countdown(key: ValueKey(f.seed), scale: s),
+                      ],
                     ],
                   ),
                 ),
@@ -111,6 +209,133 @@ class CockFightOverlay extends StatelessWidget {
             child: _ResultBanner(fight: f, game: game, scale: s),
           ),
       ],
+    );
+  }
+}
+
+/// One velvet strip of the curtain: deep red with a gold fringe at the bottom.
+class _Strip extends StatelessWidget {
+  final double scale;
+  const _Strip({required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFF1E0705), Color(0xFF3B0F0A), Color(0xFF4A160E), Color(0xFF2A0A07)],
+          stops: [0, 0.35, 0.6, 1],
+        ),
+      ),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          height: 5 * s,
+          decoration: BoxDecoration(
+            color: const Color(0xFFB8892E),
+            boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 4 * s, offset: Offset(0, -1 * s))],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The hanging sign that announces the fight: drops in with a bounce, then lifts away when the
+/// betting opens.
+class _Announcement extends StatelessWidget {
+  final double drop; // 0 -> 1 (with overshoot)
+  final double leave; // 0 -> 1
+  final double height;
+  final double scale;
+  const _Announcement({required this.drop, required this.leave, required this.height, required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scale;
+    final t = context.t;
+    Widget rooster(String kind, bool faceRight) => Transform.flip(
+      flipX: !faceRight,
+      child: Image.asset(
+        'assets/images/gallos/${kind}_idle0.png',
+        width: 78 * s,
+        height: 78 * s,
+        fit: BoxFit.fill,
+        filterQuality: FilterQuality.none,
+      ),
+    );
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Opacity(
+          opacity: 1 - leave,
+          child: Transform.translate(
+            offset: Offset(0, -height * (1 - drop) - height * 0.25 * leave),
+            child: Transform.scale(
+              scale: 1 - 0.3 * leave,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // The ropes it hangs from.
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(width: 3 * s, height: 30 * s, color: const Color(0xFF8D6E4A)),
+                        SizedBox(width: 260 * s),
+                        Container(width: 3 * s, height: 30 * s, color: const Color(0xFF8D6E4A)),
+                      ],
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 22 * s, vertical: 12 * s),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF7A4522), Color(0xFF5A2F15)],
+                        ),
+                        borderRadius: BorderRadius.circular(10 * s),
+                        border: Border.all(color: CockFightOverlay._gold, width: 3 * s),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.7), blurRadius: 18 * s)],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          rooster('colorado', true),
+                          SizedBox(width: 10 * s),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                t.cockTitle.toUpperCase(),
+                                style: TextStyle(
+                                  fontFamily: 'AlfaSlabOne',
+                                  color: CockFightOverlay._gold,
+                                  fontSize: 30 * s,
+                                  shadows: const [Shadow(color: Colors.black, offset: Offset(2, 2))],
+                                ),
+                              ),
+                              SizedBox(height: 4 * s),
+                              Text(
+                                t.cockPrompt,
+                                style: TextStyle(color: Colors.white, fontSize: 16 * s, fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                          SizedBox(width: 10 * s),
+                          rooster('giro', false),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -613,7 +838,12 @@ class _ArenaState extends State<_Arena> with SingleTickerProviderStateMixin {
                       height: sprite * unit,
                       child: Transform.flip(
                         flipX: !a.faceRight,
-                        child: Image.asset(a.asset, fit: BoxFit.fill, filterQuality: FilterQuality.none, gaplessPlayback: true),
+                        child: Image.asset(
+                          a.asset,
+                          fit: BoxFit.fill,
+                          filterQuality: FilterQuality.none,
+                          gaplessPlayback: true,
+                        ),
                       ),
                     ),
                   for (final p in scene.pops)
