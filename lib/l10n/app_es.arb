@@ -77,6 +77,58 @@
   "themeCantinaDesc": "Papel picado y tequila",
   "themeGarito": "Garito clandestino",
   "themeGaritoDesc": "Mafia y dinero sucio",
+  "cockTitle": "¡Pelea de gallos!",
+  "cockPrompt": "Apuesta a tu favorito",
+  "cockFavorite": "Favorito",
+  "cockUnderdog": "Sorpresa",
+  "cockPays": "Paga x{mult}",
+  "@cockPays": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      }
+    }
+  },
+  "cockPass": "Paso",
+  "cockYourBet": "Apostaste {chips} a {name}",
+  "@cockYourBet": {
+    "placeholders": {
+      "chips": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cockYouPassed": "No apostaste esta vez",
+  "cockNoChips": "No tienes fichas para apostar",
+  "cockWaiting": "Esperando apuestas…",
+  "cockWins": "¡Gana {name}!",
+  "@cockWins": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cockYouWon": "¡Ganaste +{chips}!",
+  "@cockYouWon": {
+    "placeholders": {
+      "chips": {
+        "type": "String"
+      }
+    }
+  },
+  "cockYouLost": "Perdiste {chips}",
+  "@cockYouLost": {
+    "placeholders": {
+      "chips": {
+        "type": "String"
+      }
+    }
+  },
+  "cockNextHand": "La partida sigue…",
   "themeCasino": "Casino de lujo",
   "themeCasinoDesc": "Candelabros y neón",
   "updateTitle": "Hay una versión nueva",

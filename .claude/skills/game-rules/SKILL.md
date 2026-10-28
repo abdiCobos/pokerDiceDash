@@ -41,6 +41,20 @@ ask the user which one is intended before "fixing" either.
   - 2+1 "¡21!" (Blackjack vs dealer) was tried and REMOVED on 2026-10-21: too invasive. Do not re-add.
   - Sum 7 (other than 1+6) = lucky 7 below.
 
+## Pelea de gallos (Dice Dash, cantina scene only) - `lib/models/cock_fight.dart`
+- Random event between hands: only when the HOST plays Dice Dash with the Cantina mexicana scene,
+  10-15 minutes after the previous one (`_nextCockFightAt`; `--dart-define=COCKFIGHT_SOON=true`
+  makes it ~25 s for tests on a device). Never mid-hand, never once the match is over, and only if
+  some human has at least 20 chips. No switch in Ajustes (it is part of Dice Dash).
+- Two cartoon roosters with boxing gloves (no blood); one is the favourite (pays x1.5, wins 65 %),
+  the other pays x3. Bets 20 / 50 / 100 from the table chips, or pass; one bet per fight; 12 s to
+  decide (starts earlier when everyone decided). Bots bet 75 % of the time, 65 % on the favourite.
+- Fight 14 s (host timers), then 4 s result, then the next hand. The winner gets a hug and a cigar
+  from a well-dressed hen and leaves with her; the loser gets up and walks off (no harm shown).
+- LAN: the host decides; clients see it in the snapshot (`cockFight`) and bet with `COCK_BET`
+  (value = chips * 2 + rooster). If the host leaves mid-fight the heir refunds the bets.
+- Sprites: `tool/pixelart/gallos.py` -> assets/images/gallos/. Tests: `test/cock_fight_test.dart`.
+
 ## Hand ranking - `lib/models/hand_evaluator.dart`
 High card < pair < two pair < trips < straight < flush < full house < quads < straight flush
 < royal flush. A-2-3-4-5 is a 5-high straight. Power = rank<<20 + five 4-bit kickers; equal power = split.

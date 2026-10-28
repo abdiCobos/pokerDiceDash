@@ -231,6 +231,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeGaritoDesc => 'Mob money and danger';
 
   @override
+  String get cockTitle => 'Rooster fight!';
+
+  @override
+  String get cockPrompt => 'Bet on your favourite';
+
+  @override
+  String get cockFavorite => 'Favourite';
+
+  @override
+  String get cockUnderdog => 'Underdog';
+
+  @override
+  String cockPays(String mult) {
+    return 'Pays x$mult';
+  }
+
+  @override
+  String get cockPass => 'Pass';
+
+  @override
+  String cockYourBet(String chips, String name) {
+    return 'You bet $chips on $name';
+  }
+
+  @override
+  String get cockYouPassed => 'You sat this one out';
+
+  @override
+  String get cockNoChips => 'No chips to bet';
+
+  @override
+  String get cockWaiting => 'Waiting for bets…';
+
+  @override
+  String cockWins(String name) {
+    return '$name wins!';
+  }
+
+  @override
+  String cockYouWon(String chips) {
+    return 'You won +$chips!';
+  }
+
+  @override
+  String cockYouLost(String chips) {
+    return 'You lost $chips';
+  }
+
+  @override
+  String get cockNextHand => 'Back to the table…';
+
+  @override
   String get themeCasino => 'Luxury casino';
 
   @override

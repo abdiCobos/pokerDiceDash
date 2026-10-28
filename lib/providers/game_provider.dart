@@ -14,6 +14,7 @@ import '../services/game_settings.dart';
 import '../services/poker_bot_ai.dart';
 
 import '../models/card_model.dart';
+import '../models/cock_fight.dart';
 
 import '../models/hand_evaluator.dart';
 
@@ -356,6 +357,7 @@ class GameProvider extends ChangeNotifier {
     if (_isDisposed || _isExiting || !_isHost || !_isMultiplayer || !_matchStarted) return;
     if (_gameMode == GameMode.blackjack) return; // Blackjack runs its own turn timers
     if (_diceEventBusy) return; // dice events (all-in, extra card) have their own timers
+    if (_cockFight != null || _cockTimer != null) return; // the cockfight runs on its own timers
     if (_matchWinnerId != null) return; // match over: waits for "Jugar otra vez"
     // 1) Showdown finished but no new round is scheduled.
     if (_state.phase == PokerPhase.showdown &&
@@ -431,6 +433,10 @@ class GameProvider extends ChangeNotifier {
     _matchStarted = false;
     _newRoundTimer?.cancel();
     _newRoundTimer = null;
+    _cockTimer?.cancel();
+    _cockTimer = null;
+    _cockFight = null;
+    _nextCockFightAt = null;
     _leftSeats.clear();
     _hasSeat = false;
     _clientConnectionLost = false;
@@ -802,6 +808,19 @@ class GameProvider extends ChangeNotifier {
 
   /// Only one seat has chips left: the match is over until the host restarts it.
   String? _matchWinnerId;
+
+  // --- Pelea de gallos: Dice Dash in the cantina, every 10-15 minutes, between hands --------
+  CockFight? _cockFight;
+  CockFight? get cockFight => _cockFight;
+  Timer? _cockTimer;
+  DateTime? _nextCockFightAt;
+  final _cockRng = Random();
+
+  /// Test builds (--dart-define=COCKFIGHT_SOON=true) get a fight about 25 s after the first hand.
+  static const _cockFightSoon = bool.fromEnvironment('COCKFIGHT_SOON');
+
+  @visibleForTesting
+  void debugCockFightNow() => _nextCockFightAt = DateTime.now().subtract(const Duration(seconds: 1));
   String? get matchWinnerId => _matchWinnerId;
 
   /// "Jugar otra vez" after a match is won: everyone back to 1000 (host / local only).
@@ -1792,9 +1811,15 @@ class GameProvider extends ChangeNotifier {
 
 
 
-  void scheduleNewRound() {
+  void scheduleNewRound({Duration delay = const Duration(seconds: 5)}) {
+    // A cockfight deals the next hand itself when it ends.
+    if (_cockFight != null || _cockTimer != null) return;
+    if (_cockFightDue()) {
+      _startCockFight();
+      return;
+    }
     _newRoundTimer?.cancel();
-    _newRoundTimer = Timer(const Duration(seconds: 5), () {
+    _newRoundTimer = Timer(delay, () {
       _newRoundTimer = null;
       if (_isExiting || _isDisposed) return;
       _centralMessage = null;
@@ -1803,6 +1828,136 @@ class GameProvider extends ChangeNotifier {
   }
 
 
+
+  // --- Pelea de gallos ---------------------------------------------------------------------
+
+  bool _cockFightDue() {
+    if (!_isHost || _isExiting || _gameMode != GameMode.diceDash || _matchWinnerId != null) return false;
+    if (GameSettings().theme != TableTheme.cantina) return false; // only the cantina has a ring
+    final now = DateTime.now();
+    final at = _nextCockFightAt;
+    if (at == null) {
+      _scheduleNextCockFight(now);
+      return false;
+    }
+    if (now.isBefore(at)) return false;
+    return _players.any((p) => !p.isBot && !p.isAway && p.chipBalance >= CockFight.bets.first);
+  }
+
+  void _scheduleNextCockFight(DateTime from) {
+    _nextCockFightAt = from.add(_cockFightSoon
+        ? const Duration(seconds: 25)
+        : Duration(seconds: 600 + _cockRng.nextInt(301))); // every 10 to 15 minutes
+  }
+
+  /// Shows the hand's result for a moment, then opens the betting.
+  void _startCockFight() {
+    final epoch = _epoch;
+    _cockTimer?.cancel();
+    _cockTimer = Timer(const Duration(milliseconds: 2500), () {
+      _cockTimer = null;
+      if (_isExiting || _isDisposed || epoch != _epoch) return;
+      _cockFight = CockFight.random(_cockRng);
+      _centralMessage = null;
+      AppLogger().event('cock_fight');
+      notifyListeners();
+      broadcastState();
+      for (final bot in _players.where((p) => p.isBot)) {
+        Timer(Duration(milliseconds: 1500 + _cockRng.nextInt(5000)), () => _botBetOnCocks(bot.id, epoch));
+      }
+      _cockTimer = Timer(CockFight.bettingTime, () => _beginCockFight(epoch));
+    });
+  }
+
+  void _botBetOnCocks(String botId, int epoch) {
+    final f = _cockFight;
+    if (_isExiting || epoch != _epoch || f == null || f.phase != CockFightPhase.betting) return;
+    final bot = _players.where((p) => p.id == botId).firstOrNull;
+    if (bot == null) return;
+    final affordable = CockFight.bets.where((b) => b <= bot.chipBalance).toList();
+    if (affordable.isEmpty || _cockRng.nextDouble() < 0.25) {
+      placeCockBet(botId, 0, 0);
+      return;
+    }
+    final rooster = _cockRng.nextDouble() < 0.65 ? f.favorite : 1 - f.favorite;
+    placeCockBet(botId, rooster, affordable[_cockRng.nextInt(affordable.length)]);
+  }
+
+  /// Bets [chips] (one of [CockFight.bets]) on [rooster] (0 or 1); 0 chips = pass.
+  void placeCockBet(String playerId, int rooster, int chips) {
+    if (!_isHost) {
+      _sendPlayerAction('COCK_BET', value: chips * 2 + rooster);
+      return;
+    }
+    final f = _cockFight;
+    if (f == null || f.phase != CockFightPhase.betting || f.hasDecided(playerId)) return;
+    final player = _players.where((p) => p.id == playerId).firstOrNull;
+    if (player == null || (rooster != 0 && rooster != 1)) return;
+    if (chips != 0 && (!CockFight.bets.contains(chips) || chips > player.chipBalance)) return;
+    player.chipBalance -= chips;
+    f.wagers[playerId] = (rooster, chips);
+    if (chips > 0) SoundService().chipsRaise();
+    notifyListeners();
+    broadcastState();
+    // Everyone who can bet has decided: the fight starts without waiting for the clock.
+    final waiting = _players.where((p) => !p.isAway && p.chipBalance >= CockFight.bets.first && !f.hasDecided(p.id));
+    if (waiting.isEmpty) {
+      final epoch = _epoch;
+      _cockTimer?.cancel();
+      _cockTimer = Timer(const Duration(milliseconds: 1200), () => _beginCockFight(epoch));
+    }
+  }
+
+  void _beginCockFight(int epoch) {
+    _cockTimer = null;
+    final f = _cockFight;
+    if (_isExiting || epoch != _epoch || f == null || f.phase != CockFightPhase.betting) return;
+    f.winner = _cockRng.nextDouble() < CockFight.favoriteWins ? f.favorite : 1 - f.favorite;
+    f.phase = CockFightPhase.fighting;
+    notifyListeners();
+    broadcastState();
+    _cockTimer = Timer(CockFight.fightTime, () => _payCockFight(epoch));
+  }
+
+  void _payCockFight(int epoch) {
+    _cockTimer = null;
+    final f = _cockFight;
+    if (_isExiting || epoch != _epoch || f == null || f.phase != CockFightPhase.fighting) return;
+    for (final e in f.wagers.entries) {
+      final (rooster, chips) = e.value;
+      if (chips == 0 || rooster != f.winner) continue;
+      final won = f.payout(rooster, chips);
+      f.payouts[e.key] = won;
+      final player = _players.where((p) => p.id == e.key).firstOrNull;
+      if (player != null) player.chipBalance += won;
+    }
+    if (f.payouts.containsKey(localPlayerId)) SoundService().chipsWin();
+    f.phase = CockFightPhase.result;
+    notifyListeners();
+    broadcastState();
+    _cockTimer = Timer(CockFight.resultTime, () {
+      _cockTimer = null;
+      if (_isExiting || epoch != _epoch) return;
+      _cockFight = null;
+      _scheduleNextCockFight(DateTime.now());
+      notifyListeners();
+      broadcastState();
+      scheduleNewRound(delay: const Duration(milliseconds: 600));
+    });
+  }
+
+  /// The host left during a fight: bets go back to their owners (nothing was decided yet).
+  void _refundCockFight() {
+    _cockTimer?.cancel();
+    _cockTimer = null;
+    final f = _cockFight;
+    _cockFight = null;
+    if (f == null || f.phase == CockFightPhase.result) return;
+    for (final e in f.wagers.entries) {
+      final player = _players.where((p) => p.id == e.key).firstOrNull;
+      if (player != null) player.chipBalance += e.value.$2;
+    }
+  }
 
   void completePotTransfer() {
 
@@ -2678,6 +2833,7 @@ class GameProvider extends ChangeNotifier {
       'spied': forPlayerId == null ? const <String>[] : (_spied[forPlayerId]?.toList() ?? const <String>[]),
       'payouts': _resultPayouts,
       'matchWinner': _matchWinnerId,
+      'cockFight': _cockFight?.toMap(),
       'phase': _state.phase.name,
       'status': _state.status.name,
       'revealedCommunityCount': _state.revealedCommunityCount,
@@ -2878,6 +3034,14 @@ class GameProvider extends ChangeNotifier {
       _clearResult();
     }
     _matchWinnerId = state['matchWinner'] as String?;
+    final fight = CockFight.fromMap(state['cockFight']);
+    if (fight != null &&
+        fight.phase == CockFightPhase.result &&
+        _cockFight?.phase != CockFightPhase.result &&
+        fight.payouts.containsKey(localPlayerId)) {
+      SoundService().chipsWin();
+    }
+    _cockFight = fight;
     final payouts = state['payouts'];
     if (payouts is Map) {
       _resultPayouts = {for (final e in payouts.entries) e.key.toString(): (e.value as num).toInt()};
@@ -2915,6 +3079,10 @@ class GameProvider extends ChangeNotifier {
 
 
   void _processRemoteAction(String action, String playerId, int value) {
+    if (action == 'COCK_BET') {
+      placeCockBet(playerId, value % 2, value ~/ 2);
+      return;
+    }
     if (action != 'REBUY') {
       final ci = _state.currentPlayerIndex;
       if (ci < 0 || ci >= _players.length || _players[ci].id != playerId) {
@@ -3213,6 +3381,7 @@ class GameProvider extends ChangeNotifier {
     if (_oldHostLeft && oldHost != null) _leftSeats.add(oldHost);
     _nextSeatId = 1 + _players.map((p) => int.tryParse(p.id) ?? 0).fold(0, max);
     _awayGraceUntil = DateTime.now().add(const Duration(seconds: 15));
+    _refundCockFight();
     if (_gameMode != GameMode.blackjack) _callOffHand();
     _p2pService.startAdvertising(_advertisedMetadata());
     _showHostNotice(const HostNotice(HostNoticeKind.youAreHost));
@@ -3263,6 +3432,10 @@ class GameProvider extends ChangeNotifier {
     _isExiting = true;
     _newRoundTimer?.cancel();
     _newRoundTimer = null;
+    _cockTimer?.cancel();
+    _cockTimer = null;
+    _cockFight = null;
+    _nextCockFightAt = null;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _clientConnectionLost = false;

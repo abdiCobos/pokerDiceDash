@@ -11,6 +11,7 @@ import '../../models/game_state.dart';
 import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
+import '../widgets/cock_fight_overlay.dart';
 import '../widgets/scene_background.dart';
 import '../widgets/host_address_chip.dart';
 import '../widgets/connection_banner.dart';
@@ -251,6 +252,8 @@ class _GameTableScreenState extends State<GameTableScreen>
                         _CenteredStatusAlert(message: context.t.tableMessage(game.centralMessage!)),
                       if (_showPotFlying && game.winnerId != null)
                         _buildPotFlyingAnimation(game),
+                      if (game.cockFight != null)
+                        Positioned.fill(child: CockFightOverlay(game: game, scale: _s)),
                       if (game.roomClosed || (game.isConnectionLost && game.reconnectGaveUp))
                         Positioned.fill(
                           child: RoomClosedOverlay(

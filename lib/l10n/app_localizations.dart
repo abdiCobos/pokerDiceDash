@@ -518,6 +518,90 @@ abstract class AppLocalizations {
   /// **'Mafia y dinero sucio'**
   String get themeGaritoDesc;
 
+  /// No description provided for @cockTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Pelea de gallos!'**
+  String get cockTitle;
+
+  /// No description provided for @cockPrompt.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuesta a tu favorito'**
+  String get cockPrompt;
+
+  /// No description provided for @cockFavorite.
+  ///
+  /// In es, this message translates to:
+  /// **'Favorito'**
+  String get cockFavorite;
+
+  /// No description provided for @cockUnderdog.
+  ///
+  /// In es, this message translates to:
+  /// **'Sorpresa'**
+  String get cockUnderdog;
+
+  /// No description provided for @cockPays.
+  ///
+  /// In es, this message translates to:
+  /// **'Paga x{mult}'**
+  String cockPays(String mult);
+
+  /// No description provided for @cockPass.
+  ///
+  /// In es, this message translates to:
+  /// **'Paso'**
+  String get cockPass;
+
+  /// No description provided for @cockYourBet.
+  ///
+  /// In es, this message translates to:
+  /// **'Apostaste {chips} a {name}'**
+  String cockYourBet(String chips, String name);
+
+  /// No description provided for @cockYouPassed.
+  ///
+  /// In es, this message translates to:
+  /// **'No apostaste esta vez'**
+  String get cockYouPassed;
+
+  /// No description provided for @cockNoChips.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes fichas para apostar'**
+  String get cockNoChips;
+
+  /// No description provided for @cockWaiting.
+  ///
+  /// In es, this message translates to:
+  /// **'Esperando apuestas…'**
+  String get cockWaiting;
+
+  /// No description provided for @cockWins.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Gana {name}!'**
+  String cockWins(String name);
+
+  /// No description provided for @cockYouWon.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Ganaste +{chips}!'**
+  String cockYouWon(String chips);
+
+  /// No description provided for @cockYouLost.
+  ///
+  /// In es, this message translates to:
+  /// **'Perdiste {chips}'**
+  String cockYouLost(String chips);
+
+  /// No description provided for @cockNextHand.
+  ///
+  /// In es, this message translates to:
+  /// **'La partida sigue…'**
+  String get cockNextHand;
+
   /// No description provided for @themeCasino.
   ///
   /// In es, this message translates to:
