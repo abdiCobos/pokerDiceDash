@@ -73,6 +73,7 @@ flutter:
     - assets/images/chips/
     - assets/images/cantina/
     - assets/images/gallos/
+    - assets/images/redada/
     - assets/sounds/
 
   fonts:

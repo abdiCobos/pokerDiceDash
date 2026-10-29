@@ -602,6 +602,342 @@ abstract class AppLocalizations {
   /// **'La partida sigue…'**
   String get cockNextHand;
 
+  /// No description provided for @raidAlarm.
+  ///
+  /// In es, this message translates to:
+  /// **'¡LA JUDICIAL!'**
+  String get raidAlarm;
+
+  /// No description provided for @raidLookoutShout.
+  ///
+  /// In es, this message translates to:
+  /// **'«¡Viene la judicial! ¿Qué vas a hacer?»'**
+  String get raidLookoutShout;
+
+  /// No description provided for @raidMood0.
+  ///
+  /// In es, this message translates to:
+  /// **'«El comandante anda con prisa.»'**
+  String get raidMood0;
+
+  /// No description provided for @raidMood1.
+  ///
+  /// In es, this message translates to:
+  /// **'«El comandante viene como cualquier noche.»'**
+  String get raidMood1;
+
+  /// No description provided for @raidMood2.
+  ///
+  /// In es, this message translates to:
+  /// **'«El comandante viene de malas.»'**
+  String get raidMood2;
+
+  /// No description provided for @raidTip.
+  ///
+  /// In es, this message translates to:
+  /// **'Propina al vigía ({cost})'**
+  String raidTip(String cost);
+
+  /// No description provided for @raidTipReal.
+  ///
+  /// In es, this message translates to:
+  /// **'«Es de verdad, jefe. Ya están en la puerta.»'**
+  String get raidTipReal;
+
+  /// No description provided for @raidTipFake.
+  ///
+  /// In es, this message translates to:
+  /// **'«Tranquilo, es una patrulla que va pasando.»'**
+  String get raidTipFake;
+
+  /// No description provided for @raidBribe.
+  ///
+  /// In es, this message translates to:
+  /// **'Sobornar'**
+  String get raidBribe;
+
+  /// No description provided for @raidHide.
+  ///
+  /// In es, this message translates to:
+  /// **'Esconder fichas'**
+  String get raidHide;
+
+  /// No description provided for @raidFlee.
+  ///
+  /// In es, this message translates to:
+  /// **'Huir'**
+  String get raidFlee;
+
+  /// No description provided for @raidSnitch.
+  ///
+  /// In es, this message translates to:
+  /// **'Delatar a los capos'**
+  String get raidSnitch;
+
+  /// No description provided for @raidSurrender.
+  ///
+  /// In es, this message translates to:
+  /// **'Rendirme'**
+  String get raidSurrender;
+
+  /// No description provided for @raidRecord.
+  ///
+  /// In es, this message translates to:
+  /// **'Expediente'**
+  String get raidRecord;
+
+  /// No description provided for @raidDecided.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya decidiste. Esperando a los demás…'**
+  String get raidDecided;
+
+  /// No description provided for @raidOutOfIt.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin fichas: no te buscan'**
+  String get raidOutOfIt;
+
+  /// No description provided for @raidAccuse.
+  ///
+  /// In es, this message translates to:
+  /// **'«¡Fue {name}, comandante! ¡Toda la mesa es suya!»'**
+  String raidAccuse(String name);
+
+  /// No description provided for @raidAccuseNoBoss.
+  ///
+  /// In es, this message translates to:
+  /// **'El capo de la casa culpa a {name}'**
+  String raidAccuseNoBoss(String name);
+
+  /// No description provided for @raidPayDouble.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagar el doble ({amount})'**
+  String raidPayDouble(String amount);
+
+  /// No description provided for @raidAccuseBack.
+  ///
+  /// In es, this message translates to:
+  /// **'Delatar al capo (volado)'**
+  String get raidAccuseBack;
+
+  /// No description provided for @raidAcceptBlame.
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptar la culpa (+500 al volver)'**
+  String get raidAcceptBlame;
+
+  /// No description provided for @raidBlamedOther.
+  ///
+  /// In es, this message translates to:
+  /// **'El capo culpa a {name}…'**
+  String raidBlamedOther(String name);
+
+  /// No description provided for @raidReal.
+  ///
+  /// In es, this message translates to:
+  /// **'«¡Nadie se mueve!»'**
+  String get raidReal;
+
+  /// No description provided for @raidFake.
+  ///
+  /// In es, this message translates to:
+  /// **'Falsa alarma: solo pasaba una patrulla'**
+  String get raidFake;
+
+  /// No description provided for @raidPrice.
+  ///
+  /// In es, this message translates to:
+  /// **'El comandante cobraba {price}'**
+  String raidPrice(String price);
+
+  /// No description provided for @raidOutBribed.
+  ///
+  /// In es, this message translates to:
+  /// **'Soborno aceptado'**
+  String get raidOutBribed;
+
+  /// No description provided for @raidOutBribeFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No alcanzó el sobre: lo revisaron'**
+  String get raidOutBribeFailed;
+
+  /// No description provided for @raidOutHidden.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontraron nada'**
+  String get raidOutHidden;
+
+  /// No description provided for @raidOutFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Encontraron las fichas'**
+  String get raidOutFound;
+
+  /// No description provided for @raidOutEscaped.
+  ///
+  /// In es, this message translates to:
+  /// **'Escapó por atrás'**
+  String get raidOutEscaped;
+
+  /// No description provided for @raidOutCaught.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo atraparon huyendo'**
+  String get raidOutCaught;
+
+  /// No description provided for @raidOutSnitched.
+  ///
+  /// In es, this message translates to:
+  /// **'Delató: recompensa'**
+  String get raidOutSnitched;
+
+  /// No description provided for @raidOutJailed.
+  ///
+  /// In es, this message translates to:
+  /// **'A la cárcel'**
+  String get raidOutJailed;
+
+  /// No description provided for @raidOutLawyer.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo sacó su abogado'**
+  String get raidOutLawyer;
+
+  /// No description provided for @raidOutScapegoatPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagó el doble y salió'**
+  String get raidOutScapegoatPaid;
+
+  /// No description provided for @raidOutScapegoatWon.
+  ///
+  /// In es, this message translates to:
+  /// **'Ganó el volado'**
+  String get raidOutScapegoatWon;
+
+  /// No description provided for @raidOutBossJailed.
+  ///
+  /// In es, this message translates to:
+  /// **'El capo cayó'**
+  String get raidOutBossJailed;
+
+  /// No description provided for @raidOutWastedBribe.
+  ///
+  /// In es, this message translates to:
+  /// **'Le dio el sobre a nadie'**
+  String get raidOutWastedBribe;
+
+  /// No description provided for @raidOutDropped.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiró fichas al correr'**
+  String get raidOutDropped;
+
+  /// No description provided for @raidOutFalseSurrender.
+  ///
+  /// In es, this message translates to:
+  /// **'Se rindió ante nadie'**
+  String get raidOutFalseSurrender;
+
+  /// No description provided for @raidOutNothing.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin novedad'**
+  String get raidOutNothing;
+
+  /// No description provided for @raidRevenge.
+  ///
+  /// In es, this message translates to:
+  /// **'La mafia no olvida: te tienen en la mira'**
+  String get raidRevenge;
+
+  /// No description provided for @raidLawyer.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Llama al Lic. Saúl! ({fee})'**
+  String raidLawyer(String fee);
+
+  /// No description provided for @raidLawyerName.
+  ///
+  /// In es, this message translates to:
+  /// **'Lic. Saúl Buenhombre'**
+  String get raidLawyerName;
+
+  /// No description provided for @raidLawyerPitch.
+  ///
+  /// In es, this message translates to:
+  /// **'«¿Problemas con la ley? ¡Yo te saco!»'**
+  String get raidLawyerPitch;
+
+  /// No description provided for @raidPaperName.
+  ///
+  /// In es, this message translates to:
+  /// **'EL CHISMOSO'**
+  String get raidPaperName;
+
+  /// No description provided for @raidPaperReal.
+  ///
+  /// In es, this message translates to:
+  /// **'CAE GARITO EN LA COLONIA DOCTORES'**
+  String get raidPaperReal;
+
+  /// No description provided for @raidPaperFake.
+  ///
+  /// In es, this message translates to:
+  /// **'FALSA ALARMA EN LA DOCTORES'**
+  String get raidPaperFake;
+
+  /// No description provided for @raidPaperDetained.
+  ///
+  /// In es, this message translates to:
+  /// **'Detenidos: {names}'**
+  String raidPaperDetained(String names);
+
+  /// No description provided for @raidPaperNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Nadie fue detenido: todos se esfumaron'**
+  String get raidPaperNone;
+
+  /// No description provided for @raidPaperFakeSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasó una patrulla y medio garito salió corriendo'**
+  String get raidPaperFakeSub;
+
+  /// No description provided for @raidSentence.
+  ///
+  /// In es, this message translates to:
+  /// **'Sentencia: 5 años'**
+  String get raidSentence;
+
+  /// No description provided for @raidYearsLater.
+  ///
+  /// In es, this message translates to:
+  /// **'5 años después…'**
+  String get raidYearsLater;
+
+  /// No description provided for @raidNewTable.
+  ///
+  /// In es, this message translates to:
+  /// **'Mesa nueva. La mafia no olvida.'**
+  String get raidNewTable;
+
+  /// No description provided for @raidJailLan.
+  ///
+  /// In es, this message translates to:
+  /// **'A la cárcel: fuera 2 manos'**
+  String get raidJailLan;
+
+  /// No description provided for @raidInJail.
+  ///
+  /// In es, this message translates to:
+  /// **'En la cárcel'**
+  String get raidInJail;
+
   /// No description provided for @themeCasino.
   ///
   /// In es, this message translates to:

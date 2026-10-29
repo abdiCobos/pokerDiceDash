@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../models/hand_evaluator.dart';
+import '../models/police_raid.dart';
 import '../providers/game_provider.dart';
 import '../services/game_settings.dart';
 import '../services/poker_bot_ai.dart';
@@ -77,6 +78,32 @@ extension AppTexts on AppLocalizations {
         HostNoticeKind.reconnecting => noticeReconnecting,
         HostNoticeKind.newHost => noticeNewHost(n.name),
         HostNoticeKind.youAreHost => noticeYouAreHost,
+      };
+
+  /// What happened to a player in the garito's raid.
+  String raidOutcome(RaidOutcome o) => switch (o) {
+        RaidOutcome.bribed => raidOutBribed,
+        RaidOutcome.bribeFailed => raidOutBribeFailed,
+        RaidOutcome.hidden => raidOutHidden,
+        RaidOutcome.found => raidOutFound,
+        RaidOutcome.escaped => raidOutEscaped,
+        RaidOutcome.caught => raidOutCaught,
+        RaidOutcome.snitched => raidOutSnitched,
+        RaidOutcome.jailed => raidOutJailed,
+        RaidOutcome.lawyer => raidOutLawyer,
+        RaidOutcome.scapegoatPaid => raidOutScapegoatPaid,
+        RaidOutcome.scapegoatWon => raidOutScapegoatWon,
+        RaidOutcome.bossJailed => raidOutBossJailed,
+        RaidOutcome.wastedBribe => raidOutWastedBribe,
+        RaidOutcome.droppedChips => raidOutDropped,
+        RaidOutcome.falseSurrender => raidOutFalseSurrender,
+        RaidOutcome.nothing => raidOutNothing,
+      };
+
+  String raidMood(int mood) => switch (mood) {
+        0 => raidMood0,
+        1 => raidMood1,
+        _ => raidMood2,
       };
 
   /// Blackjack seat badge for an outcome code from the host ('GANA', 'PIERDE'...).

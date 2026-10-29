@@ -283,6 +283,191 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cockNextHand => 'Back to the table…';
 
   @override
+  String get raidAlarm => 'THE COPS!';
+
+  @override
+  String get raidLookoutShout => '\"Cops are coming! What will you do?\"';
+
+  @override
+  String get raidMood0 => '\"The comandante is in a hurry.\"';
+
+  @override
+  String get raidMood1 => '\"The comandante looks like any other night.\"';
+
+  @override
+  String get raidMood2 => '\"The comandante is in a foul mood.\"';
+
+  @override
+  String raidTip(String cost) {
+    return 'Tip the lookout ($cost)';
+  }
+
+  @override
+  String get raidTipReal => '\"It\'s real, boss. They\'re at the door.\"';
+
+  @override
+  String get raidTipFake => '\"Relax, just a patrol driving by.\"';
+
+  @override
+  String get raidBribe => 'Bribe';
+
+  @override
+  String get raidHide => 'Hide chips';
+
+  @override
+  String get raidFlee => 'Run';
+
+  @override
+  String get raidSnitch => 'Snitch on the bosses';
+
+  @override
+  String get raidSurrender => 'Give up';
+
+  @override
+  String get raidRecord => 'Record';
+
+  @override
+  String get raidDecided => 'You decided. Waiting for the others…';
+
+  @override
+  String get raidOutOfIt => 'No chips: nobody is after you';
+
+  @override
+  String raidAccuse(String name) {
+    return '\"It was $name, comandante! The whole table is theirs!\"';
+  }
+
+  @override
+  String raidAccuseNoBoss(String name) {
+    return 'The house boss blames $name';
+  }
+
+  @override
+  String raidPayDouble(String amount) {
+    return 'Pay double ($amount)';
+  }
+
+  @override
+  String get raidAccuseBack => 'Rat out the boss (coin toss)';
+
+  @override
+  String get raidAcceptBlame => 'Take the blame (+500 back later)';
+
+  @override
+  String raidBlamedOther(String name) {
+    return 'The boss blames $name…';
+  }
+
+  @override
+  String get raidReal => '\"Nobody move!\"';
+
+  @override
+  String get raidFake => 'False alarm: just a patrol passing by';
+
+  @override
+  String raidPrice(String price) {
+    return 'The comandante wanted $price';
+  }
+
+  @override
+  String get raidOutBribed => 'Bribe taken';
+
+  @override
+  String get raidOutBribeFailed => 'Envelope too thin: searched';
+
+  @override
+  String get raidOutHidden => 'Found nothing';
+
+  @override
+  String get raidOutFound => 'Chips found';
+
+  @override
+  String get raidOutEscaped => 'Got away';
+
+  @override
+  String get raidOutCaught => 'Caught running';
+
+  @override
+  String get raidOutSnitched => 'Snitched: reward';
+
+  @override
+  String get raidOutJailed => 'Off to jail';
+
+  @override
+  String get raidOutLawyer => 'Their lawyer got them out';
+
+  @override
+  String get raidOutScapegoatPaid => 'Paid double and walked';
+
+  @override
+  String get raidOutScapegoatWon => 'Won the coin toss';
+
+  @override
+  String get raidOutBossJailed => 'The boss went down';
+
+  @override
+  String get raidOutWastedBribe => 'Bribed nobody';
+
+  @override
+  String get raidOutDropped => 'Dropped chips running';
+
+  @override
+  String get raidOutFalseSurrender => 'Gave up to nobody';
+
+  @override
+  String get raidOutNothing => 'All quiet';
+
+  @override
+  String get raidRevenge => 'The mob never forgets: you are marked';
+
+  @override
+  String raidLawyer(String fee) {
+    return 'Call Lic. Saúl! ($fee)';
+  }
+
+  @override
+  String get raidLawyerName => 'Lic. Saúl Buenhombre';
+
+  @override
+  String get raidLawyerPitch => '\"Trouble with the law? I\'ll get you out!\"';
+
+  @override
+  String get raidPaperName => 'THE DAILY GOSSIP';
+
+  @override
+  String get raidPaperReal => 'MOB DEN BUSTED DOWNTOWN';
+
+  @override
+  String get raidPaperFake => 'FALSE ALARM DOWNTOWN';
+
+  @override
+  String raidPaperDetained(String names) {
+    return 'Arrested: $names';
+  }
+
+  @override
+  String get raidPaperNone => 'No arrests: everyone vanished';
+
+  @override
+  String get raidPaperFakeSub =>
+      'A patrol drove by and half the den ran for it';
+
+  @override
+  String get raidSentence => 'Sentence: 5 years';
+
+  @override
+  String get raidYearsLater => '5 years later…';
+
+  @override
+  String get raidNewTable => 'A new table. The mob remembers.';
+
+  @override
+  String get raidJailLan => 'Jailed: out for 2 hands';
+
+  @override
+  String get raidInJail => 'In jail';
+
+  @override
   String get themeCasino => 'Luxury casino';
 
   @override

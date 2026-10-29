@@ -15,6 +15,7 @@ import '../services/poker_bot_ai.dart';
 
 import '../models/card_model.dart';
 import '../models/cock_fight.dart';
+import '../models/police_raid.dart';
 
 import '../models/hand_evaluator.dart';
 
@@ -358,6 +359,7 @@ class GameProvider extends ChangeNotifier {
     if (_gameMode == GameMode.blackjack) return; // Blackjack runs its own turn timers
     if (_diceEventBusy) return; // dice events (all-in, extra card) have their own timers
     if (_cockFight != null || _cockTimer != null) return; // the cockfight runs on its own timers
+    if (_raid != null || _raidTimer != null) return; // and so does the raid
     if (_matchWinnerId != null) return; // match over: waits for "Jugar otra vez"
     // 1) Showdown finished but no new round is scheduled.
     if (_state.phase == PokerPhase.showdown &&
@@ -437,6 +439,16 @@ class GameProvider extends ChangeNotifier {
     _cockTimer = null;
     _cockFight = null;
     _nextCockFightAt = null;
+    _raidTimer?.cancel();
+    _raidTimer = null;
+    _raid = null;
+    _nextRaidAt = null;
+    _record.clear();
+    _revenge.clear();
+    _snitches.clear();
+    _jail.clear();
+    _favor.clear();
+    _lawyerUsedBy.clear();
     _leftSeats.clear();
     _hasSeat = false;
     _clientConnectionLost = false;
@@ -578,6 +590,7 @@ class GameProvider extends ChangeNotifier {
   int get diceTotal => _die1 + _die2;
 
   bool get isHost => _isHost;
+  bool get isMultiplayer => _isMultiplayer;
 
   GameMode get gameMode => _gameMode;
 
@@ -818,6 +831,46 @@ class GameProvider extends ChangeNotifier {
 
   /// Test builds (--dart-define=COCKFIGHT_SOON=true) get a fight about 25 s after the first hand.
   static const _cockFightSoon = bool.fromEnvironment('COCKFIGHT_SOON');
+
+  // --- La redada: Dice Dash in the garito, every 10-15 minutes, between hands --------------
+  PoliceRaid? _raid;
+  PoliceRaid? get raid => _raid;
+  Timer? _raidTimer;
+  DateTime? _nextRaidAt;
+  final _raidRng = Random();
+
+  /// Test builds (--dart-define=RAID_SOON=true) get a raid about 25 s after the first hand.
+  static const _raidSoon = bool.fromEnvironment('RAID_SOON');
+
+  /// Stacks when the decisions closed (after the lookout's tips).
+  Map<String, int> _raidChips = {};
+  bool _coinWon = false;
+
+  /// Police record (bribes +1, snitching +2): the comandante charges more. Kept for the
+  /// whole table, also after a stay in jail.
+  final Map<String, int> _record = {};
+  int recordOf(String playerId) => _record[playerId] ?? 0;
+
+  /// Snitches the mafia is after (hands left), and everyone who ever snitched at this table.
+  final Map<String, int> _revenge = {};
+  final Set<String> _snitches = {};
+  bool isMarked(String playerId) => (_revenge[playerId] ?? 0) > 0;
+
+  /// LAN: hands a jailed player still sits out, and the extra chips owed by the boss.
+  final Map<String, int> _jail = {};
+  final Map<String, int> _favor = {};
+  bool isJailed(String playerId) => _jail.containsKey(playerId);
+
+  /// The lawyer gets each player out of jail once per table.
+  final Set<String> _lawyerUsedBy = {};
+  bool lawyerAvailable(String playerId) => !_lawyerUsedBy.contains(playerId);
+
+  @visibleForTesting
+  void debugRaidNow() => _nextRaidAt = DateTime.now().subtract(const Duration(seconds: 1));
+  @visibleForTesting
+  bool? debugRaidReal;
+  @visibleForTesting
+  bool debugScapegoat = false;
 
   @visibleForTesting
   void debugCockFightNow() => _nextCockFightAt = DateTime.now().subtract(const Duration(seconds: 1));
@@ -1812,8 +1865,13 @@ class GameProvider extends ChangeNotifier {
 
 
   void scheduleNewRound({Duration delay = const Duration(seconds: 5)}) {
-    // A cockfight deals the next hand itself when it ends.
+    // A cockfight or a raid deals the next hand itself when it ends.
     if (_cockFight != null || _cockTimer != null) return;
+    if (_raid != null || _raidTimer != null) return;
+    if (_raidDue()) {
+      _startRaid();
+      return;
+    }
     if (_cockFightDue()) {
       _startCockFight();
       return;
@@ -1828,6 +1886,269 @@ class GameProvider extends ChangeNotifier {
   }
 
 
+
+  // --- La redada -------------------------------------------------------------------------
+
+  bool _raidDue() {
+    if (!_isHost || _isExiting || _gameMode != GameMode.diceDash || _matchWinnerId != null) return false;
+    if (GameSettings().theme != TableTheme.garito) return false; // only the garito gets raided
+    final now = DateTime.now();
+    final at = _nextRaidAt;
+    if (at == null) {
+      _scheduleNextRaid(now);
+      return false;
+    }
+    if (now.isBefore(at)) return false;
+    return _players.any((p) => !p.isBot && !p.isAway && p.chipBalance > 0 && !isJailed(p.id));
+  }
+
+  void _scheduleNextRaid(DateTime from) {
+    _nextRaidAt = from.add(_raidSoon
+        ? const Duration(seconds: 25)
+        : Duration(seconds: 600 + _raidRng.nextInt(301))); // every 10 to 15 minutes
+  }
+
+  /// Players caught in the raid: everyone at the table with chips (not those in jail).
+  Iterable<PlayerModel> get _raidPlayers => _players.where((p) => p.chipBalance > 0 && !p.isBankrupt && !isJailed(p.id));
+
+  /// Shows the hand's result for a moment, then the sirens.
+  void _startRaid() {
+    final epoch = _epoch;
+    _raidTimer?.cancel();
+    _raidTimer = Timer(const Duration(milliseconds: 2500), () {
+      _raidTimer = null;
+      if (_isExiting || _isDisposed || epoch != _epoch) return;
+      final r = PoliceRaid.random(_raidRng);
+      _raid = debugRaidReal == null
+          ? r
+          : PoliceRaid(seed: r.seed, real: debugRaidReal, price: r.price, mood: r.mood);
+      _centralMessage = null;
+      _coinWon = false;
+      AppLogger().event('police_raid');
+      notifyListeners();
+      broadcastState();
+      for (final bot in _raidPlayers.where((p) => p.isBot)) {
+        Timer(PoliceRaid.announceTime + Duration(milliseconds: 1200 + _raidRng.nextInt(6000)),
+            () => _botRaidChoice(bot.id, epoch));
+      }
+      _raidTimer = Timer(PoliceRaid.announceTime, () {
+        _raidTimer = null;
+        if (_isExiting || epoch != _epoch || _raid == null) return;
+        _raid!.phase = RaidPhase.deciding;
+        notifyListeners();
+        broadcastState();
+        _raidTimer = Timer(PoliceRaid.decideTime, () => _closeRaidDecisions(epoch));
+      });
+    });
+  }
+
+  void _botRaidChoice(String botId, int epoch) {
+    final r = _raid;
+    if (_isExiting || epoch != _epoch || r == null || r.phase != RaidPhase.deciding || r.decided.contains(botId)) return;
+    final bot = _players.where((p) => p.id == botId).firstOrNull;
+    if (bot == null) return;
+    final roll = _raidRng.nextDouble();
+    final bribes = PoliceRaid.bribes.where((b) => b <= bot.chipBalance).toList();
+    if (roll < 0.35 && bribes.isNotEmpty) {
+      raidChoose(botId, RaidChoice.bribe, bribes[_raidRng.nextInt(bribes.length)]);
+    } else if (roll < 0.7) {
+      raidChoose(botId, RaidChoice.hide, 0);
+    } else if (roll < 0.95) {
+      raidChoose(botId, RaidChoice.flee, 0);
+    } else {
+      raidChoose(botId, RaidChoice.snitch, 0);
+    }
+  }
+
+  /// What a player does when the police come: [amount] is the envelope for a bribe.
+  void raidChoose(String playerId, RaidChoice choice, int amount) {
+    if (!_isHost) {
+      _sendPlayerAction('RAID', value: 10000 + choice.index * 1000 + (choice == RaidChoice.bribe ? amount : 0));
+      return;
+    }
+    final r = _raid;
+    if (r == null || r.phase != RaidPhase.deciding || r.decided.contains(playerId)) return;
+    final player = _raidPlayers.where((p) => p.id == playerId).firstOrNull;
+    if (player == null) return;
+    if (choice == RaidChoice.bribe && (!PoliceRaid.bribes.contains(amount) || amount > player.chipBalance)) return;
+    r.choices[playerId] = (choice, choice == RaidChoice.bribe ? amount : 0);
+    r.decided.add(playerId);
+    notifyListeners();
+    broadcastState();
+    // Everyone has decided: no need to wait for the clock.
+    if (_raidPlayers.every((p) => p.isAway || r.decided.contains(p.id))) {
+      final epoch = _epoch;
+      _raidTimer?.cancel();
+      _raidTimer = Timer(const Duration(milliseconds: 1200), () => _closeRaidDecisions(epoch));
+    }
+  }
+
+  /// Pays the lookout to say whether the police are really coming in.
+  void raidTip(String playerId) {
+    if (!_isHost) {
+      _sendPlayerAction('RAID', value: 20000);
+      return;
+    }
+    final r = _raid;
+    if (r == null || (r.phase != RaidPhase.alarm && r.phase != RaidPhase.deciding) || r.tips.containsKey(playerId)) return;
+    final player = _raidPlayers.where((p) => p.id == playerId).firstOrNull;
+    if (player == null || player.chipBalance < PoliceRaid.tipCost + 10 || r.decided.contains(playerId)) return;
+    player.chipBalance -= PoliceRaid.tipCost;
+    r.tips[playerId] = r.real ?? false;
+    notifyListeners();
+    broadcastState();
+  }
+
+  void _closeRaidDecisions(int epoch) {
+    _raidTimer = null;
+    final r = _raid;
+    if (_isExiting || epoch != _epoch || r == null || r.phase != RaidPhase.deciding) return;
+    _raidChips = {for (final p in _raidPlayers) p.id: p.chipBalance};
+    // Sometimes the boss blames a player to save himself (snitches first).
+    if (r.real == true) {
+      final humans = [for (final p in _raidPlayers) if (!p.isBot && !p.isAway) p.id];
+      final snitches = humans.where(_snitches.contains).toList();
+      final target = snitches.isNotEmpty
+          ? snitches[_raidRng.nextInt(snitches.length)]
+          : (humans.isEmpty ? null : humans[_raidRng.nextInt(humans.length)]);
+      final chance = snitches.isNotEmpty ? PoliceRaid.scapegoatChanceForSnitches : PoliceRaid.scapegoatChance;
+      if (target != null && (debugScapegoat || _raidRng.nextDouble() < chance)) {
+        final bots = [for (final p in _raidPlayers) if (p.isBot) p.id];
+        r.scapegoatId = target;
+        r.bossId = bots.isEmpty ? null : bots[_raidRng.nextInt(bots.length)];
+        r.phase = RaidPhase.scapegoat;
+        notifyListeners();
+        broadcastState();
+        _raidTimer = Timer(PoliceRaid.scapegoatTime, () => _revealRaid(epoch));
+        return;
+      }
+    }
+    _revealRaid(epoch);
+  }
+
+  /// The blamed player's last move: pay double, accuse the boss back (a coin toss) or take it.
+  void raidScapegoat(String playerId, ScapegoatChoice choice) {
+    if (!_isHost) {
+      _sendPlayerAction('RAID', value: 30000 + choice.index);
+      return;
+    }
+    final r = _raid;
+    if (r == null || r.phase != RaidPhase.scapegoat || r.scapegoatId != playerId || r.scapegoatChoice != null) return;
+    final c = _raidChips[playerId] ?? 0;
+    if (choice == ScapegoatChoice.payDouble && c < 2 * PoliceRaid.priceFor(r.price ?? 0, recordOf(playerId))) return;
+    r.scapegoatChoice = choice;
+    _coinWon = choice == ScapegoatChoice.accuseBack && _raidRng.nextBool();
+    notifyListeners();
+    broadcastState();
+    final epoch = _epoch;
+    _raidTimer?.cancel();
+    _raidTimer = Timer(const Duration(milliseconds: 1000), () => _revealRaid(epoch));
+  }
+
+  void _revealRaid(int epoch) {
+    _raidTimer = null;
+    final r = _raid;
+    if (_isExiting || epoch != _epoch || r == null || r.revealed) return;
+    final outcomes = settleRaid(raid: r, chips: _raidChips, record: _record, rng: _raidRng, coinWon: _coinWon);
+    for (final id in _raidChips.keys) {
+      r.prices[id] = PoliceRaid.priceFor(r.price ?? 0, recordOf(id));
+    }
+    r.outcomes.addAll(outcomes);
+    for (final e in outcomes.entries) {
+      final player = _players.where((p) => p.id == e.key).firstOrNull;
+      if (player == null) continue;
+      player.chipBalance = max(0, player.chipBalance + e.value.$2);
+      final choice = r.choices[e.key]?.$1;
+      if (choice == RaidChoice.bribe) _record[e.key] = recordOf(e.key) + 1;
+      if (choice == RaidChoice.snitch) {
+        // The mafia finds out, even when it was only a patrol passing by.
+        _record[e.key] = recordOf(e.key) + 2;
+        _revenge[e.key] = PoliceRaid.revengeHands;
+        _snitches.add(e.key);
+      }
+      if (e.value.$1 == RaidOutcome.jailed && !player.isBot) {
+        _jail[e.key] = PoliceRaid.jailHands;
+        if (r.scapegoatId == e.key && r.scapegoatChoice == ScapegoatChoice.acceptBlame) {
+          _favor[e.key] = PoliceRaid.favorChips;
+        }
+      }
+    }
+    if (outcomes.values.any((o) => o.$2 > 0)) SoundService().chipsWin();
+    r.phase = RaidPhase.reveal;
+    notifyListeners();
+    broadcastState();
+    _raidTimer = Timer(PoliceRaid.revealTime, () {
+      _raidTimer = null;
+      if (_isExiting || epoch != _epoch || _raid != r) return;
+      // Playing alone and in jail: the cell, then a new table (the bots remember you).
+      if (!_isMultiplayer && r.jailed(localPlayerId) && isJailed(localPlayerId)) {
+        r.phase = RaidPhase.jail;
+        notifyListeners();
+        _raidTimer = Timer(PoliceRaid.jailTime, () {
+          _raidTimer = null;
+          if (_isExiting || epoch != _epoch) return;
+          _endRaid(newTable: true);
+        });
+        return;
+      }
+      _endRaid();
+    });
+  }
+
+  /// "¡Mejor llama a Saúl!": once per table the lawyer gets a jailed player out for half
+  /// the chips they had.
+  void raidLawyer(String playerId) {
+    if (!_isHost) {
+      _sendPlayerAction('RAID', value: 40000);
+      return;
+    }
+    final r = _raid;
+    if (r == null || r.phase != RaidPhase.reveal || !r.jailed(playerId) || !lawyerAvailable(playerId)) return;
+    final c = _raidChips[playerId] ?? 0;
+    if (c < 100) return;
+    final fee = (c / 20).round() * 10;
+    final player = _players.where((p) => p.id == playerId).firstOrNull;
+    if (player == null) return;
+    player.chipBalance = c - fee;
+    r.outcomes[playerId] = (RaidOutcome.lawyer, -fee);
+    _jail.remove(playerId);
+    _favor.remove(playerId);
+    _lawyerUsedBy.add(playerId);
+    SoundService().chipsWin();
+    notifyListeners();
+    broadcastState();
+  }
+
+  void _endRaid({bool newTable = false}) {
+    _raid = null;
+    _scheduleNextRaid(DateTime.now());
+    if (newTable) {
+      // A new table: everyone starts again with 1000 (plus the boss's favour, if owed).
+      for (final p in _players) {
+        p.chipBalance = 1000 + (_favor.remove(p.id) ?? 0);
+        p.isBankrupt = false;
+        p.isFolded = false;
+      }
+      _jail.clear();
+      _matchWinnerId = null;
+    }
+    notifyListeners();
+    broadcastState();
+    scheduleNewRound(delay: const Duration(milliseconds: 600));
+  }
+
+  /// The host left during a raid: tips go back and nothing happens (nothing was decided yet).
+  void _refundRaid() {
+    _raidTimer?.cancel();
+    _raidTimer = null;
+    final r = _raid;
+    _raid = null;
+    if (r == null || r.revealed) return;
+    for (final id in r.tips.keys) {
+      final player = _players.where((p) => p.id == id).firstOrNull;
+      if (player != null) player.chipBalance += PoliceRaid.tipCost;
+    }
+  }
 
   // --- Pelea de gallos ---------------------------------------------------------------------
 
@@ -2180,6 +2501,31 @@ class GameProvider extends ChangeNotifier {
     for (final p in _players) {
       if (_leftSeats.contains(p.id)) p.chipBalance = 0;
     }
+    // La redada: jailed players sit out, then come back with fresh chips; the mafia's
+    // revenge on a snitch lasts a few hands.
+    for (final p in _players) {
+      final left = _jail[p.id];
+      if (left == null) continue;
+      if (left > 0) {
+        _jail[p.id] = left - 1;
+        p.chipBalance = 0;
+        p.isBankrupt = true;
+        p.isFolded = true;
+      } else {
+        _jail.remove(p.id);
+        p.chipBalance = 1000 + (_favor.remove(p.id) ?? 0);
+        p.isBankrupt = false;
+        p.isFolded = false;
+      }
+    }
+    for (final id in _revenge.keys.toList()) {
+      final left = _revenge[id]! - 1;
+      if (left <= 0) {
+        _revenge.remove(id);
+      } else {
+        _revenge[id] = left;
+      }
+    }
     // Mark bankrupt players
     for (final player in _players) {
       if (player.chipBalance <= 0) {
@@ -2198,6 +2544,13 @@ class GameProvider extends ChangeNotifier {
 
     final activePlayers = _players.where((p) => !p.isBankrupt && p.chipBalance > 0).toList();
 
+    if (activePlayers.length == 1 && _jail.isNotEmpty) {
+      // Everybody else is in jail for now: wait for them instead of ending the match.
+      notifyListeners();
+      broadcastState();
+      scheduleNewRound(delay: const Duration(seconds: 2));
+      return;
+    }
     if (activePlayers.length == 1) {
       // Everybody else is out of chips: announce the winner, nobody is reset behind their back.
       _matchWinnerId = activePlayers.first.id;
@@ -2210,6 +2563,7 @@ class GameProvider extends ChangeNotifier {
     if (activePlayers.isEmpty) {
       AppLogger().log('NOT_ENOUGH_PLAYERS: resetting all chips to 1000');
       for (final p in _players) {
+        if (isJailed(p.id)) continue; // still serving their time
         p.isBankrupt = false;
         p.isFolded = false;
         p.chipBalance = 1000;
@@ -2719,6 +3073,7 @@ class GameProvider extends ChangeNotifier {
 
 
   void rebuyPlayer(String playerId) {
+    if (isJailed(playerId)) return;
     final idx = _players.indexWhere((p) => p.id == playerId);
     if (idx < 0) { AppLogger().error('REBUY_FAIL: playerId=$playerId not found'); return; }
     final player = _players[idx];
@@ -2754,7 +3109,7 @@ class GameProvider extends ChangeNotifier {
 
     final local = _players.where((p) => p.isLocal).firstOrNull;
 
-    if (local == null) return;
+    if (local == null || isJailed(local.id)) return;
 
     local.chipBalance = 1000;
 
@@ -2834,6 +3189,9 @@ class GameProvider extends ChangeNotifier {
       'payouts': _resultPayouts,
       'matchWinner': _matchWinnerId,
       'cockFight': _cockFight?.toMap(),
+      'raid': _raid?.toMap(forPlayerId: forPlayerId, full: !mask),
+      'jail': _jail.keys.toList(),
+      'lawyerUsed': _lawyerUsedBy.toList(),
       'phase': _state.phase.name,
       'status': _state.status.name,
       'revealedCommunityCount': _state.revealedCommunityCount,
@@ -3042,6 +3400,19 @@ class GameProvider extends ChangeNotifier {
       SoundService().chipsWin();
     }
     _cockFight = fight;
+    _raid = PoliceRaid.fromMap(state['raid']);
+    final jail = state['jail'];
+    if (jail is List) {
+      _jail
+        ..clear()
+        ..addAll({for (final id in jail) id as String: 1});
+    }
+    final lawyers = state['lawyerUsed'];
+    if (lawyers is List) {
+      _lawyerUsedBy
+        ..clear()
+        ..addAll(lawyers.cast<String>());
+    }
     final payouts = state['payouts'];
     if (payouts is Map) {
       _resultPayouts = {for (final e in payouts.entries) e.key.toString(): (e.value as num).toInt()};
@@ -3079,6 +3450,21 @@ class GameProvider extends ChangeNotifier {
 
 
   void _processRemoteAction(String action, String playerId, int value) {
+    if (action == 'RAID') {
+      final kind = value ~/ 10000;
+      final rest = value % 10000;
+      switch (kind) {
+        case 1:
+          raidChoose(playerId, RaidChoice.values[(rest ~/ 1000).clamp(0, RaidChoice.values.length - 1)], rest % 1000);
+        case 2:
+          raidTip(playerId);
+        case 3:
+          raidScapegoat(playerId, ScapegoatChoice.values[rest.clamp(0, ScapegoatChoice.values.length - 1)]);
+        case 4:
+          raidLawyer(playerId);
+      }
+      return;
+    }
     if (action == 'COCK_BET') {
       placeCockBet(playerId, value % 2, value ~/ 2);
       return;
@@ -3215,6 +3601,12 @@ class GameProvider extends ChangeNotifier {
     } catch (e, st) {
       AppLogger().error('Bot ${bot.name}: fallo al decidir: $e', st);
       decision = BotDecision(amountToCall > 0 ? BotActionKind.fold : BotActionKind.call);
+    }
+    // La mafia no olvida: against a snitch still in the hand, the bots push harder.
+    final snitchInHand = _players.any((p) => p.id != bot.id && !p.isFolded && p.hand.isNotEmpty && isMarked(p.id));
+    if (snitchInHand && decision.kind == BotActionKind.call && _raidRng.nextDouble() < 0.5) {
+      final raiseBy = max(20, (pot ~/ 20) * 10);
+      if (bot.chipBalance > amountToCall + raiseBy) decision = BotDecision(BotActionKind.raise, raiseBy: raiseBy);
     }
     AppLogger().log('Bot ${bot.name} (${personalityOf(bot).name}, ${_botDifficulty.name}): $decision');
     // Still this bot's turn after thinking? (state may have moved on)
@@ -3382,6 +3774,7 @@ class GameProvider extends ChangeNotifier {
     _nextSeatId = 1 + _players.map((p) => int.tryParse(p.id) ?? 0).fold(0, max);
     _awayGraceUntil = DateTime.now().add(const Duration(seconds: 15));
     _refundCockFight();
+    _refundRaid();
     if (_gameMode != GameMode.blackjack) _callOffHand();
     _p2pService.startAdvertising(_advertisedMetadata());
     _showHostNotice(const HostNotice(HostNoticeKind.youAreHost));
@@ -3436,6 +3829,10 @@ class GameProvider extends ChangeNotifier {
     _cockTimer = null;
     _cockFight = null;
     _nextCockFightAt = null;
+    _raidTimer?.cancel();
+    _raidTimer = null;
+    _raid = null;
+    _nextRaidAt = null;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _clientConnectionLost = false;

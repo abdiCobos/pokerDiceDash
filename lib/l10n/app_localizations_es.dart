@@ -285,6 +285,191 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cockNextHand => 'La partida sigue…';
 
   @override
+  String get raidAlarm => '¡LA JUDICIAL!';
+
+  @override
+  String get raidLookoutShout => '«¡Viene la judicial! ¿Qué vas a hacer?»';
+
+  @override
+  String get raidMood0 => '«El comandante anda con prisa.»';
+
+  @override
+  String get raidMood1 => '«El comandante viene como cualquier noche.»';
+
+  @override
+  String get raidMood2 => '«El comandante viene de malas.»';
+
+  @override
+  String raidTip(String cost) {
+    return 'Propina al vigía ($cost)';
+  }
+
+  @override
+  String get raidTipReal => '«Es de verdad, jefe. Ya están en la puerta.»';
+
+  @override
+  String get raidTipFake => '«Tranquilo, es una patrulla que va pasando.»';
+
+  @override
+  String get raidBribe => 'Sobornar';
+
+  @override
+  String get raidHide => 'Esconder fichas';
+
+  @override
+  String get raidFlee => 'Huir';
+
+  @override
+  String get raidSnitch => 'Delatar a los capos';
+
+  @override
+  String get raidSurrender => 'Rendirme';
+
+  @override
+  String get raidRecord => 'Expediente';
+
+  @override
+  String get raidDecided => 'Ya decidiste. Esperando a los demás…';
+
+  @override
+  String get raidOutOfIt => 'Sin fichas: no te buscan';
+
+  @override
+  String raidAccuse(String name) {
+    return '«¡Fue $name, comandante! ¡Toda la mesa es suya!»';
+  }
+
+  @override
+  String raidAccuseNoBoss(String name) {
+    return 'El capo de la casa culpa a $name';
+  }
+
+  @override
+  String raidPayDouble(String amount) {
+    return 'Pagar el doble ($amount)';
+  }
+
+  @override
+  String get raidAccuseBack => 'Delatar al capo (volado)';
+
+  @override
+  String get raidAcceptBlame => 'Aceptar la culpa (+500 al volver)';
+
+  @override
+  String raidBlamedOther(String name) {
+    return 'El capo culpa a $name…';
+  }
+
+  @override
+  String get raidReal => '«¡Nadie se mueve!»';
+
+  @override
+  String get raidFake => 'Falsa alarma: solo pasaba una patrulla';
+
+  @override
+  String raidPrice(String price) {
+    return 'El comandante cobraba $price';
+  }
+
+  @override
+  String get raidOutBribed => 'Soborno aceptado';
+
+  @override
+  String get raidOutBribeFailed => 'No alcanzó el sobre: lo revisaron';
+
+  @override
+  String get raidOutHidden => 'No encontraron nada';
+
+  @override
+  String get raidOutFound => 'Encontraron las fichas';
+
+  @override
+  String get raidOutEscaped => 'Escapó por atrás';
+
+  @override
+  String get raidOutCaught => 'Lo atraparon huyendo';
+
+  @override
+  String get raidOutSnitched => 'Delató: recompensa';
+
+  @override
+  String get raidOutJailed => 'A la cárcel';
+
+  @override
+  String get raidOutLawyer => 'Lo sacó su abogado';
+
+  @override
+  String get raidOutScapegoatPaid => 'Pagó el doble y salió';
+
+  @override
+  String get raidOutScapegoatWon => 'Ganó el volado';
+
+  @override
+  String get raidOutBossJailed => 'El capo cayó';
+
+  @override
+  String get raidOutWastedBribe => 'Le dio el sobre a nadie';
+
+  @override
+  String get raidOutDropped => 'Tiró fichas al correr';
+
+  @override
+  String get raidOutFalseSurrender => 'Se rindió ante nadie';
+
+  @override
+  String get raidOutNothing => 'Sin novedad';
+
+  @override
+  String get raidRevenge => 'La mafia no olvida: te tienen en la mira';
+
+  @override
+  String raidLawyer(String fee) {
+    return '¡Llama al Lic. Saúl! ($fee)';
+  }
+
+  @override
+  String get raidLawyerName => 'Lic. Saúl Buenhombre';
+
+  @override
+  String get raidLawyerPitch => '«¿Problemas con la ley? ¡Yo te saco!»';
+
+  @override
+  String get raidPaperName => 'EL CHISMOSO';
+
+  @override
+  String get raidPaperReal => 'CAE GARITO EN LA COLONIA DOCTORES';
+
+  @override
+  String get raidPaperFake => 'FALSA ALARMA EN LA DOCTORES';
+
+  @override
+  String raidPaperDetained(String names) {
+    return 'Detenidos: $names';
+  }
+
+  @override
+  String get raidPaperNone => 'Nadie fue detenido: todos se esfumaron';
+
+  @override
+  String get raidPaperFakeSub =>
+      'Pasó una patrulla y medio garito salió corriendo';
+
+  @override
+  String get raidSentence => 'Sentencia: 5 años';
+
+  @override
+  String get raidYearsLater => '5 años después…';
+
+  @override
+  String get raidNewTable => 'Mesa nueva. La mafia no olvida.';
+
+  @override
+  String get raidJailLan => 'A la cárcel: fuera 2 manos';
+
+  @override
+  String get raidInJail => 'En la cárcel';
+
+  @override
   String get themeCasino => 'Casino de lujo';
 
   @override

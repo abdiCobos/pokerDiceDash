@@ -129,6 +129,118 @@
     }
   },
   "cockNextHand": "La partida sigue…",
+  "raidAlarm": "¡LA JUDICIAL!",
+  "raidLookoutShout": "«¡Viene la judicial! ¿Qué vas a hacer?»",
+  "raidMood0": "«El comandante anda con prisa.»",
+  "raidMood1": "«El comandante viene como cualquier noche.»",
+  "raidMood2": "«El comandante viene de malas.»",
+  "raidTip": "Propina al vigía ({cost})",
+  "@raidTip": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "raidTipReal": "«Es de verdad, jefe. Ya están en la puerta.»",
+  "raidTipFake": "«Tranquilo, es una patrulla que va pasando.»",
+  "raidBribe": "Sobornar",
+  "raidHide": "Esconder fichas",
+  "raidFlee": "Huir",
+  "raidSnitch": "Delatar a los capos",
+  "raidSurrender": "Rendirme",
+  "raidRecord": "Expediente",
+  "raidDecided": "Ya decidiste. Esperando a los demás…",
+  "raidOutOfIt": "Sin fichas: no te buscan",
+  "raidAccuse": "«¡Fue {name}, comandante! ¡Toda la mesa es suya!»",
+  "@raidAccuse": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "raidAccuseNoBoss": "El capo de la casa culpa a {name}",
+  "@raidAccuseNoBoss": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "raidPayDouble": "Pagar el doble ({amount})",
+  "@raidPayDouble": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "raidAccuseBack": "Delatar al capo (volado)",
+  "raidAcceptBlame": "Aceptar la culpa (+500 al volver)",
+  "raidBlamedOther": "El capo culpa a {name}…",
+  "@raidBlamedOther": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "raidReal": "«¡Nadie se mueve!»",
+  "raidFake": "Falsa alarma: solo pasaba una patrulla",
+  "raidPrice": "El comandante cobraba {price}",
+  "@raidPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "raidOutBribed": "Soborno aceptado",
+  "raidOutBribeFailed": "No alcanzó el sobre: lo revisaron",
+  "raidOutHidden": "No encontraron nada",
+  "raidOutFound": "Encontraron las fichas",
+  "raidOutEscaped": "Escapó por atrás",
+  "raidOutCaught": "Lo atraparon huyendo",
+  "raidOutSnitched": "Delató: recompensa",
+  "raidOutJailed": "A la cárcel",
+  "raidOutLawyer": "Lo sacó su abogado",
+  "raidOutScapegoatPaid": "Pagó el doble y salió",
+  "raidOutScapegoatWon": "Ganó el volado",
+  "raidOutBossJailed": "El capo cayó",
+  "raidOutWastedBribe": "Le dio el sobre a nadie",
+  "raidOutDropped": "Tiró fichas al correr",
+  "raidOutFalseSurrender": "Se rindió ante nadie",
+  "raidOutNothing": "Sin novedad",
+  "raidRevenge": "La mafia no olvida: te tienen en la mira",
+  "raidLawyer": "¡Llama al Lic. Saúl! ({fee})",
+  "@raidLawyer": {
+    "placeholders": {
+      "fee": {
+        "type": "String"
+      }
+    }
+  },
+  "raidLawyerName": "Lic. Saúl Buenhombre",
+  "raidLawyerPitch": "«¿Problemas con la ley? ¡Yo te saco!»",
+  "raidPaperName": "EL CHISMOSO",
+  "raidPaperReal": "CAE GARITO EN LA COLONIA DOCTORES",
+  "raidPaperFake": "FALSA ALARMA EN LA DOCTORES",
+  "raidPaperDetained": "Detenidos: {names}",
+  "@raidPaperDetained": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "raidPaperNone": "Nadie fue detenido: todos se esfumaron",
+  "raidPaperFakeSub": "Pasó una patrulla y medio garito salió corriendo",
+  "raidSentence": "Sentencia: 5 años",
+  "raidYearsLater": "5 años después…",
+  "raidNewTable": "Mesa nueva. La mafia no olvida.",
+  "raidJailLan": "A la cárcel: fuera 2 manos",
+  "raidInJail": "En la cárcel",
   "themeCasino": "Casino de lujo",
   "themeCasinoDesc": "Candelabros y neón",
   "updateTitle": "Hay una versión nueva",

@@ -12,6 +12,7 @@ import '../../models/player_model.dart';
 import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
 import '../widgets/cock_fight_overlay.dart';
+import '../widgets/police_raid_overlay.dart';
 import '../widgets/scene_background.dart';
 import '../widgets/host_address_chip.dart';
 import '../widgets/connection_banner.dart';
@@ -253,7 +254,9 @@ class _GameTableScreenState extends State<GameTableScreen>
                       if (_showPotFlying && game.winnerId != null)
                         _buildPotFlyingAnimation(game),
                       if (game.cockFight != null)
-                        Positioned.fill(child: CockFightOverlay(game: game, scale: _s)),
+                        Positioned.fill(key: const ValueKey('cock_fight'), child: CockFightOverlay(game: game, scale: _s)),
+                      if (game.raid != null)
+                        Positioned.fill(key: const ValueKey('police_raid'), child: PoliceRaidOverlay(game: game, scale: _s)),
                       if (game.roomClosed || (game.isConnectionLost && game.reconnectGaveUp))
                         Positioned.fill(
                           child: RoomClosedOverlay(
@@ -2292,7 +2295,19 @@ class _PlayerSeat extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 3 * s),
-              if (isLocal && player.isBankrupt && Provider.of<GameProvider>(context).matchWinnerId == null)
+              if (isLocal && player.isBankrupt && Provider.of<GameProvider>(context).isJailed(playerId))
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4 * s),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lock_outline, color: Colors.redAccent, size: 11 * s),
+                      SizedBox(width: 3 * s),
+                      Text(context.t.raidInJail, style: TextStyle(color: Colors.redAccent, fontSize: 8.5 * s, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                )
+              else if (isLocal && player.isBankrupt && Provider.of<GameProvider>(context).matchWinnerId == null)
                 Padding(
                   padding: EdgeInsets.only(top: 4 * s, bottom: 4 * s),
                   child: Consumer<GameProvider>(

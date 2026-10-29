@@ -55,6 +55,29 @@ ask the user which one is intended before "fixing" either.
   (value = chips * 2 + rooster). If the host leaves mid-fight the heir refunds the bets.
 - Sprites: `tool/pixelart/gallos.py` -> assets/images/gallos/. Tests: `test/cock_fight_test.dart`.
 
+## La redada (Dice Dash, garito scene only) - `lib/models/police_raid.dart`
+- Random event between hands, only when the HOST plays Dice Dash with the Garito clandestino scene,
+  10-15 minutes after the previous one (`--dart-define=RAID_SOON=true`: ~25 s, for device tests).
+  Everyone at the table with chips is in it; nobody in jail.
+- 3.5 s alarm (lights out, red/blue flashes, the lookout shouts), then 12 s to decide in secret:
+  bribe 100/200/300, hide, run, snitch on the bosses, or give up. The lookout gives a hint of the
+  comandante's mood (his secret price 100-500, +50 per point on your record) and, for a 50 tip,
+  tells you if the raid is real (60 %) or a patrol passing by (40 %). `settleRaid` is the rulebook:
+  false alarm: bribe wasted, running drops 10 %, giving up costs 20 %; real: enough bribe = free,
+  not enough = envelope lost + half of the rest; hide 50/50 lose half; run 60 % escape / 40 %
+  lose 30 %; snitch = free + half of what the police took from the others; give up = jail.
+- Scapegoat (15 % of real raids, 50 % if a snitch is at the table): the boss blames one human, who
+  can pay double the price, accuse him back (coin toss: the boss loses everything) or take the
+  blame (jail, +500 at the next table).
+- Record: bribe +1, snitch +2 (kept for the table). Snitching: the bots raise on that player for 6
+  hands (`isMarked`). Lawyer "Lic. Saúl Buenhombre" (a parody, never the TV character's name):
+  once per table gets a jailed player out for half the chips they had.
+- Jail: alone -> the cell ("Sentencia: 5 años", "5 años después…") and a new table with 1000 each,
+  bots keep their memory. LAN -> the seat sits out 2 hands (no RECOMPRAR) and comes back with 1000.
+- LAN: clients see the secrets (real, price, others' choices, tips) only at the reveal; actions go
+  as `RAID` (value 1xxxx choice*1000+bribe, 20000 tip, 3000x scapegoat, 40000 lawyer).
+- Portraits: `tool/pixelart/redada.py` -> assets/images/redada/. Tests: `test/police_raid_test.dart`.
+
 ## Hand ranking - `lib/models/hand_evaluator.dart`
 High card < pair < two pair < trips < straight < flush < full house < quads < straight flush
 < royal flush. A-2-3-4-5 is a 5-high straight. Power = rank<<20 + five 4-bit kickers; equal power = split.
