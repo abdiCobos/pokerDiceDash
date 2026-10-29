@@ -689,6 +689,9 @@ class _ArenaState extends State<_Arena> with SingleTickerProviderStateMixin {
 
   static String _r(int rooster, String frame) => 'assets/images/gallos/${CockFight.kinds[rooster]}_$frame.png';
 
+  /// Punch words in the player's language.
+  bool _spanish = true;
+
   _Scene _scene() {
     final f = widget.fight;
     final scene = _Scene();
@@ -743,7 +746,7 @@ class _ArenaState extends State<_Arena> with SingleTickerProviderStateMixin {
         scene.actors.add(_Actor(_r(r, frame), x, facesIn(r)));
       }
       if (hitting) {
-        final words = ['¡PAF!', '¡PUM!', '¡ZAS!', '¡POW!'];
+        final words = _spanish ? const ['¡PAF!', '¡PUM!', '¡ZAS!', '¡POW!'] : const ['POW!', 'BAM!', 'WHAM!', 'BOP!'];
         scene.pops.add(
           _Pop(words[beat % words.length], 100 + (attacker == 0 ? 6 : -6), 22, 9, const Color(0xFFFFEB3B)),
         );
@@ -817,7 +820,8 @@ class _ArenaState extends State<_Arena> with SingleTickerProviderStateMixin {
         final unit = min(c.maxWidth / 200, c.maxHeight / 90);
         final w = 200 * unit;
         final h = 90 * unit;
-        final scene = _scene();
+        _spanish = Localizations.localeOf(context).languageCode == 'es';
+      final scene = _scene();
         const sprite = 60.0; // the 48 px sprites, a bit bigger than the ring's pixels
         const ground = 76.0; // feet line in ring units (feet sit at 43/48 of the sprite)
         return Center(
