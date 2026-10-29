@@ -78,6 +78,17 @@ ask the user which one is intended before "fixing" either.
   as `RAID` (value 1xxxx choice*1000+bribe, 20000 tip, 3000x scapegoat, 40000 lawyer).
 - Portraits: `tool/pixelart/redada.py` -> assets/images/redada/. Tests: `test/police_raid_test.dart`.
 
+## La ruleta (Dice Dash, casino scene only) - `lib/models/roulette.dart`
+- Random event between hands, only when the HOST plays Dice Dash with the Casino de lujo scene,
+  10-15 minutes after the previous one (`--dart-define=ROULETTE_SOON=true`: ~25 s for device tests).
+- European wheel 0-36. 3 s announcement ("¡Hagan sus apuestas!"), 12 s to bet (starts earlier
+  when everyone decided): one bet of 50/100/200 on red, black, even or odd (x2 back) or one number
+  (x36 back), or pass. Zero beats every outside bet. Bots bet 80 % of the time (10 % on a number).
+- The host draws the number when the wheel starts (7.5 s spin, the ball lands on the drawn pocket),
+  4.8 s result, then the next hand. LAN: snapshot `roulette`, bets as `ROULETTE` (value = bet code).
+  If the host leaves before the result the bets go back.
+- Croupier sprites: `tool/pixelart/crupier.py` -> assets/images/ruleta/. Tests: `test/roulette_test.dart`.
+
 ## Hand ranking - `lib/models/hand_evaluator.dart`
 High card < pair < two pair < trips < straight < flush < full house < quads < straight flush
 < royal flush. A-2-3-4-5 is a 5-high straight. Power = rank<<20 + five 4-bit kickers; equal power = split.

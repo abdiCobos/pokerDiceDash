@@ -129,6 +129,34 @@
     }
   },
   "cockNextHand": "La partida sigue…",
+  "rouletteAnnounce": "¡HAGAN SUS APUESTAS!",
+  "rouletteHello": "«Bienvenidos a la ruleta. ¿Rojo o negro?»",
+  "rouletteRed": "Rojo",
+  "rouletteBlack": "Negro",
+  "rouletteEven": "Par",
+  "rouletteOdd": "Impar",
+  "rouletteNumber": "Número",
+  "roulettePaysOutside": "Paga x2",
+  "roulettePaysNumber": "Pleno: paga x36",
+  "roulettePickNumber": "Elige un número",
+  "rouletteChip": "Ficha",
+  "rouletteYourBet": "Apostaste {chips} a {what}",
+  "@rouletteYourBet": {
+    "placeholders": {
+      "chips": {
+        "type": "String"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "rouletteNoMoreBets": "«No va más.»",
+  "rouletteCongrats": "«¡Felicidades!»",
+  "rouletteHouseThanks": "«La casa agradece.»",
+  "rouletteZero": "CERO",
+  "rouletteRedWord": "ROJO",
+  "rouletteBlackWord": "NEGRO",
   "raidAlarm": "¡LA JUDICIAL!",
   "raidLookoutShout": "«¡Viene la judicial! ¿Qué vas a hacer?»",
   "raidMood0": "«El comandante anda con prisa.»",

@@ -285,6 +285,62 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cockNextHand => 'La partida sigue…';
 
   @override
+  String get rouletteAnnounce => '¡HAGAN SUS APUESTAS!';
+
+  @override
+  String get rouletteHello => '«Bienvenidos a la ruleta. ¿Rojo o negro?»';
+
+  @override
+  String get rouletteRed => 'Rojo';
+
+  @override
+  String get rouletteBlack => 'Negro';
+
+  @override
+  String get rouletteEven => 'Par';
+
+  @override
+  String get rouletteOdd => 'Impar';
+
+  @override
+  String get rouletteNumber => 'Número';
+
+  @override
+  String get roulettePaysOutside => 'Paga x2';
+
+  @override
+  String get roulettePaysNumber => 'Pleno: paga x36';
+
+  @override
+  String get roulettePickNumber => 'Elige un número';
+
+  @override
+  String get rouletteChip => 'Ficha';
+
+  @override
+  String rouletteYourBet(String chips, String what) {
+    return 'Apostaste $chips a $what';
+  }
+
+  @override
+  String get rouletteNoMoreBets => '«No va más.»';
+
+  @override
+  String get rouletteCongrats => '«¡Felicidades!»';
+
+  @override
+  String get rouletteHouseThanks => '«La casa agradece.»';
+
+  @override
+  String get rouletteZero => 'CERO';
+
+  @override
+  String get rouletteRedWord => 'ROJO';
+
+  @override
+  String get rouletteBlackWord => 'NEGRO';
+
+  @override
   String get raidAlarm => '¡LA JUDICIAL!';
 
   @override

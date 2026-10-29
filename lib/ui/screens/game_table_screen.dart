@@ -13,6 +13,7 @@ import '../../providers/game_provider.dart';
 import '../layout/seat_layout.dart';
 import '../widgets/cock_fight_overlay.dart';
 import '../widgets/police_raid_overlay.dart';
+import '../widgets/roulette_overlay.dart';
 import '../widgets/scene_background.dart';
 import '../widgets/host_address_chip.dart';
 import '../widgets/connection_banner.dart';
@@ -257,6 +258,8 @@ class _GameTableScreenState extends State<GameTableScreen>
                         Positioned.fill(key: const ValueKey('cock_fight'), child: CockFightOverlay(game: game, scale: _s)),
                       if (game.raid != null)
                         Positioned.fill(key: const ValueKey('police_raid'), child: PoliceRaidOverlay(game: game, scale: _s)),
+                      if (game.roulette != null)
+                        Positioned.fill(key: const ValueKey('roulette'), child: RouletteOverlay(game: game, scale: _s)),
                       if (game.roomClosed || (game.isConnectionLost && game.reconnectGaveUp))
                         Positioned.fill(
                           child: RoomClosedOverlay(

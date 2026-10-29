@@ -602,6 +602,114 @@ abstract class AppLocalizations {
   /// **'La partida sigue…'**
   String get cockNextHand;
 
+  /// No description provided for @rouletteAnnounce.
+  ///
+  /// In es, this message translates to:
+  /// **'¡HAGAN SUS APUESTAS!'**
+  String get rouletteAnnounce;
+
+  /// No description provided for @rouletteHello.
+  ///
+  /// In es, this message translates to:
+  /// **'«Bienvenidos a la ruleta. ¿Rojo o negro?»'**
+  String get rouletteHello;
+
+  /// No description provided for @rouletteRed.
+  ///
+  /// In es, this message translates to:
+  /// **'Rojo'**
+  String get rouletteRed;
+
+  /// No description provided for @rouletteBlack.
+  ///
+  /// In es, this message translates to:
+  /// **'Negro'**
+  String get rouletteBlack;
+
+  /// No description provided for @rouletteEven.
+  ///
+  /// In es, this message translates to:
+  /// **'Par'**
+  String get rouletteEven;
+
+  /// No description provided for @rouletteOdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Impar'**
+  String get rouletteOdd;
+
+  /// No description provided for @rouletteNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Número'**
+  String get rouletteNumber;
+
+  /// No description provided for @roulettePaysOutside.
+  ///
+  /// In es, this message translates to:
+  /// **'Paga x2'**
+  String get roulettePaysOutside;
+
+  /// No description provided for @roulettePaysNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Pleno: paga x36'**
+  String get roulettePaysNumber;
+
+  /// No description provided for @roulettePickNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige un número'**
+  String get roulettePickNumber;
+
+  /// No description provided for @rouletteChip.
+  ///
+  /// In es, this message translates to:
+  /// **'Ficha'**
+  String get rouletteChip;
+
+  /// No description provided for @rouletteYourBet.
+  ///
+  /// In es, this message translates to:
+  /// **'Apostaste {chips} a {what}'**
+  String rouletteYourBet(String chips, String what);
+
+  /// No description provided for @rouletteNoMoreBets.
+  ///
+  /// In es, this message translates to:
+  /// **'«No va más.»'**
+  String get rouletteNoMoreBets;
+
+  /// No description provided for @rouletteCongrats.
+  ///
+  /// In es, this message translates to:
+  /// **'«¡Felicidades!»'**
+  String get rouletteCongrats;
+
+  /// No description provided for @rouletteHouseThanks.
+  ///
+  /// In es, this message translates to:
+  /// **'«La casa agradece.»'**
+  String get rouletteHouseThanks;
+
+  /// No description provided for @rouletteZero.
+  ///
+  /// In es, this message translates to:
+  /// **'CERO'**
+  String get rouletteZero;
+
+  /// No description provided for @rouletteRedWord.
+  ///
+  /// In es, this message translates to:
+  /// **'ROJO'**
+  String get rouletteRedWord;
+
+  /// No description provided for @rouletteBlackWord.
+  ///
+  /// In es, this message translates to:
+  /// **'NEGRO'**
+  String get rouletteBlackWord;
+
   /// No description provided for @raidAlarm.
   ///
   /// In es, this message translates to:

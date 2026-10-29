@@ -16,6 +16,7 @@ import '../services/poker_bot_ai.dart';
 import '../models/card_model.dart';
 import '../models/cock_fight.dart';
 import '../models/police_raid.dart';
+import '../models/roulette.dart';
 
 import '../models/hand_evaluator.dart';
 
@@ -360,6 +361,7 @@ class GameProvider extends ChangeNotifier {
     if (_diceEventBusy) return; // dice events (all-in, extra card) have their own timers
     if (_cockFight != null || _cockTimer != null) return; // the cockfight runs on its own timers
     if (_raid != null || _raidTimer != null) return; // and so does the raid
+    if (_roulette != null || _rouletteTimer != null) return; // and the roulette
     if (_matchWinnerId != null) return; // match over: waits for "Jugar otra vez"
     // 1) Showdown finished but no new round is scheduled.
     if (_state.phase == PokerPhase.showdown &&
@@ -443,6 +445,10 @@ class GameProvider extends ChangeNotifier {
     _raidTimer = null;
     _raid = null;
     _nextRaidAt = null;
+    _rouletteTimer?.cancel();
+    _rouletteTimer = null;
+    _roulette = null;
+    _nextRouletteAt = null;
     _record.clear();
     _revenge.clear();
     _snitches.clear();
@@ -864,6 +870,21 @@ class GameProvider extends ChangeNotifier {
   /// The lawyer gets each player out of jail once per table.
   final Set<String> _lawyerUsedBy = {};
   bool lawyerAvailable(String playerId) => !_lawyerUsedBy.contains(playerId);
+
+  // --- La ruleta: Dice Dash in the casino, every 10-15 minutes, between hands ---------------
+  Roulette? _roulette;
+  Roulette? get roulette => _roulette;
+  Timer? _rouletteTimer;
+  DateTime? _nextRouletteAt;
+  final _rouletteRng = Random();
+
+  /// Test builds (--dart-define=ROULETTE_SOON=true) get a spin about 25 s after the first hand.
+  static const _rouletteSoon = bool.fromEnvironment('ROULETTE_SOON');
+
+  @visibleForTesting
+  void debugRouletteNow() => _nextRouletteAt = DateTime.now().subtract(const Duration(seconds: 1));
+  @visibleForTesting
+  int? debugRouletteNumber;
 
   @visibleForTesting
   void debugRaidNow() => _nextRaidAt = DateTime.now().subtract(const Duration(seconds: 1));
@@ -1868,6 +1889,11 @@ class GameProvider extends ChangeNotifier {
     // A cockfight or a raid deals the next hand itself when it ends.
     if (_cockFight != null || _cockTimer != null) return;
     if (_raid != null || _raidTimer != null) return;
+    if (_roulette != null || _rouletteTimer != null) return;
+    if (_rouletteDue()) {
+      _startRoulette();
+      return;
+    }
     if (_raidDue()) {
       _startRaid();
       return;
@@ -1886,6 +1912,142 @@ class GameProvider extends ChangeNotifier {
   }
 
 
+
+  // --- La ruleta -------------------------------------------------------------------------
+
+  bool _rouletteDue() {
+    if (!_isHost || _isExiting || _gameMode != GameMode.diceDash || _matchWinnerId != null) return false;
+    if (GameSettings().theme != TableTheme.casino) return false; // only the casino has a wheel
+    final now = DateTime.now();
+    final at = _nextRouletteAt;
+    if (at == null) {
+      _scheduleNextRoulette(now);
+      return false;
+    }
+    if (now.isBefore(at)) return false;
+    return _players.any((p) => !p.isBot && !p.isAway && p.chipBalance >= Roulette.bets.first);
+  }
+
+  void _scheduleNextRoulette(DateTime from) {
+    _nextRouletteAt = from.add(_rouletteSoon
+        ? const Duration(seconds: 25)
+        : Duration(seconds: 600 + _rouletteRng.nextInt(301))); // every 10 to 15 minutes
+  }
+
+  /// Shows the hand's result for a moment, then the croupier opens the betting.
+  void _startRoulette() {
+    final epoch = _epoch;
+    _rouletteTimer?.cancel();
+    _rouletteTimer = Timer(const Duration(milliseconds: 2500), () {
+      _rouletteTimer = null;
+      if (_isExiting || _isDisposed || epoch != _epoch) return;
+      _roulette = Roulette.random(_rouletteRng);
+      _centralMessage = null;
+      AppLogger().event('roulette');
+      notifyListeners();
+      broadcastState();
+      for (final bot in _players.where((p) => p.isBot)) {
+        Timer(Roulette.announceTime + Duration(milliseconds: 1500 + _rouletteRng.nextInt(6000)),
+            () => _botBetOnRoulette(bot.id, epoch));
+      }
+      _rouletteTimer = Timer(Roulette.announceTime + Roulette.bettingTime, () => _spinRoulette(epoch));
+    });
+  }
+
+  void _botBetOnRoulette(String botId, int epoch) {
+    final r = _roulette;
+    if (_isExiting || epoch != _epoch || r == null || r.phase != RoulettePhase.betting) return;
+    final bot = _players.where((p) => p.id == botId).firstOrNull;
+    if (bot == null) return;
+    final chips = Roulette.bets.where((b) => b <= bot.chipBalance).toList();
+    final roll = _rouletteRng.nextDouble();
+    if (chips.isEmpty || roll < 0.2) {
+      placeRouletteBet(botId, const RouletteBet(RouletteBetKind.red, 0));
+      return;
+    }
+    final amount = chips[_rouletteRng.nextInt(chips.length)];
+    if (roll < 0.3) {
+      placeRouletteBet(botId, RouletteBet(RouletteBetKind.number, amount, _rouletteRng.nextInt(37)));
+    } else {
+      placeRouletteBet(botId, RouletteBet(RouletteBetKind.values[_rouletteRng.nextInt(4)], amount));
+    }
+  }
+
+  /// One bet per player per spin; a bet of 0 chips means the player passes.
+  void placeRouletteBet(String playerId, RouletteBet bet) {
+    if (!_isHost) {
+      _sendPlayerAction('ROULETTE', value: bet.code);
+      return;
+    }
+    final r = _roulette;
+    if (r == null || r.phase != RoulettePhase.betting || r.hasDecided(playerId)) return;
+    final player = _players.where((p) => p.id == playerId).firstOrNull;
+    if (player == null) return;
+    if (!bet.passed && (!Roulette.bets.contains(bet.chips) || bet.chips > player.chipBalance)) return;
+    if (bet.kind == RouletteBetKind.number && (bet.number < 0 || bet.number > 36)) return;
+    player.chipBalance -= bet.chips;
+    r.wagers[playerId] = bet;
+    if (!bet.passed) SoundService().chipsRaise();
+    notifyListeners();
+    broadcastState();
+    // Everyone who can bet has decided: the wheel spins without waiting for the clock.
+    final waiting = _players.where((p) => !p.isAway && p.chipBalance >= Roulette.bets.first && !r.hasDecided(p.id));
+    if (waiting.isEmpty) {
+      final epoch = _epoch;
+      _rouletteTimer?.cancel();
+      _rouletteTimer = Timer(const Duration(milliseconds: 1200), () => _spinRoulette(epoch));
+    }
+  }
+
+  void _spinRoulette(int epoch) {
+    _rouletteTimer = null;
+    final r = _roulette;
+    if (_isExiting || epoch != _epoch || r == null || r.phase != RoulettePhase.betting) return;
+    r.number = debugRouletteNumber ?? _rouletteRng.nextInt(37);
+    r.phase = RoulettePhase.spinning;
+    notifyListeners();
+    broadcastState();
+    _rouletteTimer = Timer(Roulette.spinTime, () => _payRoulette(epoch));
+  }
+
+  void _payRoulette(int epoch) {
+    _rouletteTimer = null;
+    final r = _roulette;
+    if (_isExiting || epoch != _epoch || r == null || r.phase != RoulettePhase.spinning) return;
+    final n = r.number!;
+    for (final e in r.wagers.entries) {
+      if (e.value.passed || !e.value.wins(n)) continue;
+      r.payouts[e.key] = e.value.payout;
+      final player = _players.where((p) => p.id == e.key).firstOrNull;
+      if (player != null) player.chipBalance += e.value.payout;
+    }
+    if (r.payouts.containsKey(localPlayerId)) SoundService().chipsWin();
+    r.phase = RoulettePhase.result;
+    notifyListeners();
+    broadcastState();
+    _rouletteTimer = Timer(Roulette.resultTime, () {
+      _rouletteTimer = null;
+      if (_isExiting || epoch != _epoch) return;
+      _roulette = null;
+      _scheduleNextRoulette(DateTime.now());
+      notifyListeners();
+      broadcastState();
+      scheduleNewRound(delay: const Duration(milliseconds: 600));
+    });
+  }
+
+  /// The host left before the ball stopped: bets go back to their owners.
+  void _refundRoulette() {
+    _rouletteTimer?.cancel();
+    _rouletteTimer = null;
+    final r = _roulette;
+    _roulette = null;
+    if (r == null || r.phase == RoulettePhase.result) return;
+    for (final e in r.wagers.entries) {
+      final player = _players.where((p) => p.id == e.key).firstOrNull;
+      if (player != null) player.chipBalance += e.value.chips;
+    }
+  }
 
   // --- La redada -------------------------------------------------------------------------
 
@@ -3190,6 +3352,7 @@ class GameProvider extends ChangeNotifier {
       'matchWinner': _matchWinnerId,
       'cockFight': _cockFight?.toMap(),
       'raid': _raid?.toMap(forPlayerId: forPlayerId, full: !mask),
+      'roulette': _roulette?.toMap(),
       'jail': _jail.keys.toList(),
       'lawyerUsed': _lawyerUsedBy.toList(),
       'phase': _state.phase.name,
@@ -3401,6 +3564,14 @@ class GameProvider extends ChangeNotifier {
     }
     _cockFight = fight;
     _raid = PoliceRaid.fromMap(state['raid']);
+    final spin = Roulette.fromMap(state['roulette']);
+    if (spin != null &&
+        spin.phase == RoulettePhase.result &&
+        _roulette?.phase != RoulettePhase.result &&
+        spin.payouts.containsKey(localPlayerId)) {
+      SoundService().chipsWin();
+    }
+    _roulette = spin;
     final jail = state['jail'];
     if (jail is List) {
       _jail
@@ -3450,6 +3621,11 @@ class GameProvider extends ChangeNotifier {
 
 
   void _processRemoteAction(String action, String playerId, int value) {
+    if (action == 'ROULETTE') {
+      final bet = RouletteBet.fromCode(value);
+      if (bet != null) placeRouletteBet(playerId, bet);
+      return;
+    }
     if (action == 'RAID') {
       final kind = value ~/ 10000;
       final rest = value % 10000;
@@ -3775,6 +3951,7 @@ class GameProvider extends ChangeNotifier {
     _awayGraceUntil = DateTime.now().add(const Duration(seconds: 15));
     _refundCockFight();
     _refundRaid();
+    _refundRoulette();
     if (_gameMode != GameMode.blackjack) _callOffHand();
     _p2pService.startAdvertising(_advertisedMetadata());
     _showHostNotice(const HostNotice(HostNoticeKind.youAreHost));
@@ -3833,6 +4010,10 @@ class GameProvider extends ChangeNotifier {
     _raidTimer = null;
     _raid = null;
     _nextRaidAt = null;
+    _rouletteTimer?.cancel();
+    _rouletteTimer = null;
+    _roulette = null;
+    _nextRouletteAt = null;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _clientConnectionLost = false;
