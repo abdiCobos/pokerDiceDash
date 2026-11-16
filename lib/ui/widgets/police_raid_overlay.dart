@@ -62,7 +62,7 @@ class _PoliceRaidOverlayState extends State<PoliceRaidOverlay> with TickerProvid
     final me = widget.game.localPlayerId;
     final Duration? until = switch (r.phase) {
       RaidPhase.reveal when !widget.game.isMultiplayer && r.jailed(me) && widget.game.isJailed(me) => null,
-      RaidPhase.reveal => PoliceRaid.revealTime,
+      RaidPhase.reveal => PoliceRaid.revealTimeFor(r.real),
       RaidPhase.jail => PoliceRaid.jailTime,
       _ => null,
     };
@@ -697,14 +697,14 @@ class _Reveal extends StatelessWidget {
     return Stack(
       children: [
         body,
-        if (paperIn > 0)
+        if (real && paperIn > 0)
           Positioned.fill(
             child: Center(
               child: Transform.translate(
                 offset: Offset(0, 300 * s * (1 - paperIn)),
                 child: Transform.rotate(
                   angle: -0.06 * paperIn,
-                  child: _Newspaper(real: real, detained: detained, scale: s),
+                  child: _Newspaper(detained: detained, scale: s),
                 ),
               ),
             ),
@@ -774,10 +774,9 @@ class _LawyerOffer extends StatelessWidget {
 }
 
 class _Newspaper extends StatelessWidget {
-  final bool real;
   final List<String> detained;
   final double scale;
-  const _Newspaper({required this.real, required this.detained, required this.scale});
+  const _Newspaper({required this.detained, required this.scale});
 
   @override
   Widget build(BuildContext context) {
@@ -806,7 +805,7 @@ class _Newspaper extends StatelessWidget {
             margin: EdgeInsets.symmetric(vertical: 4 * s),
           ),
           Text(
-            real ? t.raidPaperReal : t.raidPaperFake,
+            t.raidPaperReal,
             textAlign: TextAlign.center,
             style: TextStyle(color: ink, fontSize: 17 * s, fontWeight: FontWeight.w900, height: 1.1),
           ),
@@ -825,15 +824,13 @@ class _Newspaper extends StatelessWidget {
                     0.33, 0.33, 0.33, 0, 0, //
                     0, 0, 0, 1, 0,
                   ]),
-                  child: _portrait(real ? 'comandante_idle' : 'vigia_idle', 54 * s),
+                  child: _portrait('comandante_idle', 54 * s),
                 ),
               ),
               SizedBox(width: 10 * s),
               Expanded(
                 child: Text(
-                  real
-                      ? (detained.isEmpty ? t.raidPaperNone : t.raidPaperDetained(detained.join(', ')))
-                      : t.raidPaperFakeSub,
+                  detained.isEmpty ? t.raidPaperNone : t.raidPaperDetained(detained.join(', ')),
                   style: TextStyle(color: ink, fontSize: 11.5 * s, height: 1.3),
                 ),
               ),

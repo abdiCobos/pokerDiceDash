@@ -253,7 +253,6 @@
   "raidLawyerPitch": "«¿Problemas con la ley? ¡Yo te saco!»",
   "raidPaperName": "EL CHISMOSO",
   "raidPaperReal": "CAE GARITO EN LA COLONIA DOCTORES",
-  "raidPaperFake": "FALSA ALARMA EN LA DOCTORES",
   "raidPaperDetained": "Detenidos: {names}",
   "@raidPaperDetained": {
     "placeholders": {
@@ -263,7 +262,6 @@
     }
   },
   "raidPaperNone": "Nadie fue detenido: todos se esfumaron",
-  "raidPaperFakeSub": "Pasó una patrulla y medio garito salió corriendo",
   "raidSentence": "Sentencia: 5 años",
   "raidYearsLater": "5 años después…",
   "raidNewTable": "Mesa nueva. La mafia no olvida.",

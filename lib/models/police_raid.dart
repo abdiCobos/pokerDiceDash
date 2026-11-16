@@ -39,7 +39,11 @@ class PoliceRaid {
   static const scapegoatTime = Duration(seconds: 7);
   static const revealTime = Duration(milliseconds: 8500);
 
-  /// When the newspaper slides in, counted from the start of the reveal.
+  /// A false alarm has no newspaper: the outcomes show a moment and the game goes on.
+  static const falseAlarmRevealTime = Duration(milliseconds: 5000);
+  static Duration revealTimeFor(bool? real) => real == true ? revealTime : falseAlarmRevealTime;
+
+  /// When the newspaper slides in (real raids only), counted from the start of the reveal.
   static const newspaperAt = Duration(milliseconds: 5000);
   static const jailTime = Duration(milliseconds: 5500);
 

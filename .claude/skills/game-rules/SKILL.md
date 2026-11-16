@@ -76,6 +76,8 @@ ask the user which one is intended before "fixing" either.
   bots keep their memory. LAN -> the seat sits out 2 hands (no RECOMPRAR) and comes back with 1000.
 - LAN: clients see the secrets (real, price, others' choices, tips) only at the reveal; actions go
   as `RAID` (value 1xxxx choice*1000+bribe, 20000 tip, 3000x scapegoat, 40000 lawyer).
+- Reveal: a real raid shows the outcomes 8.5 s with the next-day paper "EL CHISMOSO" (from 5 s);
+  a false alarm shows the outcomes only 5 s and NO paper, so the game goes on quickly.
 - Portraits: `tool/pixelart/redada.py` -> assets/images/redada/. Tests: `test/police_raid_test.dart`.
 
 ## La ruleta (Dice Dash, casino scene only) - `lib/models/roulette.dart`

@@ -2239,7 +2239,7 @@ class GameProvider extends ChangeNotifier {
     r.phase = RaidPhase.reveal;
     notifyListeners();
     broadcastState();
-    _raidTimer = Timer(PoliceRaid.revealTime, () {
+    _raidTimer = Timer(PoliceRaid.revealTimeFor(r.real), () {
       _raidTimer = null;
       if (_isExiting || epoch != _epoch || _raid != r) return;
       // Playing alone and in jail: the cell, then a new table (the bots remember you).

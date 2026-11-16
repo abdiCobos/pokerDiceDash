@@ -496,19 +496,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get raidPaperReal => 'CAE GARITO EN LA COLONIA DOCTORES';
 
   @override
-  String get raidPaperFake => 'FALSA ALARMA EN LA DOCTORES';
-
-  @override
   String raidPaperDetained(String names) {
     return 'Detenidos: $names';
   }
 
   @override
   String get raidPaperNone => 'Nadie fue detenido: todos se esfumaron';
-
-  @override
-  String get raidPaperFakeSub =>
-      'Pasó una patrulla y medio garito salió corriendo';
 
   @override
   String get raidSentence => 'Sentencia: 5 años';

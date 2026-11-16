@@ -992,12 +992,6 @@ abstract class AppLocalizations {
   /// **'CAE GARITO EN LA COLONIA DOCTORES'**
   String get raidPaperReal;
 
-  /// No description provided for @raidPaperFake.
-  ///
-  /// In es, this message translates to:
-  /// **'FALSA ALARMA EN LA DOCTORES'**
-  String get raidPaperFake;
-
   /// No description provided for @raidPaperDetained.
   ///
   /// In es, this message translates to:
@@ -1009,12 +1003,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Nadie fue detenido: todos se esfumaron'**
   String get raidPaperNone;
-
-  /// No description provided for @raidPaperFakeSub.
-  ///
-  /// In es, this message translates to:
-  /// **'Pasó una patrulla y medio garito salió corriendo'**
-  String get raidPaperFakeSub;
 
   /// No description provided for @raidSentence.
   ///

@@ -494,19 +494,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get raidPaperReal => 'MOB DEN BUSTED DOWNTOWN';
 
   @override
-  String get raidPaperFake => 'FALSE ALARM DOWNTOWN';
-
-  @override
   String raidPaperDetained(String names) {
     return 'Arrested: $names';
   }
 
   @override
   String get raidPaperNone => 'No arrests: everyone vanished';
-
-  @override
-  String get raidPaperFakeSub =>
-      'A patrol drove by and half the den ran for it';
 
   @override
   String get raidSentence => 'Sentence: 5 years';
