@@ -1,0 +1,4 @@
+Dice Dash now has surprise events between hands, depending on the scene:
+• Mexican cantina: a cockfight. Bet 50, 100 or 200 on the favourite (x1.5) or the underdog (x3).
+• Underground den: a police raid. Bribe, hide your chips, run, snitch or give up; tip the lookout and watch out for jail.
+• Luxury casino: roulette with a croupier. Red or black, even or odd (x2) or a single number (x36).

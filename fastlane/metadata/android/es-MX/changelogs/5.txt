@@ -1,0 +1,4 @@
+Dice Dash ahora tiene eventos sorpresa entre manos, según el ambiente:
+• Cantina mexicana: pelea de gallos. Apuesta 50, 100 o 200 al favorito (x1.5) o al de abajo (x3).
+• Garito clandestino: la redada. Soborna, esconde fichas, huye, delata o ríndete; dale propina al vigía y cuidado con la cárcel.
+• Casino de lujo: la ruleta con su crupier. Rojo o negro, par o impar (x2) o a un número (x36).
