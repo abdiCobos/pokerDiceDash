@@ -1,94 +1,107 @@
-<p align="right"><b>Español</b> · <a href="README.en.md">English</a></p>
+<p align="right"><b>English</b> · <a href="README.es.md">Español</a></p>
 
 <p align="center">
-  <img src="fastlane/metadata/android/es-MX/images/featureGraphic.png" alt="Poker Dice Dash" width="100%">
+  <img src="fastlane/metadata/android/en-US/images/featureGraphic.png" alt="Poker Dice Dash" width="100%">
 </p>
 
 <p align="center">
-  <b>Casino de bolsillo:</b> póker con dados, Texas Hold'em y Blackjack.<br>
-  Juega contra bots o con tus amigos en la misma red Wi-Fi. Sin cuentas, sin anuncios y sin servidores: solo se conecta a internet para avisarte de versiones nuevas (se apaga en Ajustes).
+  <b>A pocket casino:</b> poker with dice, Texas Hold'em and Blackjack.<br>
+  Play against bots or with your friends on the same Wi-Fi network. No accounts, no ads, no servers: it only goes online to tell you about new versions (switch it off in Settings).
 </p>
 
 <p align="center">
-  <a href="https://github.com/abdiCobos/pokerDiceDash/releases/latest"><img alt="Descargar" src="https://img.shields.io/github/v/release/abdiCobos/pokerDiceDash?label=descargar&color=2e7d32"></a>
-  <img alt="Android y Windows" src="https://img.shields.io/badge/plataformas-Android%20%7C%20Windows-d4af37">
-  <a href="LICENSE"><img alt="Licencia GPL-3.0" src="https://img.shields.io/badge/licencia-GPL--3.0-blue"></a>
+  <a href="https://github.com/abdiCobos/pokerDiceDash/releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/abdiCobos/pokerDiceDash?label=download&color=2e7d32"></a>
+  <img alt="Android and Windows" src="https://img.shields.io/badge/platforms-Android%20%7C%20Windows-d4af37">
+  <a href="LICENSE"><img alt="GPL-3.0 license" src="https://img.shields.io/badge/license-GPL--3.0-blue"></a>
 </p>
 
-> En español e inglés: sigue el idioma de tu teléfono o lo eliges en Ajustes.
+> In English and Spanish: it follows your device language, or pick one in Settings.
 
-## Capturas
+## Screenshots
 
 <table>
   <tr>
-    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/2_dicedash.png" alt="Dice Dash"><p align="center">Dice Dash: póker con dados</p></td>
-    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/3_texas.png" alt="Texas Hold'em"><p align="center">Texas Hold'em</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_dicedash.png" alt="Dice Dash"><p align="center">Dice Dash: poker with dice</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_texas.png" alt="Texas Hold'em"><p align="center">Texas Hold'em</p></td>
   </tr>
   <tr>
-    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/4_blackjack.png" alt="Blackjack"><p align="center">Blackjack</p></td>
-    <td width="50%"><img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/5_blackjack_result.png" alt="Resultados de Blackjack"><p align="center">Resultados de la ronda</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4_blackjack.png" alt="Blackjack"><p align="center">Blackjack</p></td>
+    <td width="50%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5_blackjack_result.png" alt="Blackjack results"><p align="center">Round results</p></td>
   </tr>
 </table>
 
 <p align="center">
-  <img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/1_menu.png" alt="Menú" width="24%">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_menu.png" alt="Menu" width="24%">
   &nbsp;
-  <img src="fastlane/metadata/android/es-MX/images/phoneScreenshots/6_lan.png" alt="Jugar en red" width="24%">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6_lan.png" alt="LAN play" width="24%">
 </p>
 
-### Elige el ambiente
+### Pick the scene
 
-El juego empieza en el **Casino de lujo**, con candelabros, neón y tragamonedas. En **Ajustes → Ambiente** puedes cambiarlo por la mesa verde **Clásica** de la primera versión, una **Cantina mexicana** con papel picado, tequila y talavera, o un **Garito clandestino** de mala muerte, con mafia y dinero sucio. El menú y todas las mesas cambian con él.
+The game starts in the **luxury casino**, with chandeliers, neon and slot machines. In **Settings → Scene** you can switch to the **Classic** plain green table of the first version, a **Mexican cantina** with papel picado, tequila and talavera tiles, or a seedy **underground den** run by the mob. The menu and every table change with it.
 
 <table>
   <tr>
-    <td width="30%"><img src="docs/screenshots/ajustes_casino_es.png" alt="Ajustes: elegir el ambiente"><p align="center">Ajustes: elige el ambiente</p></td>
-    <td width="70%"><img src="docs/screenshots/texas_garito.png" alt="Mesa de Texas Hold'em en el Garito clandestino"><p align="center">Texas Hold'em en el Garito clandestino</p></td>
+    <td width="30%"><img src="docs/screenshots/ajustes_casino_en.png" alt="Settings: pick the scene"><p align="center">Settings: pick the scene</p></td>
+    <td width="70%"><img src="docs/screenshots/texas_garito.png" alt="Texas Hold'em table in the underground den"><p align="center">Texas Hold'em in the underground den</p></td>
   </tr>
 </table>
 
-## Descargar
+## Download
 
-| Plataforma | Archivo |
+| Platform | File |
 |---|---|
-| **Android** | `PokerDiceDash-<versión>.apk` en [Releases](https://github.com/abdiCobos/pokerDiceDash/releases/latest) (pronto también en F-Droid) |
-| **Windows 10/11** | Instalador `PokerDiceDash-<versión>-setup.exe` o versión portátil `PokerDiceDash-<versión>-windows-x64.zip` en [Releases](https://github.com/abdiCobos/pokerDiceDash/releases/latest) |
+| **Quiver Launcher** | Install and update it from [Quiver Launcher](https://quiverlauncher.com/apps/poker-dice-dash) |
+| **Android** | `PokerDiceDash-<version>.apk` from [Releases](https://github.com/abdiCobos/pokerDiceDash/releases/latest) (F-Droid coming soon) |
+| **Windows 10/11** | Installer `PokerDiceDash-<version>-setup.exe` or portable `PokerDiceDash-<version>-windows-x64.zip` from [Releases](https://github.com/abdiCobos/pokerDiceDash/releases/latest) |
 
-> **Windows:** el juego no tiene una firma digital de pago, así que SmartScreen puede mostrar «Windows protegió tu PC». Pulsa **Más información → Ejecutar de todas formas**. La primera vez que crees una sala, permite el acceso en **redes privadas**.
+> **Windows:** the game has no paid code-signing certificate, so SmartScreen may show "Windows protected your PC". Click **More info → Run anyway**. The first time you host a room, allow access on **private networks**.
 
-## Modos de juego
+## Game modes
 
-### 🎲 Dice Dash: póker con dados
-Antes de cada jugada tiras dos dados, y algunas combinaciones cambian la mano:
+### 🎲 Dice Dash: poker with dice
+Before each move you roll two dice, and some combinations change the hand:
 
-| Dados | Evento |
+| Dice | Event |
 |---|---|
-| 1 + 1 | **Intercambio**: las cartas de todos se mezclan y se reparten otra vez |
-| 6 + 6 | **All-in**: quien tira apuesta todas sus fichas |
-| 3 + 3 | **Espía**: ves una carta de un rival |
-| 6 + 1 | **Carta extra**: recibes una tercera carta y te quedas con las dos mejores |
-| Suma 7 | **Dados de la suerte**: el bote crece un 30 % (una vez por mano) |
+| 1 + 1 | **Swap**: everyone's cards are shuffled and dealt again |
+| 6 + 6 | **All-in**: the roller bets all their chips |
+| 3 + 3 | **Spy**: you see one of an opponent's cards |
+| 6 + 1 | **Extra card**: you get a third card and keep the best two |
+| Sum 7 | **Lucky dice**: the pot grows by 30 % (once per hand) |
+
+### 🎰 Random events: they depend on the scene
+In Dice Dash, every 10 to 15 minutes something happens between two hands, and **what happens depends on the scene you picked** in **Settings → Scene**:
+
+| Scene | Event |
+|---|---|
+| **Mexican cantina** | **Cockfight**: bet 50, 100 or 200 on the favourite (pays x1.5) or the underdog (pays x3), or pass |
+| **Underground den** | **Police raid**: bribe the comandante, hide your chips, run, snitch on the bosses or give up. Tip the lookout to find out if it is real, call the lawyer, and watch out for jail |
+| **Luxury casino** | **Roulette** with a croupier: red or black, even or odd (pay x2) or a single number (pays x36) |
+| **Classic** | No events: just poker with dice |
+
+Texas Hold'em and Blackjack have no events. In a network game, the host's scene decides.
 
 ### ♠️ Texas Hold'em
-El póker clásico con ciegas, botes paralelos y todo el reglamento.
+Classic poker with blinds, side pots and the full rulebook.
 
 ### 🃏 Blackjack
-Pide, plántate, dobla o divide. Blackjack paga 3 a 2, el crupier se planta en 17, regla 5-Card Charlie y seguro cuando el crupier muestra un As.
+Hit, stand, double down or split. Blackjack pays 3 to 2, the dealer stands on 17, 5-Card Charlie rule, and insurance when the dealer shows an Ace.
 
-### 🤖 Bots con personalidad
-Tres niveles (fácil, normal y difícil). Calculan sus probabilidades, farolean y cada uno juega distinto.
+### 🤖 Bots with personality
+Three levels (easy, normal and hard). They work out their odds, bluff, and each one plays differently.
 
-## Multijugador en red local
+## Local network multiplayer
 
-- Crea una sala y únete desde otros móviles o PC con Windows en la **misma red Wi-Fi**; también puedes entrar por IP.
-- Póker y Blackjack en red, con contraseña opcional.
-- Reconexión automática: si alguien pierde la señal recupera su asiento, y mientras tanto la mesa sigue.
-- El anfitrión manda: cada jugador solo recibe sus propias cartas hasta el final de la mano.
-- Sin servidores externos: todo ocurre dentro de tu red.
+- Host a room and join from other phones or Windows PCs on the **same Wi-Fi network**; you can also join by IP.
+- Poker and Blackjack over the network, with an optional password.
+- Automatic reconnection: if someone loses signal they get their seat back, and the table keeps going meanwhile.
+- The host is in charge: each player only receives their own cards until the hand ends.
+- No external servers: everything stays inside your network.
 
-## Compilar desde el código
+## Building from source
 
-Necesitas [Flutter](https://docs.flutter.dev/get-started/install) 3.38 o superior.
+You need [Flutter](https://docs.flutter.dev/get-started/install) 3.38 or newer.
 
 ```bash
 git clone https://github.com/abdiCobos/pokerDiceDash.git
@@ -98,20 +111,20 @@ flutter run
 ```
 
 - **APK:** `flutter build apk --release`
-- **Windows (ZIP e instalador):** `powershell -ExecutionPolicy Bypass -File windows/packaging/build_release.ps1` (el instalador requiere [Inno Setup 6](https://jrsoftware.org/isinfo.php))
-- **Pruebas:** `flutter test`
+- **Windows (ZIP and installer):** `powershell -ExecutionPolicy Bypass -File windows/packaging/build_release.ps1` (the installer needs [Inno Setup 6](https://jrsoftware.org/isinfo.php))
+- **Tests:** `flutter test`
 
-## Para desarrolladores: el motor por separado
+## For developers: the engine on its own
 
-Las reglas de Texas Hold'em y Blackjack del juego también están disponibles como paquete independiente de Dart, **[card_table_engine](https://pub.dev/packages/card_table_engine)**, para que cualquiera pueda usarlas en sus propios juegos sin empezar de cero: evaluador de manos, botes paralelos, mesa completa de Texas Hold'em, mesa de Blackjack y bots. Es Dart puro (funciona en Flutter, servidores y consola) y tiene licencia **MIT**.
+The game's Texas Hold'em and Blackjack rules are also available as a standalone Dart package, **[card_table_engine](https://pub.dev/packages/card_table_engine)**, so anyone can use them in their own games instead of starting from scratch: hand evaluator, side pots, a full Texas Hold'em table, a Blackjack table and bots. It is pure Dart (works in Flutter, on servers and in the console) and **MIT** licensed.
 
 ```sh
 dart pub add card_table_engine
 ```
 
-Código y documentación: [github.com/abdiCobos/card_table_engine](https://github.com/abdiCobos/card_table_engine)
+Code and docs: [github.com/abdiCobos/card_table_engine](https://github.com/abdiCobos/card_table_engine)
 
-## Licencia
+## License
 
-Software libre bajo **GPL-3.0-or-later**. Ver [LICENSE](LICENSE).
-La fuente del título, Alfa Slab One, se distribuye bajo la licencia SIL Open Font License (`assets/fonts/AlfaSlabOne-OFL.txt`).
+Free software under **GPL-3.0-or-later**. See [LICENSE](LICENSE).
+The title font, Alfa Slab One, is distributed under the SIL Open Font License (`assets/fonts/AlfaSlabOne-OFL.txt`).
